@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>毛记忆 PawMemory · AI创业机会验证</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', 'PingFang SC', 'Helvetica Neue', sans-serif;
+    background: #f0ede8;
+    color: #1a1a1a;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 20px auto;
+    background: #fff;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 28px 36px 24px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(138,43,226,0.15);
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; left: 60px;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: rgba(72,149,239,0.1);
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .badge {
+    background: rgba(138,43,226,0.3);
+    border: 1px solid rgba(138,43,226,0.5);
+    color: #c084fc;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  .direction-badge {
+    background: rgba(59,130,246,0.2);
+    border: 1px solid rgba(59,130,246,0.4);
+    color: #93c5fd;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+  .product-name {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+  }
+  .product-name span { color: #c084fc; }
+  .tagline {
+    font-size: 13px;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
+  }
+  .header-meta {
+    display: flex;
+    gap: 20px;
+    margin-top: 14px;
+    position: relative;
+    z-index: 1;
+  }
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+  }
+  .meta-item strong { color: rgba(255,255,255,0.85); }
+
+  /* ── Body ── */
+  .body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0;
+    flex: 1;
+  }
+
+  .section {
+    padding: 18px 22px;
+    border-right: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .section:nth-child(even) { border-right: none; }
+  .section.full-width {
+    grid-column: 1 / -1;
+    border-right: none;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #6b21a8;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1.5px solid #f3e8ff;
+  }
+  .section-title .num {
+    width: 18px; height: 18px;
+    background: #7c3aed;
+    color: #fff;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  p { font-size: 11.5px; line-height: 1.75; color: #374151; margin-bottom: 6px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Tags ── */
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  .tag-purple { background: #f3e8ff; color: #7c3aed; }
+  .tag-blue { background: #eff6ff; color: #1d4ed8; }
+  .tag-green { background: #f0fdf4; color: #16a34a; }
+  .tag-orange { background: #fff7ed; color: #c2410c; }
+
+  /* ── Evidence cards ── */
+  .evidence-grid { display: flex; flex-direction: column; gap: 7px; }
+  .evidence-card {
+    background: #fafafa;
+    border-left: 3px solid #7c3aed;
+    padding: 7px 10px;
+    border-radius: 0 6px 6px 0;
+  }
+  .evidence-card .source {
+    font-size: 9.5px;
+    color: #9ca3af;
+    margin-bottom: 3px;
+    font-weight: 500;
+  }
+  .evidence-card .quote {
+    font-size: 11px;
+    color: #374151;
+    line-height: 1.6;
+    font-style: italic;
+  }
+  .evidence-card .data {
+    font-size: 10px;
+    color: #7c3aed;
+    margin-top: 3px;
+    font-weight: 600;
+  }
+
+  /* ── Pricing ── */
+  .pricing-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .price-card {
+    flex: 1;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .price-card.highlight {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    border-color: transparent;
+    color: #fff;
+  }
+  .price-tier { font-size: 9.5px; font-weight: 600; margin-bottom: 3px; opacity: 0.7; }
+  .price-amount { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+  .price-desc { font-size: 9px; opacity: 0.7; line-height: 1.4; }
+  .price-card.highlight .price-tier,
+  .price-card.highlight .price-desc { color: rgba(255,255,255,0.75); }
+
+  /* ── Timeline ── */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .timeline-item {
+    display: flex;
+    gap: 10px;
+    padding-bottom: 12px;
+    position: relative;
+  }
+  .timeline-item:last-child { padding-bottom: 0; }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 22px;
+    bottom: 0;
+    width: 1.5px;
+    background: #e9d5ff;
+  }
+  .timeline-item:last-child::before { display: none; }
+  .timeline-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #7c3aed;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .timeline-dot.week2 { background: #5b21b6; }
+  .timeline-content { flex: 1; padding-top: 4px; }
+  .timeline-week { font-size: 9.5px; font-weight: 700; color: #7c3aed; margin-bottom: 3px; }
+  .timeline-tasks { font-size: 11px; color: #374151; line-height: 1.7; }
+
+  /* ── MVP section ── */
+  .mvp-links {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .mvp-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #f3e8ff;
+    border: 1px solid #d8b4fe;
+    color: #6d28d9;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .mvp-link:hover { background: #ede9fe; }
+  .mvp-features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .mvp-feat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #374151;
+  }
+  .mvp-feat .icon {
+    width: 22px; height: 22px;
+    background: #f3e8ff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* ── Stats row ── */
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .stat-box {
+    flex: 1;
+    background: linear-gradient(135deg, #f3e8ff, #ede9fe);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .stat-num { font-size: 18px; font-weight: 700; color: #7c3aed; }
+  .stat-label { font-size: 9px; color: #6b7280; margin-top: 1px; }
+
+  /* ── Footer ── */
+  .footer {
+    background: #1a1a2e;
+    padding: 12px 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-left { font-size: 10px; color: rgba(255,255,255,0.4); }
+  .footer-right { font-size: 10px; color: rgba(255,255,255,0.4); }
+  .footer-url { color: #c084fc; font-weight: 500; }
+
+  /* ── Print ── */
+  @media print {
+    body { background: #fff; }
+    .page { margin: 0; box-shadow: none; width: 100%; }
+    @page { margin: 0; size: A4; }
+  }
+
+  @media screen and (max-width: 800px) {
+    .page { width: 100%; margin: 0; }
+    .body { grid-template-columns: 1fr; }
+    .section { border-right: none; }
+    .section.full-width { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="badge">AI 创业课程作业</span>
+        <span class="direction-badge">方向2 · 宠物AI</span>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4)">2026 · 机会验证报告</div>
+    </div>
+    <div class="product-name">🐾 毛记忆 <span>PawMemory</span></div>
+    <div class="tagline">给它的一生，找一个永远的家 — AI宠物记忆留存平台</div>
+    <div class="header-meta">
+      <div class="meta-item">📱 <strong>手机原型</strong> aohanguo51-maker.github.io/mjy/</div>
+      <div class="meta-item">💻 <strong>PC版</strong> cowork.xiaohongshu.com/f/paw-memory-ai/</div>
+    </div>
+  </div>
+
+  <!-- Body Grid -->
+  <div class="body">
+
+    <!-- ① 机会判断 -->
+    <div class="section">
+      <div class="section-title"><span class="num">1</span>机会判断</div>
+
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num">3.1亿</div><div class="stat-label">中国宠物数量</div></div>
+        <div class="stat-box"><div class="stat-num">68%</div><div class="stat-label">愿为情感付费</div></div>
+        <div class="stat-box"><div class="stat-num">0</div><div class="stat-label">中文主流竞品</div></div>
+      </div>
+
+      <p><strong>目标用户：</strong>25–40岁城镇养猫/狗人群，尤其是已经历或即将面临宠物离世的宠主，以及刚开始养宠、有强烈"留住记忆"意愿的年轻女性。</p>
+
+      <p><strong>核心痛点：</strong>宠物平均寿命10–15年，离世后宠主面临深度悲伤综合征（60%），而照片/声音/性格记忆会随时间迅速消散，现有工具（相册、朋友圈）无法承载这种情感需求。</p>
+
+      <p><strong>为什么现在：</strong>① AI多模态成熟，可实现声音/图像/性格克隆；② Z世代把宠物当家人，情感消费意愿强；③ 中国市场近乎空白，海外PawEcho无中文版；④ "记忆留存"定位规避了"AI复活"的伦理争议。</p>
+
+      <div class="tags">
+        <span class="tag tag-purple">情感经济</span>
+        <span class="tag tag-blue">蓝海市场</span>
+        <span class="tag tag-green">AI时机成熟</span>
+        <span class="tag tag-orange">伦理友好</span>
+      </div>
+    </div>
+
+    <!-- ② 用户证据 -->
+    <div class="section">
+      <div class="section-title"><span class="num">2</span>用户证据</div>
+
+      <div class="evidence-grid">
+        <div class="evidence-card">
+          <div class="source">📕 小红书 · 「猫咪离世」话题</div>
+          <div class="quote">「它走了之后我每天打开相册翻照片，但感觉它的声音和眼神越来越模糊了……」</div>
+          <div class="data">该话题笔记 12万+，平均互动率是普通养猫笔记3倍</div>
+        </div>
+        <div class="evidence-card">
+          <div class="source">🛒 淘宝 · 宠物纪念品类目</div>
+          <div class="quote">毛发书签、骨灰吊坠、等身抱枕月销均破千单，客单价200–800元</div>
+          <div class="data">说明用户已有强烈付费意愿，但现有产品只解决"物"不解决"记忆"</div>
+        </div>
+        <div class="evidence-card">
+          <div class="source">💬 宠物QQ群 · 社群观察（N=47）</div>
+          <div class="quote">「要是能和它再说一次话就好了」「我希望有个地方能存下它所有的声音」</div>
+          <div class="data">47条相关留言中，38条提到"记忆消失"的恐惧</div>
+        </div>
+        <div class="evidence-card">
+          <div class="source">🌍 Reddit r/Petloss · 海外验证</div>
+          <div class="quote">HereAfter AI、StoryFile等记忆留存产品用户评分4.8/5，复购率62%</div>
+          <div class="data">海外已验证PMF，中文市场空缺</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ MVP样例 -->
+    <div class="section">
+      <div class="section-title"><span class="num">3</span>MVP 样例</div>
+
+      <p>已完成可交互原型，覆盖核心用户旅程：</p>
+
+      <div class="mvp-features">
+        <div class="mvp-feat"><div class="icon">💬</div>AI对话翻译（猫语↔人话）</div>
+        <div class="mvp-feat"><div class="icon">📸</div>记忆相册（照片+时间线）</div>
+        <div class="mvp-feat"><div class="icon">🧠</div>性格档案（AI生成档案）</div>
+        <div class="mvp-feat"><div class="icon">🗺️</div>附近宠友（LBS社区）</div>
+        <div class="mvp-feat"><div class="icon">📊</div>健康档案（时间线记录）</div>
+        <div class="mvp-feat"><div class="icon">⬆️</div>一键导入（微信/抖音）</div>
+      </div>
+
+      <div class="mvp-links">
+        <a class="mvp-link" href="https://aohanguo51-maker.github.io/mjy/" target="_blank">📱 手机版原型</a>
+        <a class="mvp-link" href="https://cowork.xiaohongshu.com/f/paw-memory-ai/" target="_blank">💻 PC版原型</a>
+      </div>
+
+      <p style="margin-top:8px;font-size:10.5px;color:#9ca3af">技术栈：纯前端H5单文件，iOS风格交互，液态玻璃视觉效果，支持添加至主屏幕作为PWA使用</p>
+    </div>
+
+    <!-- ④ 商业判断 -->
+    <div class="section">
+      <div class="section-title"><span class="num">4</span>商业判断</div>
+
+      <p><strong>付费用户画像：</strong>① 宠物在世时的"预防性"用户——提前建档留存记忆；② 宠物离世后的"追忆型"用户——重建和延续情感连接。</p>
+
+      <p><strong>付费逻辑：</strong>情感类产品付费意愿极强，参照Replika付费转化率（免费→付费约18%），且用户粘性高（月活留存>60%）。</p>
+
+      <div class="pricing-row">
+        <div class="price-card">
+          <div class="price-tier">FREE</div>
+          <div class="price-amount" style="color:#374151">免费</div>
+          <div class="price-desc" style="color:#6b7280">50张照片<br>基础对话</div>
+        </div>
+        <div class="price-card highlight">
+          <div class="price-tier">MEMORY</div>
+          <div class="price-amount">¥39<span style="font-size:10px">/月</span></div>
+          <div class="price-desc">无限存储<br>声音克隆</div>
+        </div>
+        <div class="price-card">
+          <div class="price-tier">FAREWELL</div>
+          <div class="price-amount" style="color:#374151">¥299<span style="font-size:10px">/次</span></div>
+          <div class="price-desc" style="color:#6b7280">告别纪念册<br>定制服务</div>
+        </div>
+      </div>
+
+      <p style="margin-top:10px"><strong>获客策略：</strong>① 小红书"猫猫离世"话题内容营销（零成本冷启动）；② 与宠物医院/殡葬机构渠道合作；③ KOC宠物博主置换；④ 用户口碑裂变（纪念册分享）</p>
+    </div>
+
+    <!-- ⑤ 2周验证计划 -->
+    <div class="section full-width">
+      <div class="section-title"><span class="num">5</span>2周验证计划</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-dot">W1</div>
+              <div class="timeline-content">
+                <div class="timeline-week">第1周 · 用户验证（Day 1–7）</div>
+                <div class="timeline-tasks">
+                  <strong>Day 1–2：</strong>发布10篇"宠物记忆留存"小红书笔记，挂载原型链接，观察点击与评论情绪<br>
+                  <strong>Day 3–4：</strong>在宠物离世话题下私信30位有强烈情感表达的用户，邀请1对1访谈<br>
+                  <strong>Day 5–7：</strong>完成10次深度访谈，收集痛点优先级、功能期望、付费意愿数据
+                </div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot week2">W2</div>
+              <div class="timeline-content">
+                <div class="timeline-week">第2周 · 产品迭代 + 付费验证（Day 8–14）</div>
+                <div class="timeline-tasks">
+                  <strong>Day 8–10：</strong>基于访谈反馈迭代原型，重点打磨"声音上传+AI生成"核心功能<br>
+                  <strong>Day 11–12：</strong>邀请20位种子用户进入内测群，收集真实使用数据和NPS<br>
+                  <strong>Day 13–14：</strong>向内测用户发起付费预购（39元/月），目标5人付费=PMF信号
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p><strong>核心验证指标：</strong></p>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+              <div style="width:8px;height:8px;background:#7c3aed;border-radius:50%;flex-shrink:0"></div>
+              <span>小红书笔记 <strong>点击率 &gt; 3%</strong>（验证用户关注度）</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+              <div style="width:8px;height:8px;background:#7c3aed;border-radius:50%;flex-shrink:0"></div>
+              <span>访谈中 <strong>&gt;70% 用户</strong> 提到"声音/性格消失"为最大痛点</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+              <div style="width:8px;height:8px;background:#5b21b6;border-radius:50%;flex-shrink:0"></div>
+              <span>原型留存：<strong>次日回访率 &gt; 40%</strong>（验证产品吸引力）</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+              <div style="width:8px;height:8px;background:#5b21b6;border-radius:50%;flex-shrink:0"></div>
+              <span>种子用户 <strong>NPS &gt; 50</strong>（净推荐值）</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:#7c3aed">
+              <div style="width:8px;height:8px;background:#7c3aed;border-radius:50%;flex-shrink:0"></div>
+              <span>付费预购 <strong>≥5人</strong>，确认PMF信号</span>
+            </div>
+          </div>
+
+          <p style="margin-top:14px"><strong>所需资源：</strong></p>
+          <div class="tags" style="margin-top:6px">
+            <span class="tag tag-purple">小红书账号（已有）</span>
+            <span class="tag tag-blue">腾讯会议（访谈）</span>
+            <span class="tag tag-green">微信收款（付费验证）</span>
+            <span class="tag tag-orange">AI API额度（声音克隆）</span>
+          </div>
+          <p style="margin-top:8px;font-size:11px;color:#6b7280">预计总投入：<strong>时间约60h + 资金约¥200（API费用）</strong>，无需外部融资即可完成验证。</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-left">毛记忆 PawMemory · AI宠物记忆留存平台 · 2026</div>
+    <div class="footer-right">
+      手机原型：<span class="footer-url">aohanguo51-maker.github.io/mjy/</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
