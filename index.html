@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>毛记忆 PawMemory</title>
+<!-- @cowork-spa-host -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,a{outline:none;-webkit-tap-highlight-color:transparent}
+:root{
+  --red:#ff2442;--red-l:#fff0f2;--red-m:rgba(255,36,66,.08);
+  --ink:#1d1d1f;--body:#3a3a3c;--muted:#6e6e73;--muted2:#aeaeb2;
+  --bg:#ffffff;--bg2:#f5f5f7;--bg3:#e8e8ed;
+  /* legacy aliases kept for compat */
+  --cream:#ffffff;--cream2:#f5f5f7;--cream3:#e8e8ed;
+  --warm:#f5f5f7;--warm2:#ebebf0;
+  --line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.12);
+  /* glass */
+  --glass:rgba(255,255,255,0.72);--glass-border:rgba(255,255,255,0.6);
+  --glass-blur:blur(20px) saturate(180%);
+  --r4:4px;--r8:8px;--r12:12px;--r16:16px;--r18:18px;--r24:24px;--rf:9999px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Helvetica Neue",sans-serif;
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --ease-smooth:cubic-bezier(.4,0,.2,1);
+}
+html{height:100%;overflow:hidden}body{position:fixed;inset:0;overflow:hidden;font-family:var(--font);background:#fff;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{display:none}
+
+/* ── SHELL ── */
+.app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;z-index:1;background:#fff;padding-bottom:calc(49px + var(--safe-bottom))}
+.screen{flex:1;overflow:hidden;display:none;flex-direction:column;opacity:0;transition:opacity .22s var(--ease-smooth);min-height:0;min-width:0}
+.screen.on{display:flex;opacity:1}
+
+/* ── PARTICLE CANVAS ── */
+#particleCanvas{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.55}
+
+/* ══════════════════════
+   HOME SCREEN
+══════════════════════ */
+.home-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;display:flex;flex-direction:column;width:100%;min-height:0}
+
+/* Top bar – liquid glass */
+.topbar{flex-shrink:0;background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-bottom:1px solid var(--glass-border);padding-top:var(--safe-top);position:relative;z-index:10}
+.tb-row{display:flex;align-items:center;height:44px;padding:0 14px;gap:10px}
+.tb-logo{font-size:16px;font-weight:800;color:var(--red);letter-spacing:-.5px;font-style:italic}
+.tb-search{flex:1;height:32px;background:rgba(118,118,128,.12);border-radius:var(--rf);display:flex;align-items:center;padding:0 12px;gap:6px;color:var(--muted);font-size:12px;cursor:pointer;border:none;transition:background .15s}
+.tb-search:active{background:rgba(118,118,128,.2)}
+.tb-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;border-radius:50%;transition:background .15s}
+.tb-icon:active{background:var(--bg2)}
+.tb-tabs{display:flex;border-bottom:1px solid var(--line);padding:0 16px}
+.tb-tab{flex:1;text-align:center;padding:7px 0;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s var(--ease-smooth)}
+.tb-tab.on{color:var(--ink);font-weight:700;border-bottom-color:var(--red)}
+
+/* ── HERO ILLUSTRATION ── */
+.hero-scene{position:relative;height:240px;overflow:hidden;flex-shrink:0;width:100%}
+.hero-bg-photos{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;will-change:transform}
+.hero-bg-photos img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.08);transition:transform .4s var(--ease-smooth)}
+.hero-bg-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.04) 0%,rgba(0,0,0,.02) 40%,rgba(255,255,255,.85) 76%,rgba(255,255,255,1) 100%)}
+/* glass pill on hero */
+.hero-change-btn{position:absolute;bottom:12px;right:12px;z-index:5;background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:var(--rf);padding:5px 12px;font-size:10px;font-weight:600;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:4px;transition:transform .15s var(--ease-spring),box-shadow .15s}
+.hero-change-btn:active{transform:scale(.94)}
+/* sun */
+.sun{position:absolute;top:20px;right:30px;width:56px;height:56px;border-radius:50%;background:radial-gradient(circle,#ffe066 0%,#ffb347 60%,#ff8c42 100%);box-shadow:0 0 30px rgba(255,180,60,.6),0 0 60px rgba(255,140,42,.3);animation:sunPulse 3s ease-in-out infinite}
+@keyframes sunPulse{0%,100%{transform:scale(1);box-shadow:0 0 30px rgba(255,180,60,.6),0 0 60px rgba(255,140,42,.3)}50%{transform:scale(1.05);box-shadow:0 0 40px rgba(255,180,60,.8),0 0 80px rgba(255,140,42,.4)}}
+/* clouds */
+.cloud{position:absolute;background:rgba(255,255,255,.5);border-radius:50px;animation:cloudDrift linear infinite}
+.c1{width:60px;height:20px;top:30px;left:-70px;--spd:18s;animation-duration:var(--spd)}
+.c2{width:40px;height:14px;top:50px;left:-50px;--spd:25s;animation-duration:var(--spd);animation-delay:-8s}
+@keyframes cloudDrift{from{left:-80px}to{left:calc(100% + 80px)}}
+/* window frame */
+.window{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:200px;height:180px}
+.win-frame{position:absolute;inset:0;border:3px solid rgba(139,100,60,.5);border-radius:12px 12px 0 0;background:rgba(255,220,160,.2)}
+.win-bar{position:absolute;top:50%;left:0;right:0;height:3px;background:rgba(139,100,60,.4)}
+.win-bar2{position:absolute;top:0;bottom:0;left:50%;width:3px;background:rgba(139,100,60,.4)}
+.win-sill{position:absolute;bottom:-4px;left:-8px;right:-8px;height:8px;background:rgba(139,100,60,.4);border-radius:4px}
+/* plant */
+.plant{position:absolute;bottom:0;right:10px;font-size:28px;line-height:1}
+/* human silhouette (CSS) */
+.human{position:absolute;bottom:12px;left:32px}
+.h-body{width:28px;height:44px;background:rgba(80,50,30,.75);border-radius:14px 14px 4px 4px;position:relative}
+.h-head{width:22px;height:22px;border-radius:50%;background:rgba(220,160,110,.9);position:absolute;top:-20px;left:3px}
+.h-head::after{content:'';position:absolute;top:2px;left:2px;right:2px;height:8px;background:rgba(80,50,30,.5);border-radius:50%}/* hair */
+.h-arm{position:absolute;width:28px;height:10px;background:rgba(80,50,30,.65);border-radius:6px;top:10px;right:-22px;transform:rotate(-18deg)}
+/* lap area for cat */
+.h-lap{position:absolute;bottom:-2px;left:-4px;right:-4px;height:14px;background:rgba(80,50,30,.65);border-radius:6px}
+/* cat on lap */
+.cat-body{position:absolute;bottom:0;left:14px;animation:catBreath 2.5s ease-in-out infinite}
+@keyframes catBreath{0%,100%{transform:scaleY(1) translateY(0)}50%{transform:scaleY(1.04) translateY(-1px)}}
+.cb-body{width:36px;height:24px;background:#e8873a;border-radius:18px 18px 8px 8px;position:relative;left:-6px}
+.cb-head{width:26px;height:20px;border-radius:50% 50% 40% 40%;background:#e8873a;position:absolute;top:-14px;left:5px}
+.cb-head::before,
+.cb-head::after{content:'';position:absolute;top:-7px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid #e8873a}
+.cb-head::before{left:2px;transform:rotate(-12deg)}
+.cb-head::after{right:2px;transform:rotate(12deg)}
+.cb-eye1,.cb-eye2{position:absolute;width:5px;height:5px;border-radius:50%;background:#1a1a1a;top:6px;animation:blink 4s ease-in-out infinite}
+.cb-eye1{left:5px}.cb-eye2{right:5px}
+@keyframes blink{0%,96%,100%{transform:scaleY(1)}98%{transform:scaleY(.1)}}
+.cb-nose{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:4px;height:3px;background:#e06060;border-radius:50%}
+.cb-stripe{position:absolute;top:3px;left:8px;right:8px;height:2px;background:rgba(180,90,20,.4);border-radius:1px}
+.cb-stripe2{position:absolute;top:9px;left:6px;right:6px;height:2px;background:rgba(180,90,20,.3);border-radius:1px}
+/* tail */
+.cat-tail{position:absolute;bottom:2px;right:-20px;width:28px;height:10px;border-radius:0 50% 50% 0;border:4px solid #e8873a;border-left:none;animation:tailWag 1.8s ease-in-out infinite;transform-origin:left center}
+@keyframes tailWag{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(15deg)}}
+/* floor */
+.floor{position:absolute;bottom:0;left:0;right:0;height:20px;background:rgba(180,120,60,.3);border-radius:0}
+/* hero text overlay */
+.hero-text{position:absolute;top:16px;left:16px;z-index:2}
+.hero-tag{font-size:10px;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px}
+.hero-h1{font-size:20px;font-weight:800;color:#fff;line-height:1.2;text-shadow:0 1px 8px rgba(0,0,0,.2)}
+.hero-h1 span{color:#ffe4a0}
+
+/* Story row */
+.story-row{display:flex;gap:12px;padding:12px 14px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0;background:#fff;width:100%}
+.story-row::-webkit-scrollbar{height:0}
+.story-item{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;cursor:pointer;transition:transform .18s var(--ease-spring)}
+.story-item:active{transform:scale(.9)}
+.story-ring{width:54px;height:54px;border-radius:var(--rf);background:linear-gradient(135deg,var(--red),#ff8c5a);padding:2.5px;box-shadow:0 2px 8px rgba(255,36,66,.2)}
+.story-ring.add{background:var(--bg3);border:none;box-shadow:none}
+.story-inner{width:100%;height:100%;border-radius:var(--rf);background:#fff;padding:1.5px;overflow:hidden}
+.story-photo{width:100%;height:100%;border-radius:var(--rf);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden}
+.story-photo img{width:100%;height:100%;object-fit:cover}
+.story-lbl{font-size:10px;color:var(--muted);text-align:center;white-space:nowrap;max-width:54px;overflow:hidden;text-overflow:ellipsis}
+
+/* Feed section label */
+.sec-label{padding:6px 14px 2px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.3px;width:100%;flex-shrink:0}
+
+/* Waterfall */
+.feed{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 12px 16px;width:100%;flex-shrink:0}
+.card{background:#fff;border-radius:var(--r18);overflow:hidden;cursor:pointer;transition:transform .22s var(--ease-spring),box-shadow .22s var(--ease-smooth);box-shadow:0 2px 12px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.04)}
+.card:hover{transform:translateY(-4px);box-shadow:0 8px 28px rgba(0,0,0,.12)}
+.card:active{transform:scale(.97);box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.card-img-wrap{position:relative;overflow:hidden}
+.card-img-wrap img{width:100%;display:block;aspect-ratio:3/4;object-fit:cover;background:var(--bg2);transition:transform .35s var(--ease-smooth)}
+.card:hover .card-img-wrap img{transform:scale(1.04)}
+.card-tag{position:absolute;top:8px;left:8px;background:var(--glass);backdrop-filter:blur(12px) saturate(160%);-webkit-backdrop-filter:blur(12px) saturate(160%);color:var(--red);font-size:9px;font-weight:700;padding:3px 8px;border-radius:var(--rf);border:1px solid var(--glass-border)}
+.card-body{padding:9px 11px 11px}
+.card-title{font-size:13px;color:var(--ink);line-height:1.45;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-foot{display:flex;align-items:center;gap:6px}
+.card-ava{width:18px;height:18px;border-radius:var(--rf);background:var(--red-m);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.card-author{font-size:11px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-like{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:2px}
+
+/* ══════════════════════
+   PET (陪伴+记录 合并)
+══════════════════════ */
+.pet-topbar{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:calc(10px + var(--safe-top));border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+.pet-back{font-size:22px;color:var(--ink);cursor:pointer;width:28px;line-height:1}
+.pet-ava-wrap{position:relative}
+.pet-ava{width:40px;height:40px;border-radius:var(--rf);background:linear-gradient(135deg,#ff8c5a,var(--red));display:flex;align-items:center;justify-content:center;font-size:19px}
+.pet-online{position:absolute;bottom:1px;right:1px;width:9px;height:9px;border-radius:50%;background:#22c55e;border:1.5px solid var(--cream)}
+.pet-info{flex:1}
+.pet-name{font-size:15px;font-weight:700;color:var(--ink)}
+.pet-sub{font-size:11px;color:#22c55e;font-weight:500}
+
+/* tabs */
+.pet-tabs{flex-shrink:0;display:flex;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);overflow-x:auto}
+.pet-tabs::-webkit-scrollbar{height:0}
+.ptab{padding:9px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0;transition:all .2s var(--ease-smooth)}
+.ptab.on{color:var(--ink);border-bottom-color:var(--red)}
+
+/* chat area */
+.msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:var(--bg2)}
+.msgs-date{text-align:center;font-size:10px;color:var(--muted2);padding:2px 0}
+.msg{display:flex;gap:8px}
+.msg.me{flex-direction:row-reverse}
+.msg-ava{width:30px;height:30px;border-radius:var(--rf);background:linear-gradient(135deg,#ff8c5a,var(--red));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.msg-me-ava{width:30px;height:30px;border-radius:var(--rf);background:var(--cream3);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);flex-shrink:0;font-weight:600}
+.bubble{background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:var(--r18);border-top-left-radius:4px;padding:9px 14px;font-size:13px;color:var(--ink);max-width:72vw;line-height:1.55;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.msg.me .bubble{background:var(--red);color:#fff;border:none;border-radius:var(--r18);border-top-right-radius:4px;box-shadow:0 3px 12px rgba(255,36,66,.25);backdrop-filter:none}
+.typing-dots{display:flex;align-items:center;gap:4px;padding:4px 2px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--muted2);animation:blink2 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink2{0%,80%,100%{opacity:.3}40%{opacity:1}}
+
+/* upload bar */
+.upload-bar{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:6px 12px;border-top:1px solid var(--line);background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);overflow-x:auto}
+.upload-bar::-webkit-scrollbar{height:0}
+.upbtn{flex-shrink:0;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--rf);border:none;background:rgba(118,118,128,.1);font-size:11px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s var(--ease-smooth)}
+.upbtn:active{background:rgba(118,118,128,.22);transform:scale(.94)}
+.up-div{width:1px;height:16px;background:var(--line2);flex-shrink:0}
+.call-btn{flex-shrink:0;width:30px;height:30px;border-radius:var(--rf);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:transform .18s var(--ease-spring)}
+.call-btn:active{transform:scale(.88)}
+.call-v{background:#dcfce7;color:#16a34a}
+.call-vid{background:#dbeafe;color:#2563eb}
+
+/* input */
+.input-row{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:8px 12px;padding-bottom:calc(8px + var(--safe-bottom));border-top:1px solid var(--line);background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+.chat-inp{flex:1;border:none;border-radius:var(--rf);padding:0 14px;font-size:14px;height:38px;outline:none;font-family:var(--font);color:var(--ink);background:rgba(118,118,128,.1);transition:background .15s,box-shadow .15s}
+.chat-inp:focus{background:#fff;box-shadow:0 0 0 2px rgba(255,36,66,.3)}
+.inp-mic{width:38px;height:38px;border-radius:var(--rf);background:rgba(118,118,128,.1);border:none;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .18s var(--ease-spring)}
+.inp-mic:active{transform:scale(.88)}
+.inp-send{width:38px;height:38px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .18s var(--ease-spring),box-shadow .18s}
+.inp-send:active{transform:scale(.88);box-shadow:0 0 0 6px rgba(255,36,66,.15)}
+
+/* record tab */
+.rec-panel{flex:1;overflow-y:auto;background:var(--bg2);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.rec-upload-row{display:flex;gap:8px}
+.rec-upload{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:16px 8px;border:1.5px dashed var(--line2);border-radius:var(--r12);font-size:10px;color:var(--muted);background:#fff;cursor:pointer;transition:all .15s}
+.rec-upload:active{border-color:var(--red);color:var(--red)}
+.rec-upload span:first-child{font-size:24px}
+.rec-gallery{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.gal-thumb{aspect-ratio:1;border-radius:var(--r8);overflow:hidden;background:var(--cream2);cursor:pointer}
+.gal-thumb img{width:100%;height:100%;object-fit:cover}
+.gal-add{aspect-ratio:1;border-radius:var(--r8);border:1.5px dashed var(--line2);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--muted2);cursor:pointer;background:#fff}
+
+/* telepathy tab */
+.tele-panel{flex:1;overflow-y:auto;background:var(--bg2);padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.tele-card{background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:var(--r18);padding:16px;border:1px solid var(--glass-border);box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.tele-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.mood-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.mchip{padding:5px 10px;border-radius:var(--rf);border:none;font-size:11px;cursor:pointer;background:rgba(118,118,128,.1);transition:all .18s var(--ease-spring)}
+.mchip:active{transform:scale(.92)}
+.mchip.on{background:var(--red);color:#fff;box-shadow:0 2px 8px rgba(255,36,66,.25)}
+.tele-bars{display:flex;align-items:flex-end;gap:3px;height:36px;padding:4px 6px;background:var(--cream2);border-radius:var(--r8);margin:10px 0}
+.tbar{flex:1;border-radius:2px 2px 0 0;background:var(--red);opacity:.2;transition:height .3s,opacity .3s}
+.tbar.on{opacity:1}
+.tele-result{font-size:12px;color:var(--ink);background:var(--cream2);border-radius:var(--r8);padding:10px 12px;line-height:1.6}
+.tele-btn{display:inline-flex;align-items:center;gap:4px;padding:0 14px;height:34px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
+.tele-ta{width:100%;border:1px solid var(--line2);border-radius:var(--r8);padding:8px 10px;font-size:12px;font-family:var(--font);resize:none;outline:none;color:var(--ink);min-height:64px;background:var(--cream2)}
+.tele-ta:focus{border-color:var(--red);background:#fff}
+
+/* ══════════════════════
+   HEALTH SCREEN
+══════════════════════ */
+.health-top{flex-shrink:0;padding:12px 14px 8px;padding-top:calc(12px + var(--safe-top));border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+.health-top h2{font-size:17px;font-weight:700;color:var(--ink)}
+.health-top p{font-size:12px;color:var(--muted);margin-top:2px}
+.health-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);padding:12px 14px;display:flex;flex-direction:column;gap:14px}
+
+/* info card */
+.pet-info-card{background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:var(--r18);padding:16px;display:flex;align-items:center;gap:12px;border:1px solid var(--glass-border);box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.pic-ava{width:52px;height:52px;border-radius:var(--r8);background:linear-gradient(135deg,#ff8c5a,var(--red));display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.pic-info h3{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.pic-info p{font-size:12px;color:var(--muted)}
+.pic-badge{margin-top:5px;display:inline-flex;align-items:center;gap:4px;background:var(--red-l);border-radius:var(--rf);padding:2px 8px;font-size:10px;font-weight:700;color:var(--red)}
+
+/* daily stats */
+.hd-sec-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.hd-add{font-size:11px;color:var(--red);font-weight:600;cursor:pointer}
+.hd-card{background:#fff;border-radius:var(--r18);overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.hd-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(0,0,0,.05);transition:background .15s}
+.hd-row:active{background:var(--bg2)}
+.hd-row:last-child{border-bottom:none}
+.hd-em{font-size:18px;width:22px;text-align:center;flex-shrink:0}
+.hd-lbl{font-size:13px;color:var(--muted);flex:1}
+.hd-val{font-size:13px;font-weight:600;color:var(--ink)}
+.hd-tag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:var(--rf)}
+.tag-ok{background:#dcfce7;color:#16a34a}
+.tag-warn{background:#fef3c7;color:#d97706}
+.tag-bad{background:#fee2e2;color:#dc2626}
+
+/* medical timeline */
+.med-timeline{display:flex;flex-direction:column;gap:0}
+.med-item{display:flex;gap:12px;padding-bottom:14px;position:relative}
+.med-item::before{content:'';position:absolute;left:15px;top:34px;bottom:0;width:1.5px;background:var(--line)}
+.med-item:last-child::before{display:none}
+.med-dot{flex-shrink:0;width:32px;height:32px;border-radius:var(--rf);background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px}
+.med-body{flex:1;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:var(--r12);padding:10px 12px;border:1px solid var(--glass-border);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.med-date{font-size:10px;color:var(--muted);margin-bottom:2px}
+.med-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.med-note{font-size:11px;color:var(--muted);line-height:1.5}
+.med-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:var(--rf);margin-top:4px}
+.mb-surgery{background:#f3e8ff;color:#7c3aed}
+.mb-vaccine{background:#dcfce7;color:#16a34a}
+.mb-ill{background:#fee2e2;color:#dc2626}
+.mb-checkup{background:#dbeafe;color:#2563eb}
+
+.med-add-btn{display:flex;align-items:center;justify-content:center;gap:8px;height:42px;border:1.5px dashed var(--line2);border-radius:var(--r12);color:var(--red);font-size:13px;font-weight:600;cursor:pointer;background:#fff;transition:all .15s}
+.med-add-btn:active{background:var(--red-l)}
+
+/* ══════════════════════
+   TIMELINE SCREEN
+══════════════════════ */
+.tl-top{flex-shrink:0;padding:12px 14px 8px;padding-top:calc(12px + var(--safe-top));border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+.tl-top h2{font-size:17px;font-weight:700;color:var(--ink)}
+.tl-top p{font-size:12px;color:var(--muted);margin-top:2px}
+.tl-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;background:var(--bg2)}
+.tl-item{display:flex;gap:12px;margin-bottom:16px;position:relative}
+.tl-item::before{content:'';position:absolute;left:19px;top:40px;bottom:-16px;width:1.5px;background:var(--line)}
+.tl-item:last-child::before{display:none}
+.tl-dot{flex-shrink:0;width:40px;height:40px;border-radius:var(--rf);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.tl-body{flex:1;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:var(--r16);padding:14px;border:1px solid var(--glass-border);box-shadow:0 2px 12px rgba(0,0,0,.06);transition:transform .22s var(--ease-spring),box-shadow .22s}
+.tl-body:hover{transform:translateX(3px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.tl-date{font-size:10px;color:var(--muted);margin-bottom:3px}
+.tl-ttl{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.tl-desc{font-size:12px;color:var(--muted);line-height:1.55}
+.tl-thumbs{display:flex;gap:5px;margin-top:8px}
+.tl-thumb{width:56px;height:56px;border-radius:var(--r8);overflow:hidden;background:var(--cream2);border:1px solid var(--line)}
+.tl-thumb img{width:100%;height:100%;object-fit:cover}
+.tl-add{display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border:1.5px dashed var(--line2);border-radius:var(--r12);color:var(--red);font-size:13px;font-weight:600;cursor:pointer;background:#fff}
+
+/* ══════════════════════
+   PROFILE SCREEN
+══════════════════════ */
+.prof-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2)}
+.prof-hero{background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);padding:20px 16px 0;padding-top:calc(20px + var(--safe-top));border-bottom:1px solid var(--glass-border)}
+.prof-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.prof-ava{width:60px;height:60px;border-radius:var(--rf);background:linear-gradient(135deg,#ff8c5a,var(--red));display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.prof-name{font-size:18px;font-weight:700;color:var(--ink)}
+.prof-num{font-size:12px;color:var(--muted);margin-top:2px}
+.prof-edit-btn{padding:5px 14px;border-radius:var(--rf);border:1px solid var(--line2);background:#fff;font-size:12px;font-weight:500;cursor:pointer;color:var(--ink);flex-shrink:0}
+.prof-stats{display:flex;border-top:1px solid var(--line);padding:12px 0}
+.pstat{flex:1;text-align:center}
+.pstat-n{font-size:16px;font-weight:700;color:var(--ink)}
+.pstat-l{font-size:11px;color:var(--muted)}
+.pstat+.pstat{border-left:1px solid var(--line)}
+.pet-cards{padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.p-sec-lbl{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.3px;padding-bottom:6px}
+.pet-card{background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:var(--r16);padding:14px;display:flex;align-items:center;gap:12px;border:1px solid var(--glass-border);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.06);transition:transform .22s var(--ease-spring),box-shadow .22s}
+.pet-card:active{transform:scale(.97)}
+.pet-card-ava{width:48px;height:48px;border-radius:var(--r8);background:linear-gradient(135deg,#ff8c5a,var(--red));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.pet-card-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.pet-card-sub{font-size:11px;color:var(--muted)}
+.pet-card-arrow{font-size:14px;color:var(--muted2)}
+.capacity-block{margin:0 14px 10px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:var(--r16);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.cap-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.cap-label{font-size:13px;font-weight:600;color:var(--ink)}
+.cap-badge{font-size:11px;color:var(--muted)}
+.cap-bar{height:6px;background:var(--cream3);border-radius:var(--rf);overflow:hidden;margin-bottom:6px}
+.cap-fill{width:48%;height:100%;background:linear-gradient(90deg,var(--red),#ff8c5a);border-radius:var(--rf)}
+.cap-hint{font-size:11px;color:var(--muted)}
+.upgrade-nudge{margin:0 14px 10px;background:linear-gradient(135deg,rgba(255,36,66,.06),rgba(255,140,90,.06));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,36,66,.18);border-radius:var(--r16);padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .2s var(--ease-spring),box-shadow .2s}
+.upgrade-nudge:active{transform:scale(.97)}
+.un-icon{font-size:28px;flex-shrink:0}
+.un-title{font-size:13px;font-weight:700;color:var(--red)}
+.un-sub{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+.un-arrow{font-size:13px;color:var(--red)}
+.prof-sec{background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);margin:0 14px 10px;border-radius:var(--r16);overflow:hidden;border:1px solid var(--glass-border);box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.prof-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid rgba(0,0,0,.05);transition:background .15s;cursor:pointer}
+.prof-row:active{background:var(--bg2)}
+.prof-row:last-child{border-bottom:none}
+.pr-em{font-size:18px;width:24px;text-align:center;flex-shrink:0}
+.pr-lbl{font-size:13px;color:var(--ink);flex:1}
+.pr-arrow{font-size:12px;color:var(--muted2)}
+
+/* ── BOTTOM NAV – liquid glass ── */
+.bnav{position:fixed;bottom:0;left:0;right:0;height:calc(49px + var(--safe-bottom));background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-top:1px solid var(--glass-border);display:flex;align-items:stretch;padding-bottom:var(--safe-bottom);z-index:100}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 0;cursor:pointer;border:none;background:none;color:var(--muted2);transition:color .18s var(--ease-smooth);font-family:var(--font);outline:none;-webkit-tap-highlight-color:transparent}
+.bn-item.on{color:var(--red)}
+.bn-icon{font-size:22px;line-height:1;transition:transform .22s var(--ease-spring)}
+.bn-item.on .bn-icon{transform:scale(1.18)}
+.bn-item:active .bn-icon{transform:scale(.82)}
+.bn-lbl{font-size:10px;font-weight:500}
+.bn-post{width:44px;height:30px;background:linear-gradient(135deg,rgba(255,248,200,.5),rgba(255,220,120,.35));border-radius:var(--rf);display:flex;align-items:center;justify-content:center;font-size:18px;color:#a07000;margin-bottom:2px;box-shadow:0 2px 12px rgba(255,210,60,.18);transition:transform .2s var(--ease-spring),box-shadow .2s;border:none}
+.bn-item:active .bn-post{transform:scale(.88);box-shadow:0 2px 8px rgba(255,180,60,.25)}
+
+/* ── MODAL – glass sheet ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:500;display:none;align-items:flex-end;backdrop-filter:blur(4px)}
+.modal-bg.on{display:flex}
+.modal-sheet{background:var(--glass);backdrop-filter:blur(28px) saturate(200%);-webkit-backdrop-filter:blur(28px) saturate(200%);border:1px solid var(--glass-border);border-radius:var(--r24) var(--r24) 0 0;padding:0 0 calc(24px + var(--safe-bottom));width:100%;max-height:82vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--line2);border-radius:var(--rf);margin:12px auto 16px}
+.modal-title{font-size:17px;font-weight:700;color:var(--ink);text-align:center;margin-bottom:4px;padding:0 16px}
+.modal-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:18px;padding:0 16px}
+.plan-tabs{display:flex;gap:8px;padding:0 16px;margin-bottom:16px}
+.plan-tab{flex:1;padding:10px;border-radius:var(--r12);border:1.5px solid rgba(0,0,0,.08);background:rgba(255,255,255,.6);text-align:center;cursor:pointer;transition:all .2s var(--ease-spring)}
+.plan-tab:active{transform:scale(.95)}
+.plan-tab.on{border-color:var(--red);background:rgba(255,36,66,.07);transform:scale(1.03)}
+.plan-tab-price{font-size:20px;font-weight:700;color:var(--ink)}
+.plan-tab-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.plan-tab.on .plan-tab-price{color:var(--red)}
+.plan-feats{padding:0 16px;margin-bottom:18px;display:flex;flex-direction:column;gap:10px}
+.pf-row{display:flex;align-items:center;gap:10px}
+.pf-check{width:18px;height:18px;border-radius:var(--rf);background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.pf-txt{font-size:13px;color:var(--ink)}
+.modal-cta{margin:0 16px;height:48px;border-radius:var(--r16);background:var(--red);border:none;color:#fff;font-size:16px;font-weight:700;cursor:pointer;width:calc(100% - 32px);display:block;box-shadow:0 6px 20px rgba(255,36,66,.35);transition:transform .18s var(--ease-spring),box-shadow .18s}
+.modal-cta:active{transform:scale(.97);box-shadow:0 2px 10px rgba(255,36,66,.2)}
+.modal-hint{text-align:center;font-size:11px;color:var(--muted);margin-top:10px;padding:0 16px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(72px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(16px) scale(.92);background:rgba(29,29,31,.82);backdrop-filter:blur(20px) saturate(180%);color:#fff;font-size:12px;padding:9px 20px;border-radius:var(--rf);opacity:0;transition:all .28s var(--ease-spring);pointer-events:none;white-space:nowrap;z-index:600;border:1px solid rgba(255,255,255,.1)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+</style>
+</head>
+<body>
+<canvas id="particleCanvas"></canvas>
+<div class="app">
+
+  <!-- ══ HOME ══ -->
+  <div class="screen on" id="sc-home">
+    <div class="topbar">
+      <div class="tb-row">
+        <div class="tb-logo">毛记忆</div>
+        <div class="tb-search" onclick="showToast('搜索宠友 🔍')"><span>🔍</span><span style="color:var(--muted);font-size:12px">搜索宠物记忆、宠友…</span></div>
+        <div class="tb-icon" onclick="showToast('消息即将上线 💬')">💬</div>
+      </div>
+      <div class="tb-tabs">
+        <div class="tb-tab" onclick="setHomeTab(this,'tab-following')">关注</div>
+        <div class="tb-tab on" onclick="setHomeTab(this,'tab-discover')">发现</div>
+        <div class="tb-tab" onclick="setHomeTab(this,'tab-nearby')">附近</div>
+      </div>
+    </div>
+
+    <div class="home-scroll" id="tab-discover">
+      <!-- hero scene -->
+      <div class="hero-scene" id="heroScene">
+        <div class="hero-bg-photos" id="heroBgPhotos">
+          <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&q=75" alt="" loading="eager"/>
+          <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&q=75" alt="" loading="eager"/>
+          <img src="https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=200&q=75" alt="" loading="eager"/>
+        </div>
+        <div class="hero-bg-overlay"></div>
+        <button class="hero-change-btn" onclick="changeHeroBg()">🖼️ 换背景</button>
+        <div class="sun"></div>
+        <div class="cloud c1"></div>
+        <div class="cloud c2"></div>
+        <div class="window">
+          <div class="win-frame"></div>
+          <div class="win-bar"></div>
+          <div class="win-bar2"></div>
+          <div class="win-sill"></div>
+          <div class="plant">🌿</div>
+          <div class="human">
+            <div class="h-body">
+              <div class="h-head"></div>
+              <div class="h-arm"></div>
+              <div class="h-lap"></div>
+            </div>
+            <div class="cat-body">
+              <div class="cb-body">
+                <div class="cb-stripe"></div>
+                <div class="cb-stripe2"></div>
+              </div>
+              <div class="cb-head">
+                <div class="cb-eye1"></div>
+                <div class="cb-eye2"></div>
+                <div class="cb-nose"></div>
+              </div>
+              <div class="cat-tail"></div>
+            </div>
+          </div>
+        </div>
+        <div class="floor"></div>
+        <div class="hero-text" style="z-index:4">
+          <div class="hero-tag">PawMemory · 毛记忆</div>
+          <div class="hero-h1">给它的一生<br>找一个<span>永远的家</span></div>
+        </div>
+      </div>
+
+      <!-- stories -->
+      <div class="story-row">
+        <div class="story-item" onclick="switchScreen('sc-pet',2)">
+          <div class="story-ring add"><div class="story-inner"><div class="story-photo">＋</div></div></div>
+          <div class="story-lbl">添加宠物</div>
+        </div>
+        <div class="story-item" onclick="switchScreen('sc-pet',2)">
+          <div class="story-ring"><div class="story-inner"><div class="story-photo"><img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=100&q=80" alt=""/></div></div></div>
+          <div class="story-lbl">小橘的日记</div>
+        </div>
+        <div class="story-item" onclick="showToast('查看动态 🐶')">
+          <div class="story-ring"><div class="story-inner"><div class="story-photo"><img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=100&q=80" alt=""/></div></div></div>
+          <div class="story-lbl">柴柴故事</div>
+        </div>
+        <div class="story-item" onclick="showToast('查看动态 🐰')">
+          <div class="story-ring"><div class="story-inner"><div class="story-photo"><img src="https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=100&q=80" alt=""/></div></div></div>
+          <div class="story-lbl">棉花团团</div>
+        </div>
+        <div class="story-item" onclick="showToast('查看动态 🐹')">
+          <div class="story-ring"><div class="story-inner"><div class="story-photo"><img src="https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=100&q=80" alt=""/></div></div></div>
+          <div class="story-lbl">圆滚滚</div>
+        </div>
+      </div>
+
+      <div class="sec-label">热门记忆</div>
+      <div class="feed">
+        <div class="card" onclick="switchScreen('sc-pet',2)"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐱 猫咪</div></div><div class="card-body"><div class="card-title">小橘今天晒太阳好开心 ☀️ 每天记录最美好的瞬间</div><div class="card-foot"><div class="card-ava">橘</div><div class="card-author">橘猫日记</div><div class="card-like">❤️ 1.2万</div></div></div></div>
+        <div class="card" onclick="switchScreen('sc-pet',2)"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐶 狗狗</div></div><div class="card-body"><div class="card-title">柴犬的一百种可爱 🐶</div><div class="card-foot"><div class="card-ava">柴</div><div class="card-author">柴柴派对</div><div class="card-like">❤️ 8.6k</div></div></div></div>
+        <div class="card" onclick="switchScreen('sc-pet',2)"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐱 猫咪</div></div><div class="card-body"><div class="card-title">它最喜欢趴在键盘上陪我加班 💻</div><div class="card-foot"><div class="card-ava">工</div><div class="card-author">打工猫</div><div class="card-like">❤️ 3.4k</div></div></div></div>
+        <div class="card" onclick="switchScreen('sc-pet',2)"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐶 狗狗</div></div><div class="card-body"><div class="card-title">金毛的眼神太治愈了 🥺</div><div class="card-foot"><div class="card-ava">治</div><div class="card-author">治愈系狗狗</div><div class="card-like">❤️ 2.1万</div></div></div></div>
+        <div class="card" onclick="showToast('查看更多 🐰')"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐰 兔子</div></div><div class="card-body"><div class="card-title">兔兔耳朵超软，手感绝了 🐰</div><div class="card-foot"><div class="card-ava">棉</div><div class="card-author">棉花团团</div><div class="card-like">❤️ 6.7k</div></div></div></div>
+        <div class="card" onclick="showToast('查看更多 🐹')"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐹 仓鼠</div></div><div class="card-body"><div class="card-title">仓鼠团子，圆到滚起来了 🐹</div><div class="card-foot"><div class="card-ava">圆</div><div class="card-author">圆滚滚</div><div class="card-like">❤️ 4.5k</div></div></div></div>
+      </div>
+    </div>
+
+    <div class="home-scroll" id="tab-following" style="display:none;flex-direction:column">
+      <!-- 关注用户动态 feed -->
+      <div style="padding:10px 14px 4px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px">最新动态</div>
+      <div style="display:flex;flex-direction:column;gap:0;padding:0 14px 16px">
+        <div style="background:#fff;border-radius:var(--r12);padding:14px;margin-bottom:10px;border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.05)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div style="width:36px;height:36px;border-radius:var(--rf);background:linear-gradient(135deg,#ff8c5a,var(--red));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🐶</div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--ink)">柴柴派对</div><div style="font-size:11px;color:var(--muted)">3分钟前</div></div>
+            <div style="margin-left:auto;font-size:11px;color:var(--red);font-weight:600;cursor:pointer">已关注</div>
+          </div>
+          <div style="font-size:13px;color:var(--ink);line-height:1.55;margin-bottom:10px">今天带柴柴去公园，它追了一只蝴蝶追了半小时 😂 回来累得直接躺平，爪子还在梦里跑 🐾</div>
+          <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=75" style="width:100%;border-radius:var(--r8);aspect-ratio:4/3;object-fit:cover;display:block" loading="lazy" alt=""/>
+          <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+            <div style="font-size:12px;color:var(--muted);cursor:pointer">❤️ 1.2k</div>
+            <div style="font-size:12px;color:var(--muted);cursor:pointer">💬 86</div>
+            <div style="font-size:12px;color:var(--muted);cursor:pointer">🔁 分享</div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:var(--r12);padding:14px;margin-bottom:10px;border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.05)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div style="width:36px;height:36px;border-radius:var(--rf);background:linear-gradient(135deg,#a3d9a5,#52c06e);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🐰</div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--ink)">棉花团团</div><div style="font-size:11px;color:var(--muted)">1小时前</div></div>
+            <div style="margin-left:auto;font-size:11px;color:var(--red);font-weight:600;cursor:pointer">已关注</div>
+          </div>
+          <div style="font-size:13px;color:var(--ink);line-height:1.55;margin-bottom:10px">兔兔第一次尝试苹果，啃了一小口，然后坐在那边发了五分钟呆，不知道在回味还是在想为什么人类喜欢吃这个 🤔🍎</div>
+          <div style="display:flex;gap:6px;margin-bottom:10px">
+            <img src="https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=200&q=75" style="flex:1;border-radius:var(--r8);aspect-ratio:1;object-fit:cover" loading="lazy" alt=""/>
+            <img src="https://images.unsplash.com/photo-1452857297128-d9c29adba80b?w=200&q=75" style="flex:1;border-radius:var(--r8);aspect-ratio:1;object-fit:cover" loading="lazy" alt=""/>
+          </div>
+          <div style="display:flex;gap:16px;padding-top:10px;border-top:1px solid var(--line)">
+            <div style="font-size:12px;color:var(--muted);cursor:pointer">❤️ 673</div>
+            <div style="font-size:12px;color:var(--muted);cursor:pointer">💬 34</div>
+            <div style="font-size:12px;color:var(--muted);cursor:pointer">🔁 分享</div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:var(--r12);padding:14px;border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.05)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div style="width:36px;height:36px;border-radius:var(--rf);background:linear-gradient(135deg,#93c5fd,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🐹</div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--ink)">圆滚滚</div><div style="font-size:11px;color:var(--muted)">2小时前</div></div>
+            <div style="margin-left:auto;font-size:11px;color:var(--red);font-weight:600;cursor:pointer">已关注</div>
+          </div>
+          <div style="font-size:13px;color:var(--ink);line-height:1.55">仓鼠今天把所有粮食都搬进了一个角落，然后坐在粮堆上巡视领土。我问它够不够吃，它看了我一眼，继续搬 🐾</div>
+          <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+            <div style="font-size:12px;color:var(--muted);cursor:pointer">❤️ 451</div>
+            <div style="font-size:12px;color:var(--muted);cursor:pointer">💬 22</div>
+            <div style="font-size:12px;color:var(--muted);cursor:pointer">🔁 分享</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="home-scroll" id="tab-nearby" style="display:none;flex-direction:column;overflow-y:auto">
+      <!-- SVG 地图 + 宠物定点 -->
+      <div style="position:relative;width:100%;height:340px;overflow:hidden;flex-shrink:0">
+        <svg width="100%" height="340" viewBox="0 0 375 340" xmlns="http://www.w3.org/2000/svg" style="display:block">
+          <!-- 地图底色 -->
+          <rect width="375" height="340" fill="#e8e4dc"/>
+          <!-- 绿地块 -->
+          <rect x="10" y="20" width="80" height="60" rx="8" fill="#b8d4a0" opacity=".8"/>
+          <rect x="240" y="40" width="100" height="80" rx="8" fill="#b8d4a0" opacity=".8"/>
+          <rect x="120" y="200" width="70" height="50" rx="8" fill="#b8d4a0" opacity=".8"/>
+          <rect x="280" y="220" width="80" height="60" rx="8" fill="#b8d4a0" opacity=".8"/>
+          <!-- 道路横 -->
+          <rect x="0" y="100" width="375" height="18" fill="#d4cec4"/>
+          <rect x="0" y="190" width="375" height="18" fill="#d4cec4"/>
+          <rect x="0" y="280" width="375" height="18" fill="#d4cec4"/>
+          <!-- 道路竖 -->
+          <rect x="100" y="0" width="18" height="340" fill="#d4cec4"/>
+          <rect x="200" y="0" width="18" height="340" fill="#d4cec4"/>
+          <rect x="300" y="0" width="18" height="340" fill="#d4cec4"/>
+          <!-- 建筑块 -->
+          <rect x="15" y="125" width="75" height="55" rx="4" fill="#c8c2b8"/>
+          <rect x="120" y="125" width="70" height="55" rx="4" fill="#c8c2b8"/>
+          <rect x="220" y="125" width="70" height="55" rx="4" fill="#c8c2b8"/>
+          <rect x="320" y="125" width="45" height="55" rx="4" fill="#c8c2b8"/>
+          <rect x="15" y="215" width="75" height="55" rx="4" fill="#c8c2b8"/>
+          <rect x="230" y="215" width="40" height="55" rx="4" fill="#c8c2b8"/>
+          <!-- 蓝色水体 -->
+          <ellipse cx="155" cy="270" rx="28" ry="14" fill="#9ecae1" opacity=".7"/>
+        </svg>
+        <!-- 宠物头像定点 -->
+        <div style="position:absolute;top:58px;left:42px;text-align:center;cursor:pointer" onclick="showToast('橘橘 · 距你0.3km 🐱')">
+          <div style="width:36px;height:36px;border-radius:50%;border:2.5px solid var(--red);overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(255,36,66,.3)">
+            <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=80&q=70" style="width:100%;height:100%;object-fit:cover" alt=""/>
+          </div>
+          <div style="font-size:9px;font-weight:700;color:var(--red);margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">0.3km</div>
+        </div>
+        <div style="position:absolute;top:38px;left:248px;text-align:center;cursor:pointer" onclick="showToast('柴柴 · 距你0.8km 🐶')">
+          <div style="width:36px;height:36px;border-radius:50%;border:2.5px solid var(--red);overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(255,36,66,.3)">
+            <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=80&q=70" style="width:100%;height:100%;object-fit:cover" alt=""/>
+          </div>
+          <div style="font-size:9px;font-weight:700;color:var(--red);margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">0.8km</div>
+        </div>
+        <div style="position:absolute;top:205px;left:126px;text-align:center;cursor:pointer" onclick="showToast('棉花 · 距你1.2km 🐰')">
+          <div style="width:36px;height:36px;border-radius:50%;border:2.5px solid #52c06e;overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(82,192,110,.3)">
+            <img src="https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=80&q=70" style="width:100%;height:100%;object-fit:cover" alt=""/>
+          </div>
+          <div style="font-size:9px;font-weight:700;color:#52c06e;margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">1.2km</div>
+        </div>
+        <div style="position:absolute;top:225px;left:285px;text-align:center;cursor:pointer" onclick="showToast('金毛 · 距你1.6km 🐶')">
+          <div style="width:36px;height:36px;border-radius:50%;border:2.5px solid #3b82f6;overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(59,130,246,.3)">
+            <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=80&q=70" style="width:100%;height:100%;object-fit:cover" alt=""/>
+          </div>
+          <div style="font-size:9px;font-weight:700;color:#3b82f6;margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">1.6km</div>
+        </div>
+        <!-- 我的位置 -->
+        <div style="position:absolute;top:148px;left:155px;width:14px;height:14px;border-radius:50%;background:var(--red);border:2.5px solid #fff;box-shadow:0 0 0 4px rgba(255,36,66,.2)"></div>
+      </div>
+      <!-- 附近列表 -->
+      <div style="padding:8px 14px 2px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px">附近的宠物</div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding:6px 14px 16px">
+        <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看橘橘 🐱')">
+          <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">橘橘 <span style="font-weight:400;color:var(--muted)">· 橘猫</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 0.3km · 主人：橘猫日记</div></div>
+          <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+        </div>
+        <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看柴柴 🐶')">
+          <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">柴柴 <span style="font-weight:400;color:var(--muted)">· 柴犬</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 0.8km · 主人：柴柴派对</div></div>
+          <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+        </div>
+        <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看棉花 🐰')">
+          <img src="https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">棉花 <span style="font-weight:400;color:var(--muted)">· 垂耳兔</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 1.2km · 主人：棉花团团</div></div>
+          <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+        </div>
+        <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看金毛 🐶')">
+          <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">金豆 <span style="font-weight:400;color:var(--muted)">· 金毛</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 1.6km · 主人：治愈系狗狗</div></div>
+          <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+        </div>
+        <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看圆滚滚 🐹')">
+          <img src="https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">圆圆 <span style="font-weight:400;color:var(--muted)">· 仓鼠</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 2.1km · 主人：圆滚滚</div></div>
+          <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+        </div>
+      </div>
+      <div style="height:16px"></div>
+    </div>
+  </div><!-- /sc-home -->
+
+  <!-- ══ PET (陪伴 + 记录 合并) ══ -->
+  <div class="screen" id="sc-pet">
+    <div class="pet-topbar">
+      <div class="pet-back" onclick="switchScreen('sc-home',0)">‹</div>
+      <div class="pet-ava-wrap">
+        <div class="pet-ava">🐱</div>
+        <div class="pet-online"></div>
+      </div>
+      <div class="pet-info">
+        <div class="pet-name">小橘</div>
+        <div class="pet-sub">在线陪伴中</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button style="width:32px;height:32px;border-radius:var(--rf);border:none;background:var(--cream2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--muted)" onclick="showToast('更多功能 ⋯')">⋯</button>
+      </div>
+    </div>
+    <div class="pet-tabs">
+      <div class="ptab on" onclick="switchPetTab(this,'pt-chat')">💬 对话</div>
+      <div class="ptab" onclick="switchPetTab(this,'pt-record')">🔤 对话翻译</div>
+      <div class="ptab" onclick="switchPetTab(this,'pt-tele')">🧠 心灵感应</div>
+    </div>
+
+    <!-- 对话 -->
+    <div id="pt-chat" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div class="upload-bar">
+        <button class="upbtn">📷 照片</button>
+        <button class="upbtn">🎙️ 音频</button>
+        <button class="upbtn">📎 文件</button>
+      </div>
+      <div class="msgs" id="chatMsgs">
+        <div class="msgs-date">今天</div>
+        <div class="msg"><div class="msg-ava">🐱</div><div class="bubble">喵～今天天气好冷，我一直缩在被窝里等你回来呢 🐾</div></div>
+        <div class="msg me"><div class="msg-me-ava">我</div><div class="bubble">小橘你在干嘛呀</div></div>
+        <div class="msg"><div class="msg-ava">🐱</div><div class="bubble">我刚刚晒了一下午的太阳，肚子软软的，你要不要摸摸看？✨</div></div>
+        <div class="msg me"><div class="msg-me-ava">我</div><div class="bubble">想你了</div></div>
+        <div class="msg" id="typingMsg"><div class="msg-ava">🐱</div><div class="bubble"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>
+      </div>
+      <div class="input-row">
+        <button class="call-btn call-v" title="语音通话" onclick="showToast('语音通话即将上线 📞')">📞</button>
+        <button class="call-btn call-vid" title="视频通话" onclick="showToast('视频通话即将上线 📹')">📹</button>
+        <button class="inp-mic" id="micBtn" onclick="toggleMic()">🎤</button>
+        <input class="chat-inp" id="chatInput" placeholder="给小橘发消息…" onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button class="inp-send" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+
+    <!-- 记录 -->
+    <!-- 对话翻译 tab -->
+    <div id="pt-record" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+      <div class="rec-panel">
+        <!-- 说明 -->
+        <div style="background:linear-gradient(135deg,#fff5f0,#fff8f4);border:1px solid rgba(255,36,66,.15);border-radius:var(--r12);padding:12px 14px;display:flex;align-items:flex-start;gap:10px">
+          <div style="font-size:22px;flex-shrink:0">🐾</div>
+          <div><div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:3px">AI 双向对话翻译</div><div style="font-size:12px;color:var(--muted);line-height:1.55">听懂它在说什么，让它听懂你——用 AI 打破人宠语言壁垒</div></div>
+        </div>
+        <!-- 主人 → 宠物 -->
+        <div style="background:#fff;border-radius:var(--r12);padding:14px;border:1px solid var(--line)">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">😊 我说 → 小橘听到的</div>
+          <textarea style="width:100%;border:1px solid var(--line2);border-radius:var(--r8);padding:9px 11px;font-size:13px;font-family:var(--font);resize:none;outline:none;color:var(--ink);min-height:60px;background:var(--cream2);line-height:1.55" placeholder="输入你想说的话…">小橘你最近乖不乖啊，有没有按时吃饭？</textarea>
+          <button onclick="translateTocat()" style="width:100%;margin-top:8px;height:38px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">🔄 翻译成猫语</button>
+          <div id="catResult" style="display:none;margin-top:10px;background:var(--cream2);border-radius:var(--r8);padding:10px 12px;font-size:13px;color:var(--ink);line-height:1.6;border:1px solid var(--line)"></div>
+        </div>
+        <!-- 宠物 → 主人 -->
+        <div style="background:#fff;border-radius:var(--r12);padding:14px;border:1px solid var(--line)">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">🐱 小橘说 → 我听到的</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+            <div class="mchip on" onclick="setCatSound(this,'喵喵喵')">喵喵喵</div>
+            <div class="mchip" onclick="setCatSound(this,'嗷呜~')">嗷呜~</div>
+            <div class="mchip" onclick="setCatSound(this,'咕噜咕噜')">咕噜咕噜</div>
+            <div class="mchip" onclick="setCatSound(this,'嘶~')">嘶~</div>
+            <div class="mchip" onclick="setCatSound(this,'啾啾')">啾啾</div>
+          </div>
+          <button onclick="translateTohuman()" style="width:100%;height:38px;border-radius:var(--rf);background:var(--ink);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">🔄 翻译成人话</button>
+          <div id="humanResult" style="display:none;margin-top:10px;background:var(--cream2);border-radius:var(--r8);padding:10px 12px;font-size:13px;color:var(--ink);line-height:1.6;border:1px solid var(--line)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 心灵感应 -->
+    <div id="pt-tele" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+      <div class="tele-panel">
+        <div class="tele-card">
+          <div class="tele-title">🐾 宠物 → 主人</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">选择它现在的心情</div>
+          <div class="mood-row">
+            <div class="mchip on" onclick="setMood(this,'开心')">😸 开心</div>
+            <div class="mchip" onclick="setMood(this,'撒娇')">🥺 撒娇</div>
+            <div class="mchip" onclick="setMood(this,'困')">😴 困</div>
+            <div class="mchip" onclick="setMood(this,'饿')">🍗 饿</div>
+            <div class="mchip" onclick="setMood(this,'委屈')">😿 委屈</div>
+          </div>
+          <button class="tele-btn" onclick="playTele()">🎵 听它说</button>
+          <div class="tele-bars" id="teleBars">
+            <div class="tbar" style="height:40%"></div><div class="tbar" style="height:60%"></div><div class="tbar" style="height:30%"></div><div class="tbar" style="height:80%"></div><div class="tbar" style="height:50%"></div><div class="tbar" style="height:70%"></div><div class="tbar" style="height:40%"></div><div class="tbar" style="height:90%"></div><div class="tbar" style="height:55%"></div><div class="tbar" style="height:35%"></div>
+          </div>
+          <div class="tele-result" id="teleResult">「主人，你今天有好好吃饭吗？我等你好久了，快来陪我晒太阳吧～」</div>
+        </div>
+        <div class="tele-card">
+          <div class="tele-title">💌 主人 → 宠物</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">用它能理解的频率传递你的话</div>
+          <textarea class="tele-ta" id="teleInput" placeholder="写下你想对它说的话…">小橘，你在那边还好吗？好想你 🐟</textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+            <button class="tele-btn" onclick="playFreq()">🔊 传递</button>
+            <div style="font-size:10px;color:var(--muted);flex:1" id="freqLbl">680Hz + 720Hz 双声道</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /sc-pet -->
+
+  <!-- ══ HEALTH ══ -->
+  <div class="screen" id="sc-health">
+    <div class="health-top">
+      <h2>🏥 健康档案</h2>
+      <p>小橘的身体记录，每一笔都很重要</p>
+    </div>
+    <div class="health-scroll">
+
+      <!-- pet info -->
+      <div class="pet-info-card">
+        <div class="pic-ava">🐱</div>
+        <div class="pic-info">
+          <h3>小橘</h3>
+          <p>橘猫 · 公 · 2021年5月20日出生 · 3岁</p>
+          <div class="pic-badge">✂️ 已绝育</div>
+        </div>
+      </div>
+
+      <!-- daily health -->
+      <div>
+        <div class="hd-sec-title">📋 今日日常<span class="hd-add">+ 记录</span></div>
+        <div class="hd-card">
+          <div class="hd-row"><div class="hd-em">🍚</div><div class="hd-lbl">吃饭量</div><div class="hd-val">正常</div><div class="hd-tag tag-ok">✓ 好</div></div>
+          <div class="hd-row"><div class="hd-em">💧</div><div class="hd-lbl">喝水量</div><div class="hd-val">偏少</div><div class="hd-tag tag-warn">⚠ 注意</div></div>
+          <div class="hd-row"><div class="hd-em">💩</div><div class="hd-lbl">排便情况</div><div class="hd-val">1次，成形</div><div class="hd-tag tag-ok">✓ 好</div></div>
+          <div class="hd-row"><div class="hd-em">⚖️</div><div class="hd-lbl">体重</div><div class="hd-val">4.2 kg</div><div class="hd-tag tag-ok">正常</div></div>
+          <div class="hd-row"><div class="hd-em">🌡️</div><div class="hd-lbl">今日状态</div><div class="hd-val">活泼</div><div class="hd-tag tag-ok">✓ 好</div></div>
+          <div class="hd-row"><div class="hd-em">😊</div><div class="hd-lbl">今日心情</div><div class="hd-val">开心满足 🐾</div></div>
+        </div>
+      </div>
+
+      <!-- daily preferences -->
+      <div>
+        <div class="hd-sec-title">🍽️ 饮食偏好</div>
+        <div class="hd-card">
+          <div class="hd-row"><div class="hd-em">🛍️</div><div class="hd-lbl">常吃猫粮</div><div class="hd-val">皇家室内猫</div></div>
+          <div class="hd-row"><div class="hd-em">🐟</div><div class="hd-lbl">最爱零食</div><div class="hd-val">冻干小鱼干</div></div>
+          <div class="hd-row"><div class="hd-em">🚫</div><div class="hd-lbl">过敏食物</div><div class="hd-val">无记录</div></div>
+        </div>
+      </div>
+
+      <!-- medical timeline -->
+      <div>
+        <div class="hd-sec-title">🩺 医疗记录<span class="hd-add">+ 添加</span></div>
+        <div class="med-timeline">
+
+          <div class="med-item">
+            <div class="med-dot">✂️</div>
+            <div class="med-body">
+              <div class="med-date">2022年8月15日</div>
+              <div class="med-title">绝育手术</div>
+              <div class="med-note">公猫绝育，手术顺利，术后恢复良好，佩戴脖圈7天，伤口愈合正常</div>
+              <div class="med-badge mb-surgery">手术</div>
+            </div>
+          </div>
+
+          <div class="med-item">
+            <div class="med-dot">💉</div>
+            <div class="med-body">
+              <div class="med-date">2024年5月20日</div>
+              <div class="med-title">年度疫苗接种</div>
+              <div class="med-note">三联疫苗 + 狂犬疫苗。下次接种时间：2025年5月</div>
+              <div class="med-badge mb-vaccine">疫苗</div>
+            </div>
+          </div>
+
+          <div class="med-item">
+            <div class="med-dot">🤒</div>
+            <div class="med-body">
+              <div class="med-date">2024年1月8日</div>
+              <div class="med-title">上呼吸道感染</div>
+              <div class="med-note">症状：流鼻涕、打喷嚏，就诊医院：某猫咪专科医院。开药：阿莫西林，服药5天后康复</div>
+              <div class="med-badge mb-ill">生病</div>
+            </div>
+          </div>
+
+          <div class="med-item">
+            <div class="med-dot">🔬</div>
+            <div class="med-body">
+              <div class="med-date">2023年11月3日</div>
+              <div class="med-title">年度体检</div>
+              <div class="med-note">血常规、肝肾功能均正常，牙结石轻度，建议明年洁牙</div>
+              <div class="med-badge mb-checkup">体检</div>
+            </div>
+          </div>
+
+          <div class="med-item">
+            <div class="med-dot">💉</div>
+            <div class="med-body">
+              <div class="med-date">2021年7月10日</div>
+              <div class="med-title">首次疫苗接种</div>
+              <div class="med-note">幼猫三联首针，到医院时超紧张，全程缩成一团，但乖乖配合 🥺</div>
+              <div class="med-badge mb-vaccine">疫苗</div>
+            </div>
+          </div>
+
+        </div>
+        <div class="med-add-btn" onclick="showToast('添加医疗记录 🩺')">＋ 添加医疗记录</div>
+      </div>
+
+      <div style="height:16px"></div>
+    </div>
+  </div><!-- /sc-health -->
+
+  <!-- ══ TIMELINE ══ -->
+  <div class="screen" id="sc-timeline">
+    <div class="tl-top">
+      <h2>📅 时光轴</h2>
+      <p>小橘的每一个珍贵瞬间</p>
+    </div>
+    <div class="tl-scroll">
+      <div style="height:4px"></div>
+      <div class="tl-item">
+        <div class="tl-dot">📷</div>
+        <div class="tl-body">
+          <div class="tl-date">2024年3月15日 下午3:20</div>
+          <div class="tl-ttl">第一次带小橘去医院打疫苗</div>
+          <div class="tl-desc">小橘超级乖，整个过程都没有叫，医生说是见过最配合的猫咪 🏥</div>
+          <div class="tl-thumbs"><div class="tl-thumb"><img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=120&q=70" alt=""/></div></div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🎂</div>
+        <div class="tl-body">
+          <div class="tl-date">2023年10月8日 上午11:00</div>
+          <div class="tl-ttl">小橘的第3岁生日 🎂</div>
+          <div class="tl-desc">给它买了小鱼形状的蛋糕，把奶油舔得一干二净，蹭了我一脸 😂</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🏠</div>
+        <div class="tl-body">
+          <div class="tl-date">2021年5月20日 下午2:00</div>
+          <div class="tl-ttl">第一天来到新家</div>
+          <div class="tl-desc">一只小小的橘色毛球，躲在角落里，眼睛又大又圆，看了我好久才慢慢走过来…</div>
+        </div>
+      </div>
+      <div class="tl-add" onclick="showToast('记录新瞬间 🐾')">＋ 记录新时光</div>
+      <div style="height:16px"></div>
+    </div>
+  </div><!-- /sc-timeline -->
+
+  <!-- ══ PROFILE ══ -->
+  <div class="screen" id="sc-profile">
+    <div class="prof-scroll">
+      <!-- 我的页背景图拼贴 -->
+      <div style="position:relative;height:200px;overflow:hidden;flex-shrink:0">
+        <div style="position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px">
+          <img src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400&q=75" style="width:100%;height:100%;object-fit:cover" loading="lazy" alt=""/>
+          <img src="https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&q=75" style="width:100%;height:100%;object-fit:cover" loading="lazy" alt=""/>
+          <img src="https://images.unsplash.com/photo-1601758174493-45d0a4d3e407?w=400&q=75" style="width:100%;height:100%;object-fit:cover" loading="lazy" alt=""/>
+          <img src="https://images.unsplash.com/photo-1518155317743-a8ff43ea6a5f?w=400&q=75" style="width:100%;height:100%;object-fit:cover" loading="lazy" alt=""/>
+        </div>
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.15) 0%,rgba(0,0,0,.05) 50%,rgba(245,245,247,.92) 100%)"></div>
+        <!-- 涡浮用户信息卡 -->
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px;">
+          <div style="background:rgba(255,255,255,0.72);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-radius:16px;border:1px solid rgba(255,255,255,0.6);padding:12px 14px;display:flex;align-items:center;gap:12px">
+            <div class="prof-ava">😺</div>
+            <div style="flex:1"><div class="prof-name">小橘的主人</div><div class="prof-num">加入 237 天</div></div>
+            <button class="prof-edit-btn">编辑</button>
+          </div>
+        </div>
+      </div>
+      <div class="prof-hero" style="border-top:none;padding-top:10px">
+        <div class="prof-stats">
+          <div class="pstat"><div class="pstat-n">1</div><div class="pstat-l">宠物</div></div>
+          <div class="pstat"><div class="pstat-n">48</div><div class="pstat-l">记忆</div></div>
+          <div class="pstat"><div class="pstat-n">237</div><div class="pstat-l">陪伴天</div></div>
+        </div>
+      </div>
+      </div><!-- /prof-hero -->
+      <div style="height:8px"></div>
+      <div class="pet-cards">
+        <div class="p-sec-lbl">我的宠物</div>
+        <div class="pet-card" onclick="switchScreen('sc-pet',2)">
+          <div class="pet-card-ava">🐱</div>
+          <div style="flex:1"><div class="pet-card-name">小橘</div><div class="pet-card-sub">橘猫 · 3岁 · 已记录 48 个瞬间</div></div>
+          <div class="pet-card-arrow">›</div>
+        </div>
+        <div class="pet-card" onclick="showToast('添加新宠物 🐾')">
+          <div class="pet-card-ava" style="background:var(--cream3);color:var(--muted);font-size:20px">➕</div>
+          <div style="flex:1"><div class="pet-card-name" style="color:var(--muted)">添加新宠物</div><div class="pet-card-sub">为更多毛孩子建档</div></div>
+          <div class="pet-card-arrow">›</div>
+        </div>
+      </div>
+      <div style="height:8px"></div>
+      <div style="padding:8px 14px 2px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.3px">记忆空间</div>
+      <div class="capacity-block">
+        <div class="cap-row"><span class="cap-label">已用 48 / 100 张照片</span><span class="cap-badge">免费版</span></div>
+        <div class="cap-bar"><div class="cap-fill"></div></div>
+        <div class="cap-hint">还剩 52 张，继续记录吧 🐾</div>
+      </div>
+      <div class="upgrade-nudge" onclick="openModal()">
+        <div class="un-icon">✨</div>
+        <div style="flex:1"><div class="un-title">解锁无限记忆空间</div><div class="un-sub">无限照片 · 声音克隆 · 心灵感应 · ¥39/月起</div></div>
+        <div class="un-arrow">›</div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="prof-sec">
+        <div class="prof-row" onclick="showToast('正在跳转到数据导入 📦')" style="cursor:pointer"><div class="pr-em">📲</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">一键导入数据</div><div style="font-size:11px;color:var(--muted);margin-top:1px">从微信相册 · 抖音宠物号 · 本地照片</div></div><div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--rf);background:var(--red-l);color:var(--red);margin-right:4px">NEW</div><div class="pr-arrow">›</div></div>
+        <div class="prof-row"><div class="pr-em">🔔</div><div class="pr-lbl">提醒设置</div><div class="pr-arrow">›</div></div>
+        <div class="prof-row"><div class="pr-em">🔒</div><div class="pr-lbl">隐私与安全</div><div class="pr-arrow">›</div></div>
+        <div class="prof-row"><div class="pr-em">📦</div><div class="pr-lbl">数据导出</div><div class="pr-arrow">›</div></div>
+        <div class="prof-row"><div class="pr-em">❓</div><div class="pr-lbl">帮助与反馈</div><div class="pr-arrow">›</div></div>
+      </div>
+      <div style="height:20px"></div>
+    </div>
+  </div><!-- /sc-profile -->
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bnav" id="mainBnav">
+    <button class="bn-item on" onclick="switchScreen('sc-home',0)"><div class="bn-icon">🏠</div><div class="bn-lbl">首页</div></button>
+    <button class="bn-item" onclick="switchScreen('sc-timeline',1)"><div class="bn-icon">📅</div><div class="bn-lbl">时光</div></button>
+    <button class="bn-item" onclick="switchScreen('sc-pet',2)"><div class="bn-post" style="font-size:22px">💬</div><div class="bn-lbl">陪伴</div></button>
+    <button class="bn-item" onclick="switchScreen('sc-health',3)"><div class="bn-icon">🏥</div><div class="bn-lbl">健康</div></button>
+    <button class="bn-item" onclick="switchScreen('sc-profile',4)"><div class="bn-icon">😺</div><div class="bn-lbl">我的</div></button>
+  </nav>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">解锁记忆版</div>
+    <div class="modal-sub">为它留下更多，陪伴更长久</div>
+    <div class="plan-tabs">
+      <div class="plan-tab on" onclick="setPlan(this)"><div class="plan-tab-price">¥39</div><div class="plan-tab-lbl">月付</div></div>
+      <div class="plan-tab" onclick="setPlan(this)"><div class="plan-tab-price">¥299</div><div class="plan-tab-lbl">告别纪念</div></div>
+    </div>
+    <div class="plan-feats">
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">无限照片 + 语音上传</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">无限 AI 对话</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">声音克隆（上传录音还原声线）</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">心灵感应高级模式</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">永久存档保障</div></div>
+    </div>
+    <button class="modal-cta" onclick="showToast('感谢你的爱 🐾 即将上线');closeModal()">立即解锁 ¥39/月</button>
+    <div class="modal-hint">随时取消 · 数据永久保留 · 不会删除你的记忆</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── MEOW ──
+const MEOW='data:audio/mpeg;base64,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';
+let mR=false,mB=null,mC=null;
+function initAudio(){if(mR)return;mC=new(window.AudioContext||window.webkitAudioContext)();fetch(MEOW).then(r=>r.arrayBuffer()).then(ab=>mC.decodeAudioData(ab)).then(b=>{mB=b;mR=true;}).catch(()=>{});}
+let meowCount=0;
+function playMeow(){if(!mR||!mB||meowCount>=3)return;const s=mC.createBufferSource();s.buffer=mB;s.connect(mC.destination);s.start(0);meowCount++;}
+document.addEventListener('touchstart',initAudio,{once:true,passive:true});
+document.addEventListener('click',e=>{
+  initAudio();
+  const t=e.target;if(t.tagName==='INPUT'||t.tagName==='TEXTAREA')return;
+  playMeow();
+});
+
+// ── PARTICLES ──
+const canvas=document.getElementById('particleCanvas');
+const ctx2=canvas.getContext('2d');
+const EMOJIS=['🐾','🐟','🧶','✨','🌸','🐾','🐾'];
+let particles=[];
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resizeCanvas();window.addEventListener('resize',resizeCanvas);
+
+class Particle{
+  constructor(){this.reset();}
+  reset(){
+    this.x=Math.random()*canvas.width;
+    this.y=-30-Math.random()*100;
+    this.size=12+Math.random()*10;
+    this.speed=0.4+Math.random()*0.8;
+    this.drift=(Math.random()-.5)*0.5;
+    this.opacity=0;
+    this.targetOp=0.25+Math.random()*0.3;
+    this.rotation=Math.random()*Math.PI*2;
+    this.rotSpeed=(Math.random()-.5)*0.02;
+    this.emoji=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+    this.fadeIn=true;
+  }
+  update(){
+    this.y+=this.speed;this.x+=this.drift;this.rotation+=this.rotSpeed;
+    if(this.fadeIn){this.opacity=Math.min(this.opacity+0.015,this.targetOp);}
+    if(this.y>canvas.height*0.7){this.opacity=Math.max(this.opacity-0.012,0);}
+    if(this.y>canvas.height+30){this.reset();}
+  }
+  draw(){
+    ctx2.save();
+    ctx2.globalAlpha=this.opacity;
+    ctx2.font=`${this.size}px serif`;
+    ctx2.translate(this.x,this.y);
+    ctx2.rotate(this.rotation);
+    ctx2.fillText(this.emoji,-this.size/2,-this.size/2);
+    ctx2.restore();
+  }
+}
+for(let i=0;i<18;i++){const p=new Particle();p.y=Math.random()*canvas.height*0.6;particles.push(p);}
+function animateParticles(){ctx2.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.update();p.draw();});requestAnimationFrame(animateParticles);}
+animateParticles();
+
+// ── SCREENS ──
+let curNav=0;
+function switchScreen(id,navIdx){
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('on');s.style.display='none';});
+  const sc=document.getElementById(id);
+  if(sc){sc.style.display='flex';requestAnimationFrame(()=>sc.classList.add('on'));}
+  document.querySelectorAll('.bn-item').forEach((b,i)=>b.classList.toggle('on',i===navIdx));
+  curNav=navIdx;
+  // hide bnav inside pet screen for immersion, show for health/timeline/profile
+  document.getElementById('mainBnav').style.display=(id==='sc-pet')?'none':'flex';
+}
+
+// ── HOME TABS ──
+function setHomeTab(btn,tabId){
+  document.querySelectorAll('.tb-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');
+  ['tab-following','tab-discover','tab-nearby'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    if(id===tabId){el.style.display='flex';el.style.flexDirection='column';el.style.width='100%';}else{el.style.display='none';}
+  });
+}
+
+// ── PET TABS ──
+function switchPetTab(btn,tabId){
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');
+  document.querySelectorAll('#sc-pet > div[id^="pt-"]').forEach(t=>{t.style.display='none';});
+  const t=document.getElementById(tabId);if(t){t.style.display='flex';}
+}
+
+// ── CHAT ──
+const REPLIES=['喵～我在呢，你今天怎么样？🐾','嗯嗯，我听到你了，你要多吃点饭哦🍚','感觉你今天有点累，要不要先休息一下？😴','我最喜欢你陪我晒太阳了，什么时候再一起？☀️','你知道吗，我每天都在等你回来，听到开门声就跑过去 🏃'];
+let ri=0;
+function sendChat(){
+  const inp=document.getElementById('chatInput');
+  const txt=(inp.value||'').trim();if(!txt)return;
+  const msgs=document.getElementById('chatMsgs');
+  const typing=document.getElementById('typingMsg');
+  const urow=document.createElement('div');urow.className='msg me';
+  urow.innerHTML=`<div class="msg-me-ava">我</div><div class="bubble">${txt}</div>`;
+  msgs.insertBefore(urow,typing);inp.value='';msgs.scrollTop=msgs.scrollHeight;
+  setTimeout(()=>{
+    typing.style.display='none';
+    const arow=document.createElement('div');arow.className='msg';
+    arow.innerHTML=`<div class="msg-ava">🐱</div><div class="bubble">${REPLIES[ri++%REPLIES.length]}</div>`;
+    msgs.insertBefore(arow,typing);typing.style.display='';msgs.scrollTop=msgs.scrollHeight;
+    if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(REPLIES[(ri-1)%REPLIES.length]);u.lang='zh-CN';u.rate=.95;window.speechSynthesis.speak(u);}
+  },1400);
+}
+
+// ── MIC ──
+let recog=null,micOn=false;
+function toggleMic(){
+  const btn=document.getElementById('micBtn');
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){showToast('当前浏览器不支持语音识别');return;}
+  if(micOn){recog&&recog.stop();micOn=false;btn.textContent='🎤';btn.style.background='';return;}
+  recog=new SR();recog.lang='zh-CN';recog.continuous=false;recog.interimResults=false;
+  recog.onresult=e=>{document.getElementById('chatInput').value=e.results[0][0].transcript;micOn=false;btn.textContent='🎤';btn.style.background='';}
+  recog.onerror=()=>{micOn=false;btn.textContent='🎤';btn.style.background='';}
+  recog.start();micOn=true;btn.textContent='🔴';btn.style.background='#fee2e2';
+}
+
+// ── TELEPATHY ──
+const MOOD_MSGS={
+  '开心':'「主人，你今天有好好吃饭吗？我超级快乐，快来陪我晒太阳！」',
+  '撒娇':'「主人，我想要抱抱，你什么时候回来啊，我等你好久了 🥺」',
+  '困':'「别吵我……要睡觉了……晚安 zzzz 😴」',
+  '饿':'「喵！饿！现在！粮！快！🍗 喵！」',
+  '委屈':'「你今天有没有想我？不在的时候好冷清，我躲在你衣服里了… 😿」',
+};
+let curMood='开心';
+function setMood(el,mood){document.querySelectorAll('.mchip').forEach(c=>c.classList.remove('on'));el.classList.add('on');curMood=mood;document.getElementById('teleResult').textContent=MOOD_MSGS[mood];}
+function playTele(){
+  animBars();const msg=MOOD_MSGS[curMood];document.getElementById('teleResult').textContent=msg;
+  if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(msg);u.lang='zh-CN';u.rate=.9;window.speechSynthesis.speak(u);}
+  playDualTone(680,720,2.5);
+}
+function playFreq(){
+  animBars();const lbl=document.getElementById('freqLbl');
+  lbl.textContent='正在传递…';setTimeout(()=>lbl.textContent='680Hz + 720Hz 双声道',3000);
+  playDualTone(680,720,3);
+}
+function playDualTone(f1,f2,dur){
+  try{const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [[f1,-0.5],[f2,0.5]].forEach(([f,pan])=>{
+      const o=ctx.createOscillator(),g=ctx.createGain(),p=ctx.createStereoPanner();
+      o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0.2,0);g.gain.linearRampToValueAtTime(0,dur);
+      p.pan.value=pan;o.connect(g);g.connect(p);p.connect(ctx.destination);o.start();o.stop(ctx.currentTime+dur);
+    });
+  }catch(e){}
+}
+function animBars(){
+  const bars=document.querySelectorAll('.tbar');let i=0;
+  const t=setInterval(()=>{bars.forEach(b=>{b.style.height=(20+Math.random()*75)+'%';b.classList.toggle('on',Math.random()>.4);});if(++i>25)clearInterval(t);},120);
+}
+
+// ── TRANSLATION ──
+const CAT_SOUNDS={'喵喵喵':'我在这里！你今天有没有想我～你知道吗我一直在等你 🐾','嗷呜~':'我饿了……而且有点委屈，你今天回来好晚哦 😿','呼噜呼噜':'我很满足，你摸我摸得正好，继续吧不要停 😸','嘶~':'我不喜欢这个！你碰到我敏感的地方了，停手！','咪咪':'我睡眼惺忪……你叫我干嘛……好困……'};
+let curCatSound='喵喵喵';
+function setCatSound(el,s){document.querySelectorAll('#pt-record .mchip').forEach(c=>c.classList.remove('on'));el.classList.add('on');curCatSound=s;}
+function translateTocat(){const ta=document.querySelector('#pt-record textarea');const txt=ta.value.trim();if(!txt)return;const res=document.getElementById('catResult');const maps=['「喵～ '+txt.replace('你','汪')+' 喵喵喵」','「喵呜～ 我知道了～ 你说的是：'+txt+'  喵～」','「嗷～ '+txt+' 呼噜呼噜～ 」'];res.textContent=maps[Math.floor(Math.random()*maps.length)];res.style.display='block';}
+function translateTohuman(){const res=document.getElementById('humanResult');res.textContent=CAT_SOUNDS[curCatSound]||'它在表达一种复杂的情绪，大意是：我爱你，但你最好现在就过来摸我。';res.style.display='block';}
+
+// ── HERO BG ──
+const HERO_SETS=[
+  ['https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&q=75','https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&q=75','https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=200&q=75'],
+  ['https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&q=75','https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=200&q=75','https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=200&q=75'],
+  ['https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=200&q=75','https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=200&q=75','https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=200&q=75'],
+];
+let heroBgIdx=0;
+function changeHeroBg(){
+  // try file input first
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const url=URL.createObjectURL(f);
+    const imgs=document.querySelectorAll('#heroBgPhotos img');
+    imgs.forEach(img=>img.src=url);
+    showToast('已替换为你的宠物照片 🐾');
+  };
+  // show choice: cycle presets or upload
+  if(confirm('换一组预设宠物照片？取消则上传你自己的宠物照片')){
+    heroBgIdx=(heroBgIdx+1)%HERO_SETS.length;
+    const imgs=document.querySelectorAll('#heroBgPhotos img');
+    HERO_SETS[heroBgIdx].forEach((src,i)=>{if(imgs[i])imgs[i].src=src;});
+    showToast('已切换宠物组合 ✨');
+  } else {
+    inp.click();
+  }
+}
+
+// ── MODAL ──
+function openModal(){document.getElementById('modal').classList.add('on');}
+function closeModal(){document.getElementById('modal').classList.remove('on');}
+function setPlan(el){document.querySelectorAll('.plan-tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');}
+
+// ── TOAST ──
+let tTimer;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('on'),2200);}
+
+switchScreen('sc-home',0);
+
+// ── PARALLAX ──
+(function(){
+  const scroll=document.getElementById('tab-discover');
+  const heroBg=document.getElementById('heroBgPhotos');
+  if(!scroll||!heroBg)return;
+  scroll.addEventListener('scroll',()=>{
+    const y=scroll.scrollTop;
+    const imgs=heroBg.querySelectorAll('img');
+    // hero photos scroll slower than content → parallax
+    imgs.forEach(img=>{
+      img.style.transform=`scale(1.08) translateY(${y*0.35}px)`;
+    });
+    // topbar glass becomes more opaque on scroll
+    const topbar=document.querySelector('.topbar');
+    if(topbar){
+      const alpha=Math.min(0.72+y/300*0.28,1);
+      topbar.style.background=`rgba(255,255,255,${alpha})`;
+    }
+  },{passive:true});
+})();
+</script>
+</body>
+</html>
