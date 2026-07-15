@@ -207,20 +207,15 @@ body::before{display:none}
 .gal-thumb img{width:100%;height:100%;object-fit:cover}
 .gal-add{aspect-ratio:1;border-radius:var(--r8);border:1.5px dashed var(--line2);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--muted2);cursor:pointer;background:#fff}
 
-/* telepathy tab */
-.tele-panel{flex:1;overflow-y:auto;background:var(--bg2);padding:12px 14px;display:flex;flex-direction:column;gap:12px}
-.tele-card{background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:var(--r18);padding:16px;border:1px solid var(--glass-border);box-shadow:0 4px 20px rgba(0,0,0,.06)}
-.tele-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px}
+/* telepathy tab —— 已下线的心灵感应功能遗留样式已清理，.mchip 仍在翻译面板中复用 */
 .mood-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .mchip{padding:5px 10px;border-radius:var(--rf);border:none;font-size:11px;cursor:pointer;background:rgba(118,118,128,.1);transition:all .18s var(--ease-spring)}
 .mchip:active{transform:scale(.92)}
 .mchip.on{background:var(--red);color:#fff;box-shadow:0 2px 8px rgba(255,36,66,.25)}
-.tele-bars{display:flex;align-items:flex-end;gap:3px;height:36px;padding:4px 6px;background:var(--cream2);border-radius:var(--r8);margin:10px 0}
-.tbar{flex:1;border-radius:2px 2px 0 0;background:var(--red);opacity:.2;transition:height .3s,opacity .3s}
-.tbar.on{opacity:1}
-.tele-result{font-size:12px;color:var(--ink);background:var(--cream2);border-radius:var(--r8);padding:10px 12px;line-height:1.6}
-.tele-btn{display:inline-flex;align-items:center;gap:4px;padding:0 14px;height:34px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
-.tele-ta{width:100%;border:1px solid var(--line2);border-radius:var(--r8);padding:8px 10px;font-size:12px;font-family:var(--font);resize:none;outline:none;color:var(--ink);min-height:64px;background:var(--cream2)}
+/* 附近页筛选 tab */
+.nb-filter{flex-shrink:0;padding:6px 12px;border-radius:var(--rf);font-size:12px;font-weight:600;color:var(--muted);background:var(--bg2);cursor:pointer;white-space:nowrap;transition:all .18s var(--ease-spring)}
+.nb-filter.on{background:var(--ink);color:#fff}
+.nb-filter:active{transform:scale(.94)}
 .tele-ta:focus{border-color:var(--red);background:#fff}
 
 /* ══════════════════════
@@ -348,6 +343,71 @@ body::before{display:none}
 .bn-post{width:44px;height:30px;background:linear-gradient(135deg,rgba(255,248,200,.5),rgba(255,220,120,.35));border-radius:var(--rf);display:flex;align-items:center;justify-content:center;font-size:18px;color:#a07000;margin-bottom:2px;box-shadow:0 2px 12px rgba(255,210,60,.18);transition:transform .2s var(--ease-spring),box-shadow .2s;border:none}
 .bn-item:active .bn-post{transform:scale(.88);box-shadow:0 2px 8px rgba(255,180,60,.25)}
 
+/* ══════════════════════
+   MEMORY BANK SCREEN
+══════════════════════ */
+.bank-top{flex-shrink:0;padding:12px 14px 8px;padding-top:calc(12px + var(--safe-top));border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+.bank-top h2{font-size:17px;font-weight:700;color:var(--ink)}
+.bank-top p{font-size:12px;color:var(--muted);margin-top:2px}
+.bank-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);padding:12px 14px;display:flex;flex-direction:column;gap:14px}
+
+/* 总量卡 */
+.bank-hero{background:linear-gradient(135deg,#1d1d2e,#2d2d44);border-radius:var(--r18);padding:20px 18px;position:relative;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.18)}
+.bank-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:rgba(255,36,66,.12);pointer-events:none}
+.bank-hero::after{content:'';position:absolute;bottom:-30px;left:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,140,90,.1);pointer-events:none}
+.bh-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px}
+.bh-count{font-size:42px;font-weight:800;color:#fff;line-height:1;margin-bottom:2px}
+.bh-unit{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:16px}
+.bh-stats{display:flex;gap:0}
+.bh-stat{flex:1;text-align:center;padding:10px 0;background:rgba(255,255,255,.07);border-radius:var(--r8)}
+.bh-stat+.bh-stat{margin-left:6px}
+.bh-sn{font-size:18px;font-weight:700;color:#fff}
+.bh-sl{font-size:10px;color:rgba(255,255,255,.5);margin-top:2px}
+
+/* 声音克隆进度 */
+.clone-card{background:#fff;border-radius:var(--r18);padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.clone-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.clone-title{font-size:13px;font-weight:700;color:var(--ink)}
+.clone-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:var(--rf);background:var(--red-l);color:var(--red)}
+.clone-bar-wrap{background:var(--bg3);border-radius:var(--rf);height:8px;overflow:hidden;margin-bottom:8px}
+.clone-bar-fill{height:100%;border-radius:var(--rf);background:linear-gradient(90deg,var(--red),#ff8c5a);transition:width .6s var(--ease-smooth)}
+.clone-segs{display:flex;gap:4px;flex-wrap:wrap}
+.clone-seg{flex-shrink:0;display:flex;align-items:center;gap:3px;padding:4px 8px;border-radius:var(--rf);font-size:10px;font-weight:600}
+.clone-seg.done{background:rgba(255,36,66,.08);color:var(--red)}
+.clone-seg.todo{background:var(--bg3);color:var(--muted2)}
+.clone-hint{margin-top:8px;font-size:11px;color:var(--muted);line-height:1.5}
+
+/* 家人协作 */
+.family-card{background:#fff;border-radius:var(--r18);padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.fc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.fc-title{font-size:13px;font-weight:700;color:var(--ink)}
+.fc-invite{font-size:12px;color:var(--red);font-weight:600;cursor:pointer}
+.fc-members{display:flex;gap:8px}
+.fc-member{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.fc-ava{width:38px;height:38px;border-radius:var(--rf);display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.fc-name{font-size:9px;color:var(--muted);text-align:center;max-width:38px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fc-add-btn{width:38px;height:38px;border-radius:var(--rf);border:1.5px dashed var(--line2);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted2);background:#fff}
+
+/* 时间线 */
+.bank-tl{display:flex;flex-direction:column;gap:0}
+.btl-item{display:flex;gap:10px;padding-bottom:14px;position:relative}
+.btl-item::before{content:'';position:absolute;left:15px;top:32px;bottom:0;width:1.5px;background:var(--line)}
+.btl-item:last-child::before{display:none}
+.btl-dot{flex-shrink:0;width:32px;height:32px;border-radius:var(--rf);background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.btl-body{flex:1;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:var(--r12);padding:10px 12px;border:1px solid var(--glass-border);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.btl-date{font-size:10px;color:var(--muted);margin-bottom:2px}
+.btl-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.btl-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.btl-thumb{width:52px;height:52px;border-radius:var(--r8);object-fit:cover;margin-top:6px;border:1px solid var(--line)}
+
+/* 纪念入口 */
+.memorial-entry{background:linear-gradient(135deg,rgba(100,80,160,.08),rgba(160,100,200,.08));border:1px solid rgba(100,80,160,.2);border-radius:var(--r18);padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .2s var(--ease-spring),box-shadow .2s}
+.memorial-entry:active{transform:scale(.97)}
+.me-icon{font-size:28px;flex-shrink:0}
+.me-title{font-size:13px;font-weight:700;color:#5b2f8a}
+.me-sub{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+.me-arrow{font-size:13px;color:#5b2f8a}
+
 /* ── MODAL – glass sheet ── */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:500;display:none;align-items:flex-end;backdrop-filter:blur(4px)}
 .modal-bg.on{display:flex}
@@ -466,10 +526,10 @@ body::before{display:none}
 
       <div class="sec-label">热门记忆</div>
       <div class="feed">
-        <div class="card" onclick="switchScreen('sc-pet',2)"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐱 猫咪</div></div><div class="card-body"><div class="card-title">小橘今天晒太阳好开心 ☀️ 每天记录最美好的瞬间</div><div class="card-foot"><div class="card-ava">橘</div><div class="card-author">橘猫日记</div><div class="card-like">❤️ 1.2万</div></div></div></div>
-        <div class="card" onclick="switchScreen('sc-pet',2)"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐶 狗狗</div></div><div class="card-body"><div class="card-title">柴犬的一百种可爱 🐶</div><div class="card-foot"><div class="card-ava">柴</div><div class="card-author">柴柴派对</div><div class="card-like">❤️ 8.6k</div></div></div></div>
-        <div class="card" onclick="switchScreen('sc-pet',2)"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐱 猫咪</div></div><div class="card-body"><div class="card-title">它最喜欢趴在键盘上陪我加班 💻</div><div class="card-foot"><div class="card-ava">工</div><div class="card-author">打工猫</div><div class="card-like">❤️ 3.4k</div></div></div></div>
-        <div class="card" onclick="switchScreen('sc-pet',2)"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐶 狗狗</div></div><div class="card-body"><div class="card-title">金毛的眼神太治愈了 🥺</div><div class="card-foot"><div class="card-ava">治</div><div class="card-author">治愈系狗狗</div><div class="card-like">❤️ 2.1万</div></div></div></div>
+        <div class="card" onclick="showToast('汪汪晒太阳很开心 ☀️ 🐱')"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐱 猫咪</div></div><div class="card-body"><div class="card-title">汪汪今天晒太阳好开心 ☀️ 每天记录最美好的瞬间</div><div class="card-foot"><div class="card-ava">汪</div><div class="card-author">汪汪日记</div><div class="card-like">❤️ 1.2万</div></div></div></div>
+        <div class="card" onclick="showToast('柴柴的一百种可爱 🐶')"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐶 狗狗</div></div><div class="card-body"><div class="card-title">柴犬的一百种可爱 🐶</div><div class="card-foot"><div class="card-ava">柴</div><div class="card-author">柴柴派对</div><div class="card-like">❤️ 8.6k</div></div></div></div>
+        <div class="card" onclick="showToast('打工猫的日常 💻')"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐱 猫咪</div></div><div class="card-body"><div class="card-title">它最喜欢趴在键盘上陪我加班 💻</div><div class="card-foot"><div class="card-ava">工</div><div class="card-author">打工猫</div><div class="card-like">❤️ 3.4k</div></div></div></div>
+        <div class="card" onclick="showToast('金毛的眼神太治愈了 🥺')"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐶 狗狗</div></div><div class="card-body"><div class="card-title">金毛的眼神太治愈了 🥺</div><div class="card-foot"><div class="card-ava">治</div><div class="card-author">治愈系狗狗</div><div class="card-like">❤️ 2.1万</div></div></div></div>
         <div class="card" onclick="showToast('查看更多 🐰')"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐰 兔子</div></div><div class="card-body"><div class="card-title">兔兔耳朵超软，手感绝了 🐰</div><div class="card-foot"><div class="card-ava">棉</div><div class="card-author">棉花团团</div><div class="card-like">❤️ 6.7k</div></div></div></div>
         <div class="card" onclick="showToast('查看更多 🐹')"><div class="card-img-wrap"><img src="https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=400&q=80" loading="lazy" alt=""/><div class="card-tag">🐹 仓鼠</div></div><div class="card-body"><div class="card-title">仓鼠团子，圆到滚起来了 🐹</div><div class="card-foot"><div class="card-ava">圆</div><div class="card-author">圆滚滚</div><div class="card-like">❤️ 4.5k</div></div></div></div>
       </div>
@@ -526,7 +586,21 @@ body::before{display:none}
       </div>
     </div>
     <div class="home-scroll" id="tab-nearby" style="display:none;flex-direction:column;overflow-y:auto">
-      <!-- SVG 地图 + 宠物定点 -->
+      <!-- 定位状态引导条 -->
+      <div id="geoStatusBar" style="display:none;flex-shrink:0;margin:10px 14px 0;padding:10px 12px;border-radius:var(--r12);background:rgba(255,36,66,.06);border:1px solid rgba(255,36,66,.15);align-items:center;gap:8px">
+        <div style="font-size:16px">📍</div>
+        <div id="geoStatusText" style="flex:1;font-size:12px;color:var(--ink);line-height:1.4">开启定位，看看你真实附近的宠物店和医院</div>
+        <button id="geoStatusBtn" onclick="initNearbyReal()" style="flex-shrink:0;padding:6px 12px;border-radius:var(--rf);border:none;background:var(--red);color:#fff;font-size:11px;font-weight:600;cursor:pointer">开启定位</button>
+      </div>
+      <!-- 筛选 Tab：宠友 / 服务 -->
+      <div style="display:flex;gap:8px;padding:12px 14px 8px;flex-shrink:0">
+        <div class="nb-filter on" onclick="setNearbyFilter(this,'all')">全部</div>
+        <div class="nb-filter" onclick="setNearbyFilter(this,'friend')">🐾 宠友</div>
+        <div class="nb-filter" onclick="setNearbyFilter(this,'shop')">🏪 宠物店</div>
+        <div class="nb-filter" onclick="setNearbyFilter(this,'hospital')">🏥 医院</div>
+        <div class="nb-filter" onclick="setNearbyFilter(this,'memorial')">🕯️ 纪念服务</div>
+      </div>
+      <!-- SVG 地图 + 宠物/服务定点 -->
       <div style="position:relative;width:100%;height:340px;overflow:hidden;flex-shrink:0">
         <svg width="100%" height="340" viewBox="0 0 375 340" xmlns="http://www.w3.org/2000/svg" style="display:block">
           <!-- 地图底色 -->
@@ -554,63 +628,133 @@ body::before{display:none}
           <!-- 蓝色水体 -->
           <ellipse cx="155" cy="270" rx="28" ry="14" fill="#9ecae1" opacity=".7"/>
         </svg>
-        <!-- 宠物头像定点 -->
-        <div style="position:absolute;top:58px;left:42px;text-align:center;cursor:pointer" onclick="showToast('橘橘 · 距你0.3km 🐱')">
+        <!-- 宠物头像定点（宠友） -->
+        <div class="nb-pin nb-pin-friend" style="position:absolute;top:58px;left:42px;text-align:center;cursor:pointer" onclick="showToast('橘橘 · 距你0.3km 🐱')">
           <div style="width:36px;height:36px;border-radius:50%;border:2.5px solid var(--red);overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(255,36,66,.3)">
             <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=80&q=70" style="width:100%;height:100%;object-fit:cover" alt=""/>
           </div>
           <div style="font-size:9px;font-weight:700;color:var(--red);margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">0.3km</div>
         </div>
-        <div style="position:absolute;top:38px;left:248px;text-align:center;cursor:pointer" onclick="showToast('柴柴 · 距你0.8km 🐶')">
+        <div class="nb-pin nb-pin-friend" style="position:absolute;top:38px;left:248px;text-align:center;cursor:pointer" onclick="showToast('柴柴 · 距你0.8km 🐶')">
           <div style="width:36px;height:36px;border-radius:50%;border:2.5px solid var(--red);overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(255,36,66,.3)">
             <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=80&q=70" style="width:100%;height:100%;object-fit:cover" alt=""/>
           </div>
           <div style="font-size:9px;font-weight:700;color:var(--red);margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">0.8km</div>
         </div>
-        <div style="position:absolute;top:205px;left:126px;text-align:center;cursor:pointer" onclick="showToast('棉花 · 距你1.2km 🐰')">
+        <div class="nb-pin nb-pin-friend" style="position:absolute;top:205px;left:126px;text-align:center;cursor:pointer" onclick="showToast('棉花 · 距你1.2km 🐰')">
           <div style="width:36px;height:36px;border-radius:50%;border:2.5px solid #52c06e;overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(82,192,110,.3)">
             <img src="https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=80&q=70" style="width:100%;height:100%;object-fit:cover" alt=""/>
           </div>
           <div style="font-size:9px;font-weight:700;color:#52c06e;margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">1.2km</div>
         </div>
-        <div style="position:absolute;top:225px;left:285px;text-align:center;cursor:pointer" onclick="showToast('金毛 · 距你1.6km 🐶')">
+        <div class="nb-pin nb-pin-friend" style="position:absolute;top:225px;left:285px;text-align:center;cursor:pointer" onclick="showToast('金毛 · 距你1.6km 🐶')">
           <div style="width:36px;height:36px;border-radius:50%;border:2.5px solid #3b82f6;overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(59,130,246,.3)">
             <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=80&q=70" style="width:100%;height:100%;object-fit:cover" alt=""/>
           </div>
           <div style="font-size:9px;font-weight:700;color:#3b82f6;margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">1.6km</div>
         </div>
+        <!-- 宠物店定点 -->
+        <div class="nb-pin nb-pin-shop" style="position:absolute;top:150px;left:65px;text-align:center;cursor:pointer" onclick="showToast('毛孩子生活馆 · 距你0.5km 🏪')">
+          <div style="width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(45deg);background:#f59e0b;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(245,158,11,.4)"><span style="transform:rotate(-45deg);font-size:14px">🏪</span></div>
+          <div style="font-size:9px;font-weight:700;color:#b45309;margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">0.5km</div>
+        </div>
+        <!-- 宠物医院定点 -->
+        <div class="nb-pin nb-pin-hospital" style="position:absolute;top:150px;left:245px;text-align:center;cursor:pointer" onclick="showToast('安心宠物医院 · 距你1.0km 🏥')">
+          <div style="width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(45deg);background:#10b981;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(16,185,129,.4)"><span style="transform:rotate(-45deg);font-size:14px">🏥</span></div>
+          <div style="font-size:9px;font-weight:700;color:#047857;margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">1.0km</div>
+        </div>
+        <!-- 纪念服务定点 -->
+        <div class="nb-pin nb-pin-memorial" style="position:absolute;top:245px;left:230px;text-align:center;cursor:pointer" onclick="showToast('暖心宠物告别之家 · 距你2.3km 🕯️')">
+          <div style="width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(45deg);background:#8b5cf6;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(139,92,246,.4)"><span style="transform:rotate(-45deg);font-size:14px">🕯️</span></div>
+          <div style="font-size:9px;font-weight:700;color:#6d28d9;margin-top:2px;white-space:nowrap;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 4px">2.3km</div>
+        </div>
         <!-- 我的位置 -->
         <div style="position:absolute;top:148px;left:155px;width:14px;height:14px;border-radius:50%;background:var(--red);border:2.5px solid #fff;box-shadow:0 0 0 4px rgba(255,36,66,.2)"></div>
       </div>
-      <!-- 附近列表 -->
-      <div style="padding:8px 14px 2px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px">附近的宠物</div>
-      <div style="display:flex;flex-direction:column;gap:8px;padding:6px 14px 16px">
-        <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看橘橘 🐱')">
-          <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
-          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">橘橘 <span style="font-weight:400;color:var(--muted)">· 橘猫</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 0.3km · 主人：橘猫日记</div></div>
-          <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
-        </div>
-        <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看柴柴 🐶')">
-          <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
-          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">柴柴 <span style="font-weight:400;color:var(--muted)">· 柴犬</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 0.8km · 主人：柴柴派对</div></div>
-          <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
-        </div>
-        <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看棉花 🐰')">
-          <img src="https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
-          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">棉花 <span style="font-weight:400;color:var(--muted)">· 垂耳兔</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 1.2km · 主人：棉花团团</div></div>
-          <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
-        </div>
-        <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看金毛 🐶')">
-          <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
-          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">金豆 <span style="font-weight:400;color:var(--muted)">· 金毛</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 1.6km · 主人：治愈系狗狗</div></div>
-          <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
-        </div>
-        <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看圆滚滚 🐹')">
-          <img src="https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
-          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">圆圆 <span style="font-weight:400;color:var(--muted)">· 仓鼠</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 2.1km · 主人：圆滚滚</div></div>
-          <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+
+      <!-- 宠友列表 -->
+      <div class="nb-section" data-cat="friend">
+        <div style="padding:8px 14px 2px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px">🐾 附近的宠物</div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:6px 14px 12px">
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看橘橘 🐱')">
+            <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">橘橘 <span style="font-weight:400;color:var(--muted)">· 橘猫</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 0.3km · 主人：橘猫日记</div></div>
+            <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+          </div>
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看柴柴 🐶')">
+            <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">柴柴 <span style="font-weight:400;color:var(--muted)">· 柴犬</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 0.8km · 主人：柴柴派对</div></div>
+            <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+          </div>
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看棉花 🐰')">
+            <img src="https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">棉花 <span style="font-weight:400;color:var(--muted)">· 垂耳兔</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 1.2km · 主人：棉花团团</div></div>
+            <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+          </div>
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看金毛 🐶')">
+            <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">金豆 <span style="font-weight:400;color:var(--muted)">· 金毛</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 1.6km · 主人：治愈系狗狗</div></div>
+            <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+          </div>
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('查看圆滚滚 🐹')">
+            <img src="https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=80&q=70" style="width:44px;height:44px;border-radius:var(--r8);object-fit:cover;flex-shrink:0" alt=""/>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">圆圆 <span style="font-weight:400;color:var(--muted)">· 仓鼠</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 2.1km · 主人：圆滚滚</div></div>
+            <div style="font-size:11px;color:var(--red);font-weight:600">关注</div>
+          </div>
         </div>
       </div>
+
+      <!-- 宠物店列表 -->
+      <div class="nb-section" data-cat="shop">
+        <div style="padding:8px 14px 2px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:flex;justify-content:space-between;align-items:center"><span>🏪 附近的宠物店</span><span id="shopSourceTag" style="font-size:10px;color:var(--muted2);font-weight:400">示例数据</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:6px 14px 12px" id="shopList">
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('毛孩子生活馆 · 4.8分 🏪')">
+            <div style="width:44px;height:44px;border-radius:var(--r8);background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏪</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">毛孩子生活馆</div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 0.5km · 4.8分 · 粮食/玩具/洗护</div></div>
+            <div style="font-size:11px;color:#b45309;font-weight:600">导航</div>
+          </div>
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('喵汪严选 · 4.6分 🏪')">
+            <div style="width:44px;height:44px;border-radius:var(--r8);background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏪</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">喵汪严选</div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 1.1km · 4.6分 · 猫砂/主粮</div></div>
+            <div style="font-size:11px;color:#b45309;font-weight:600">导航</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 宠物医院列表 -->
+      <div class="nb-section" data-cat="hospital">
+        <div style="padding:8px 14px 2px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:flex;justify-content:space-between;align-items:center"><span>🏥 附近的宠物医院</span><span id="hospitalSourceTag" style="font-size:10px;color:var(--muted2);font-weight:400">示例数据</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:6px 14px 12px" id="hospitalList">
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('安心宠物医院 · 24小时急诊 🏥')">
+            <div style="width:44px;height:44px;border-radius:var(--r8);background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏥</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">安心宠物医院</div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 1.0km · 24小时急诊 · 4.9分</div></div>
+            <div style="font-size:11px;color:#047857;font-weight:600">预约</div>
+          </div>
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('瑞派宠物医院 · 内科/外科 🏥')">
+            <div style="width:44px;height:44px;border-radius:var(--r8);background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏥</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">瑞派宠物医院</div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 1.8km · 内科/外科/体检 · 4.7分</div></div>
+            <div style="font-size:11px;color:#047857;font-weight:600">预约</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 纪念服务列表 -->
+      <div class="nb-section" data-cat="memorial">
+        <div style="padding:8px 14px 2px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px">🕯️ 附近的宠物纪念服务</div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:6px 14px 16px">
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('暖心宠物告别之家 · 火化/安葬 🕯️')">
+            <div style="width:44px;height:44px;border-radius:var(--r8);background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🕯️</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">暖心宠物告别之家</div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 2.3km · 火化 / 安葬 / 上门服务</div></div>
+            <div style="font-size:11px;color:#6d28d9;font-weight:600">了解</div>
+          </div>
+          <div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('星辰纪念园 · 生命契约 🕯️')">
+            <div style="width:44px;height:44px;border-radius:var(--r8);background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🕯️</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">星辰纪念园</div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 3.5km · 生命契约 / 树葬 / 纪念墙</div></div>
+            <div style="font-size:11px;color:#6d28d9;font-weight:600">了解</div>
+          </div>
+        </div>
+      </div>
+
       <div style="height:16px"></div>
     </div>
   </div><!-- /sc-home -->
@@ -631,18 +775,36 @@ body::before{display:none}
         <button style="width:32px;height:32px;border-radius:var(--rf);border:none;background:var(--cream2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--muted)" onclick="showToast('更多功能 ⋯')">⋯</button>
       </div>
     </div>
-    <div class="pet-tabs">
-      <div class="ptab on" onclick="switchPetTab(this,'pt-chat')">💬 对话</div>
-      <div class="ptab" onclick="switchPetTab(this,'pt-record')">🔤 对话翻译</div>
-      <div class="ptab" onclick="switchPetTab(this,'pt-tele')">🧠 心灵感应</div>
-    </div>
-
-    <!-- 对话 -->
+    <!-- 对话（文字聊天 + 声音翻译 合并为同一条时间线，不再分tab） -->
     <div id="pt-chat" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
       <div class="upload-bar">
-        <button class="upbtn">📷 照片</button>
-        <button class="upbtn">🎙️ 音频</button>
+        <button class="upbtn" onclick="document.getElementById('photoFileInput').click()">📷 照片</button>
+        <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)"/>
+        <button class="upbtn" id="recordBtn" onclick="toggleRecordPanel()" style="background:rgba(255,36,66,.14);color:var(--red);font-weight:700">🎙️ 录TA的声音</button>
+        <button class="upbtn" id="translateBtn" onclick="toggleSoundPicker()">🔊 翻译一下</button>
         <button class="upbtn">📎 文件</button>
+      </div>
+      <!-- 真实录音/上传面板（默认收起）—— 这才是真正驱动声音克隆进度的入口 -->
+      <div id="recordPanel" style="display:none;flex-shrink:0;background:linear-gradient(135deg,#fff5f0,#fff8f4);border-bottom:1px solid rgba(255,36,66,.15);padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:5px">🎙️ 存下它真实的声音，这才是声音克隆真正需要的样本</div>
+        <div style="display:flex;gap:8px">
+          <button id="recBtnMain" onclick="toggleRealRecording()" style="flex:1;height:44px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span id="recIcon">⏺️</span><span id="recLabel">开始录音</span></button>
+          <button onclick="document.getElementById('audioFileInput').click()" style="flex:1;height:44px;border-radius:var(--rf);background:#fff;border:1.5px solid var(--line2);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer">📁 上传音频文件</button>
+        </div>
+        <input type="file" id="audioFileInput" accept="audio/*" style="display:none" onchange="handleAudioUpload(event)"/>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center">每段真实录音/上传都会存入记忆银行并推进声音克隆进度 · 免费</div>
+      </div>
+      <!-- 轻量翻译面板（娱乐向，不占用真实录音额度） -->
+      <div id="soundPicker" style="display:none;flex-shrink:0;background:#fff8f4;border-bottom:1px solid rgba(255,36,66,.1);padding:12px 14px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">😺 玩一下：选个叫声看 AI 怎么理解（这个不存入声音克隆，只是娱乐）</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+          <div class="mchip on" onclick="setCatSound(this,'喵喵喵')">喵喵喵</div>
+          <div class="mchip" onclick="setCatSound(this,'嗷呜~')">嗷呜~</div>
+          <div class="mchip" onclick="setCatSound(this,'咕噜咕噜')">咕噜咕噜</div>
+          <div class="mchip" onclick="setCatSound(this,'嘶~')">嘶~</div>
+          <div class="mchip" onclick="setCatSound(this,'啾啾')">啾啾</div>
+        </div>
+        <button onclick="translateAndInsert()" style="width:100%;height:36px;border-radius:var(--rf);background:var(--ink);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">🔄 看看AI怎么翻译</button>
       </div>
       <div class="msgs" id="chatMsgs">
         <div class="msgs-date">今天</div>
@@ -650,77 +812,26 @@ body::before{display:none}
         <div class="msg me"><div class="msg-me-ava">我</div><div class="bubble">小橘你在干嘛呀</div></div>
         <div class="msg"><div class="msg-ava">🐱</div><div class="bubble">我刚刚晒了一下午的太阳，肚子软软的，你要不要摸摸看？✨</div></div>
         <div class="msg me"><div class="msg-me-ava">我</div><div class="bubble">想你了</div></div>
+        <div class="msg" style="align-items:flex-start">
+          <div class="msg-ava">🐱</div>
+          <div class="bubble" style="border:1.5px solid rgba(52,199,89,.3);background:rgba(52,199,89,.06)">
+            <div style="font-size:10px;font-weight:700;color:#22a349;margin-bottom:4px;display:flex;align-items:center;gap:4px">🎙️ 真实录音 · 呼噜声</div>
+            <div style="font-size:12px;color:var(--muted)">04'' · 已存入声音记忆库</div>
+          </div>
+        </div>
+        <div class="msg" style="align-items:flex-start">
+          <div class="msg-ava">🐱</div>
+          <div class="bubble" style="border:1.5px solid rgba(255,36,66,.25);background:rgba(255,36,66,.05)">
+            <div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px;display:flex;align-items:center;gap:4px">🔊 AI翻译 · 呼噜声</div>
+            「主人，你今天有好好吃饭吗？我等你好久了，快来陪我晒太阳吧～」
+          </div>
+        </div>
         <div class="msg" id="typingMsg"><div class="msg-ava">🐱</div><div class="bubble"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>
       </div>
       <div class="input-row">
-        <button class="call-btn call-v" title="语音通话" onclick="showToast('语音通话即将上线 📞')">📞</button>
-        <button class="call-btn call-vid" title="视频通话" onclick="showToast('视频通话即将上线 📹')">📹</button>
         <button class="inp-mic" id="micBtn" onclick="toggleMic()">🎤</button>
         <input class="chat-inp" id="chatInput" placeholder="给小橘发消息…" onkeydown="if(event.key==='Enter')sendChat()"/>
         <button class="inp-send" onclick="sendChat()">➤</button>
-      </div>
-    </div>
-
-    <!-- 记录 -->
-    <!-- 对话翻译 tab -->
-    <div id="pt-record" style="display:none;flex:1;flex-direction:column;overflow:hidden">
-      <div class="rec-panel">
-        <!-- 说明 -->
-        <div style="background:linear-gradient(135deg,#fff5f0,#fff8f4);border:1px solid rgba(255,36,66,.15);border-radius:var(--r12);padding:12px 14px;display:flex;align-items:flex-start;gap:10px">
-          <div style="font-size:22px;flex-shrink:0">🐾</div>
-          <div><div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:3px">AI 双向对话翻译</div><div style="font-size:12px;color:var(--muted);line-height:1.55">听懂它在说什么，让它听懂你——用 AI 打破人宠语言壁垒</div></div>
-        </div>
-        <!-- 主人 → 宠物 -->
-        <div style="background:#fff;border-radius:var(--r12);padding:14px;border:1px solid var(--line)">
-          <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">😊 我说 → 小橘听到的</div>
-          <textarea style="width:100%;border:1px solid var(--line2);border-radius:var(--r8);padding:9px 11px;font-size:13px;font-family:var(--font);resize:none;outline:none;color:var(--ink);min-height:60px;background:var(--cream2);line-height:1.55" placeholder="输入你想说的话…">小橘你最近乖不乖啊，有没有按时吃饭？</textarea>
-          <button onclick="translateTocat()" style="width:100%;margin-top:8px;height:38px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">🔄 翻译成猫语</button>
-          <div id="catResult" style="display:none;margin-top:10px;background:var(--cream2);border-radius:var(--r8);padding:10px 12px;font-size:13px;color:var(--ink);line-height:1.6;border:1px solid var(--line)"></div>
-        </div>
-        <!-- 宠物 → 主人 -->
-        <div style="background:#fff;border-radius:var(--r12);padding:14px;border:1px solid var(--line)">
-          <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">🐱 小橘说 → 我听到的</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
-            <div class="mchip on" onclick="setCatSound(this,'喵喵喵')">喵喵喵</div>
-            <div class="mchip" onclick="setCatSound(this,'嗷呜~')">嗷呜~</div>
-            <div class="mchip" onclick="setCatSound(this,'咕噜咕噜')">咕噜咕噜</div>
-            <div class="mchip" onclick="setCatSound(this,'嘶~')">嘶~</div>
-            <div class="mchip" onclick="setCatSound(this,'啾啾')">啾啾</div>
-          </div>
-          <button onclick="translateTohuman()" style="width:100%;height:38px;border-radius:var(--rf);background:var(--ink);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">🔄 翻译成人话</button>
-          <div id="humanResult" style="display:none;margin-top:10px;background:var(--cream2);border-radius:var(--r8);padding:10px 12px;font-size:13px;color:var(--ink);line-height:1.6;border:1px solid var(--line)"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 心灵感应 -->
-    <div id="pt-tele" style="display:none;flex:1;flex-direction:column;overflow:hidden">
-      <div class="tele-panel">
-        <div class="tele-card">
-          <div class="tele-title">🐾 宠物 → 主人</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">选择它现在的心情</div>
-          <div class="mood-row">
-            <div class="mchip on" onclick="setMood(this,'开心')">😸 开心</div>
-            <div class="mchip" onclick="setMood(this,'撒娇')">🥺 撒娇</div>
-            <div class="mchip" onclick="setMood(this,'困')">😴 困</div>
-            <div class="mchip" onclick="setMood(this,'饿')">🍗 饿</div>
-            <div class="mchip" onclick="setMood(this,'委屈')">😿 委屈</div>
-          </div>
-          <button class="tele-btn" onclick="playTele()">🎵 听它说</button>
-          <div class="tele-bars" id="teleBars">
-            <div class="tbar" style="height:40%"></div><div class="tbar" style="height:60%"></div><div class="tbar" style="height:30%"></div><div class="tbar" style="height:80%"></div><div class="tbar" style="height:50%"></div><div class="tbar" style="height:70%"></div><div class="tbar" style="height:40%"></div><div class="tbar" style="height:90%"></div><div class="tbar" style="height:55%"></div><div class="tbar" style="height:35%"></div>
-          </div>
-          <div class="tele-result" id="teleResult">「主人，你今天有好好吃饭吗？我等你好久了，快来陪我晒太阳吧～」</div>
-        </div>
-        <div class="tele-card">
-          <div class="tele-title">💌 主人 → 宠物</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">用它能理解的频率传递你的话</div>
-          <textarea class="tele-ta" id="teleInput" placeholder="写下你想对它说的话…">小橘，你在那边还好吗？好想你 🐟</textarea>
-          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-            <button class="tele-btn" onclick="playFreq()">🔊 传递</button>
-            <div style="font-size:10px;color:var(--muted);flex:1" id="freqLbl">680Hz + 720Hz 双声道</div>
-          </div>
-        </div>
       </div>
     </div>
   </div><!-- /sc-pet -->
@@ -745,7 +856,7 @@ body::before{display:none}
 
       <!-- daily health -->
       <div>
-        <div class="hd-sec-title">📋 今日日常<span class="hd-add">+ 记录</span></div>
+        <div class="hd-sec-title">📋 今日日常<span class="hd-add" onclick="addHealthRecord('daily')">+ 记录</span></div>
         <div class="hd-card">
           <div class="hd-row"><div class="hd-em">🍚</div><div class="hd-lbl">吃饭量</div><div class="hd-val">正常</div><div class="hd-tag tag-ok">✓ 好</div></div>
           <div class="hd-row"><div class="hd-em">💧</div><div class="hd-lbl">喝水量</div><div class="hd-val">偏少</div><div class="hd-tag tag-warn">⚠ 注意</div></div>
@@ -768,7 +879,7 @@ body::before{display:none}
 
       <!-- medical timeline -->
       <div>
-        <div class="hd-sec-title">🩺 医疗记录<span class="hd-add">+ 添加</span></div>
+        <div class="hd-sec-title">🩺 医疗记录<span class="hd-add" onclick="addHealthRecord('medical')">+ 添加</span></div>
         <div class="med-timeline">
 
           <div class="med-item">
@@ -822,7 +933,7 @@ body::before{display:none}
           </div>
 
         </div>
-        <div class="med-add-btn" onclick="showToast('添加医疗记录 🩺')">＋ 添加医疗记录</div>
+        <div class="med-add-btn" onclick="addHealthRecord('medical')">＋ 添加医疗记录</div>
       </div>
 
       <div style="height:16px"></div>
@@ -831,9 +942,10 @@ body::before{display:none}
 
   <!-- ══ TIMELINE ══ -->
   <div class="screen" id="sc-timeline">
-    <div class="tl-top">
-      <h2>📅 时光轴</h2>
-      <p>小橘的每一个珍贵瞬间</p>
+    <div class="tl-top" style="display:flex;align-items:center;gap:10px">
+      <div onclick="switchScreen('sc-bank',1)" style="font-size:22px;cursor:pointer;line-height:1">‹</div>
+      <div><h2 style="margin:0">📅 时光轴</h2>
+      <p style="margin:0">小橘的每一个珍贵瞬间</p></div>
     </div>
     <div class="tl-scroll">
       <div style="height:4px"></div>
@@ -862,7 +974,7 @@ body::before{display:none}
           <div class="tl-desc">一只小小的橘色毛球，躲在角落里，眼睛又大又圆，看了我好久才慢慢走过来…</div>
         </div>
       </div>
-      <div class="tl-add" onclick="showToast('记录新瞬间 🐾')">＋ 记录新时光</div>
+      <div class="tl-add" onclick="goRecordMemory()">＋ 存入新声音/照片</div>
       <div style="height:16px"></div>
     </div>
   </div><!-- /sc-timeline -->
@@ -891,17 +1003,16 @@ body::before{display:none}
       <div class="prof-hero" style="border-top:none;padding-top:10px">
         <div class="prof-stats">
           <div class="pstat"><div class="pstat-n">1</div><div class="pstat-l">宠物</div></div>
-          <div class="pstat"><div class="pstat-n">48</div><div class="pstat-l">记忆</div></div>
+          <div class="pstat"><div class="pstat-n" id="profMemCount">48</div><div class="pstat-l">记忆</div></div>
           <div class="pstat"><div class="pstat-n">237</div><div class="pstat-l">陪伴天</div></div>
         </div>
       </div>
-      </div><!-- /prof-hero -->
       <div style="height:8px"></div>
       <div class="pet-cards">
         <div class="p-sec-lbl">我的宠物</div>
-        <div class="pet-card" onclick="switchScreen('sc-pet',2)">
+        <div class="pet-card" onclick="switchScreen('sc-bank',1)">
           <div class="pet-card-ava">🐱</div>
-          <div style="flex:1"><div class="pet-card-name">小橘</div><div class="pet-card-sub">橘猫 · 3岁 · 已记录 48 个瞬间</div></div>
+          <div style="flex:1"><div class="pet-card-name">小橘</div><div class="pet-card-sub">橘猫 · 3岁 · 已记录 <span id="petCardMemCount">48</span> 个瞬间</div></div>
           <div class="pet-card-arrow">›</div>
         </div>
         <div class="pet-card" onclick="showToast('添加新宠物 🐾')">
@@ -913,18 +1024,18 @@ body::before{display:none}
       <div style="height:8px"></div>
       <div style="padding:8px 14px 2px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.3px">记忆空间</div>
       <div class="capacity-block">
-        <div class="cap-row"><span class="cap-label">已用 48 / 100 张照片</span><span class="cap-badge">免费版</span></div>
-        <div class="cap-bar"><div class="cap-fill"></div></div>
-        <div class="cap-hint">还剩 52 张，继续记录吧 🐾</div>
+        <div class="cap-row"><span class="cap-label">已用 <span id="capUsed">48</span> / 100 张照片</span><span class="cap-badge">免费版</span></div>
+        <div class="cap-bar"><div class="cap-fill" id="capFill"></div></div>
+        <div class="cap-hint" id="capHint">还剩 52 张，继续记录吧 🐾</div>
       </div>
       <div class="upgrade-nudge" onclick="openModal()">
         <div class="un-icon">✨</div>
-        <div style="flex:1"><div class="un-title">解锁无限记忆空间</div><div class="un-sub">无限照片 · 声音克隆 · 心灵感应 · ¥39/月起</div></div>
+        <div style="flex:1"><div class="un-title">解锁无限记忆空间</div><div class="un-sub">无限照片 · 声音克隆 · 记忆备份 · 年度会员优先</div></div>
         <div class="un-arrow">›</div>
       </div>
       <div style="height:8px"></div>
       <div class="prof-sec">
-        <div class="prof-row" onclick="showToast('正在跳转到数据导入 📦')" style="cursor:pointer"><div class="pr-em">📲</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">一键导入数据</div><div style="font-size:11px;color:var(--muted);margin-top:1px">从微信相册 · 抖音宠物号 · 本地照片</div></div><div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--rf);background:var(--red-l);color:var(--red);margin-right:4px">NEW</div><div class="pr-arrow">›</div></div>
+        <div class="prof-row" onclick="importDataToBank()" style="cursor:pointer"><div class="pr-em">📲</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">一键导入数据</div><div style="font-size:11px;color:var(--muted);margin-top:1px">从微信相册 · 抖音宠物号 · 本地照片 · 自动存入记忆银行</div></div><div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--rf);background:var(--red-l);color:var(--red);margin-right:4px">NEW</div><div class="pr-arrow">›</div></div>
         <div class="prof-row"><div class="pr-em">🔔</div><div class="pr-lbl">提醒设置</div><div class="pr-arrow">›</div></div>
         <div class="prof-row"><div class="pr-em">🔒</div><div class="pr-lbl">隐私与安全</div><div class="pr-arrow">›</div></div>
         <div class="prof-row"><div class="pr-em">📦</div><div class="pr-lbl">数据导出</div><div class="pr-arrow">›</div></div>
@@ -934,10 +1045,134 @@ body::before{display:none}
     </div>
   </div><!-- /sc-profile -->
 
+  <!-- ══ MEMORY BANK ══ -->
+  <div class="screen" id="sc-bank">
+    <div class="bank-top">
+      <h2>🏦 记忆银行</h2>
+      <p>你存下的每一刻，都是未来的底气</p>
+    </div>
+    <div class="bank-scroll">
+
+      <!-- 总量卡 -->
+      <div class="bank-hero">
+        <div class="bh-label">已为小橘存入</div>
+        <div class="bh-count" id="bankCount">48</div>
+        <div class="bh-unit">条记忆</div>
+        <div class="bh-stats">
+          <div class="bh-stat"><div class="bh-sn" id="bankPhotos">32</div><div class="bh-sl">📷 照片</div></div>
+          <div class="bh-stat"><div class="bh-sn" id="bankAudio">2</div><div class="bh-sl">🎙️ 声音样本</div></div>
+          <div class="bh-stat"><div class="bh-sn" id="bankText">14</div><div class="bh-sl">✏️ 翻译/文字</div></div>
+        </div>
+      </div>
+
+      <!-- 健康档案联动（与 sc-health 数据联通） -->
+      <div class="family-card" style="cursor:pointer" onclick="switchScreen('sc-health',3)">
+        <div class="fc-head" style="margin-bottom:2px">
+          <div class="fc-title">🏥 健康档案已同步</div>
+          <div class="fc-invite" id="bankHealthArrow">查看 ›</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.6">已存入 <strong id="bankMedCount">5</strong> 条医疗记录、<strong id="bankDailyCount">1</strong> 条今日日常记录——每次在健康档案新增记录，会自动计入这里的记忆总量。</div>
+      </div>
+      <div class="clone-card">
+        <div class="clone-head">
+          <div class="clone-title">🎙️ 声音克隆进度</div>
+          <div class="clone-badge" id="cloneBadge">2 / 8 段</div>
+        </div>
+        <div class="clone-bar-wrap"><div class="clone-bar-fill" id="cloneBarFill" style="width:25%"></div></div>
+        <div class="clone-segs" id="cloneSegs">
+          <div class="clone-seg done">✓ 撒娇声</div>
+          <div class="clone-seg done">✓ 呼噜声</div>
+          <div class="clone-seg todo">⬜ 催促叫</div>
+          <div class="clone-seg todo">⬜ 低吼声</div>
+          <div class="clone-seg todo">⬜ 兴奋叫</div>
+          <div class="clone-seg todo">⬜ 惊吓声</div>
+          <div class="clone-seg todo">⬜ 睡梦呢喃</div>
+          <div class="clone-seg todo">⬜ 告别声</div>
+        </div>
+        <div class="clone-hint">再录 <strong>6 段</strong>不同情绪的叫声，声音克隆即可达到「可用于告别服务」的质量阈值——这一步完全免费，越早开始存越好。</div>
+      </div>
+
+      <!-- 家人协作 -->
+      <div class="family-card">
+        <div class="fc-head">
+          <div class="fc-title">👨‍👩‍👧 家人一起记录</div>
+          <div class="fc-invite" onclick="openInviteModal()">+ 邀请家人</div>
+        </div>
+        <div class="fc-members">
+          <div class="fc-member">
+            <div class="fc-ava" style="background:linear-gradient(135deg,#ff8c5a,var(--red))">😺</div>
+            <div class="fc-name">我（主人）</div>
+          </div>
+          <div class="fc-member" onclick="showToast('查看妈妈的记录 👩')">
+            <div class="fc-ava" style="background:linear-gradient(135deg,#93c5fd,#3b82f6)">👩</div>
+            <div class="fc-name">妈妈</div>
+          </div>
+          <div class="fc-member" onclick="openInviteModal()">
+            <div class="fc-add-btn">＋</div>
+            <div class="fc-name">邀请</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 近期时间线 -->
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">📋 近期存入<span style="font-size:11px;color:var(--red);font-weight:600;cursor:pointer" onclick="switchScreen('sc-timeline',1)">查看全部 ›</span></div>
+        <div class="bank-tl" id="bankTlList">
+          <div class="btl-item">
+            <div class="btl-dot">🎙️</div>
+            <div class="btl-body">
+              <div class="btl-date">今天 15:42</div>
+              <div class="btl-title">呼噜声 · 真实录音</div>
+              <div class="btl-desc">趴在胚子上打呼噜的那段，已存入声音记忆库 🐾</div>
+            </div>
+          </div>
+          <div class="btl-item">
+            <div class="btl-dot">📷</div>
+            <div class="btl-body">
+              <div class="btl-date">昨天 09:15</div>
+              <div class="btl-title">窗台晒太阳</div>
+              <div class="btl-desc">一整个下午都趴在那，肚子软软的 ☀️</div>
+              <img class="btl-thumb" src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&q=70" alt=""/>
+            </div>
+          </div>
+          <div class="btl-item">
+            <div class="btl-dot">🏥</div>
+            <div class="btl-body">
+              <div class="btl-date">3天前</div>
+              <div class="btl-title">年度体检 · 医疗记录</div>
+              <div class="btl-desc">血常规、肝肾功能均正常，牛结石轻度，建议明年洁牙</div>
+            </div>
+          </div>
+          <div class="btl-item">
+            <div class="btl-dot">🎙️</div>
+            <div class="btl-body">
+              <div class="btl-date">上周</div>
+              <div class="btl-title">呼噜声 · 声音样本</div>
+              <div class="btl-desc">趴在肚子上打呼噜的那段 🐾</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border:1.5px dashed var(--line2);border-radius:var(--r12);color:var(--red);font-size:13px;font-weight:600;cursor:pointer;background:#fff" onclick="goRecordMemory()">＋ 存入新记忆</div>
+      </div>
+
+      <!-- 纪念入口（平时低调存在，不主动推销） -->
+      <div class="memorial-entry" onclick="showToast('记忆银行存得越多，告别时就越有底气 🕯️')">
+        <div class="me-icon">🕯️</div>
+        <div style="flex:1">
+          <div class="me-title">关于「最后的告别」</div>
+          <div class="me-sub">当那天真的来临，你存下的照片、声音和文字，会成为一份专属的纪念——但那是以后的事，现在只需要好好陪它。</div>
+        </div>
+        <div class="me-arrow">›</div>
+      </div>
+
+      <div style="height:16px"></div>
+    </div>
+  </div><!-- /sc-bank -->
+
   <!-- ── BOTTOM NAV ── -->
   <nav class="bnav" id="mainBnav">
     <button class="bn-item on" onclick="switchScreen('sc-home',0)"><div class="bn-icon">🏠</div><div class="bn-lbl">首页</div></button>
-    <button class="bn-item" onclick="switchScreen('sc-timeline',1)"><div class="bn-icon">📅</div><div class="bn-lbl">时光</div></button>
+    <button class="bn-item" onclick="switchScreen('sc-bank',1)"><div class="bn-icon">🏦</div><div class="bn-lbl">记忆银行</div></button>
     <button class="bn-item" onclick="switchScreen('sc-pet',2)"><div class="bn-post" style="font-size:22px">💬</div><div class="bn-lbl">陪伴</div></button>
     <button class="bn-item" onclick="switchScreen('sc-health',3)"><div class="bn-icon">🏥</div><div class="bn-lbl">健康</div></button>
     <button class="bn-item" onclick="switchScreen('sc-profile',4)"><div class="bn-icon">😺</div><div class="bn-lbl">我的</div></button>
@@ -951,18 +1186,40 @@ body::before{display:none}
     <div class="modal-title">解锁记忆版</div>
     <div class="modal-sub">为它留下更多，陪伴更长久</div>
     <div class="plan-tabs">
-      <div class="plan-tab on" onclick="setPlan(this)"><div class="plan-tab-price">¥39</div><div class="plan-tab-lbl">月付</div></div>
-      <div class="plan-tab" onclick="setPlan(this)"><div class="plan-tab-price">¥299</div><div class="plan-tab-lbl">告别纪念</div></div>
+      <div class="plan-tab on" onclick="setPlan(this,'monthly')"><div class="plan-tab-price">¥19</div><div class="plan-tab-lbl">月付会员</div></div>
+      <div class="plan-tab" onclick="setPlan(this,'farewell')"><div class="plan-tab-price">¥299</div><div class="plan-tab-lbl">告别纪念</div></div>
     </div>
-    <div class="plan-feats">
-      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">无限照片 + 语音上传</div></div>
-      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">无限 AI 对话</div></div>
-      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">声音克隆（上传录音还原声线）</div></div>
-      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">心灵感应高级模式</div></div>
-      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">永久存档保障</div></div>
+    <div class="plan-feats" id="planFeatsMonthly">
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">无限照片存储（免费版 100张上限）</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">声音克隆优先处理（免费版排队）</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">记忆银行云备份（手机丢失不丢数据）</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">家人协作人数上限 5人 → 无限</div></div>
     </div>
-    <button class="modal-cta" onclick="showToast('感谢你的爱 🐾 即将上线');closeModal()">立即解锁 ¥39/月</button>
+    <div class="plan-feats" id="planFeatsFarewell" style="display:none">
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">基于已存声音样本，生成专属声音克隆</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">生成告别纪念册（照片+声音+文字合集）</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">一次性付费，永久保存，不需要续费</div></div>
+    </div>
+    <button class="modal-cta" id="modalCtaBtn" onclick="showToast('感谢你的爱 🐾 即将上线');closeModal()">立即解锁 ¥19/月</button>
     <div class="modal-hint">随时取消 · 数据永久保留 · 不会删除你的记忆</div>
+  </div>
+</div>
+
+<!-- 邀请家人 MODAL -->
+<div class="modal-bg" id="inviteModal" onclick="if(event.target===this)closeInviteModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👨‍👩‍👧 邀请家人一起记录</div>
+    <div class="modal-sub">扫码或分享链接，一起为小橘存下记忆</div>
+    <div style="display:flex;justify-content:center;padding:8px 16px 16px">
+      <div style="background:#fff;border-radius:var(--r16);padding:14px;box-shadow:0 4px 20px rgba(0,0,0,.1);border:1px solid var(--line)">
+        <img id="inviteQrImg" src="" alt="邀请二维码" style="width:180px;height:180px;display:block;border-radius:var(--r8)"/>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--muted);padding:0 16px;margin-bottom:14px">微信扫一扫上面的二维码，即可加入小橘的记忆圈</div>
+    <div style="margin:0 16px 10px;background:var(--bg2);border-radius:var(--r12);padding:10px 12px;font-size:11px;color:var(--muted);word-break:break-all" id="inviteLinkText"></div>
+    <button class="modal-cta" onclick="copyInviteLink()">🔗 复制邀请链接</button>
+    <div class="modal-hint">最多可邀请 5 位家人共同记录</div>
   </div>
 </div>
 
@@ -1036,6 +1293,14 @@ function switchScreen(id,navIdx){
   // hide bnav inside pet screen for immersion, show for health/timeline/profile
   document.getElementById('mainBnav').style.display=(id==='sc-pet')?'none':'flex';
 }
+// 全局唯一的“存一条新记忆”入口：跳到院伴页并自动展开录音面板（时光轴/记忆银行里的“+存入新记忆”都走这个，不再各自弹假toast）
+function goRecordMemory(){
+  switchScreen('sc-pet',2);
+  setTimeout(()=>{
+    const p=document.getElementById('recordPanel');
+    if(p && p.style.display!=='block'){toggleRecordPanel();}
+  },260);
+}
 
 // ── HOME TABS ──
 function setHomeTab(btn,tabId){
@@ -1044,14 +1309,97 @@ function setHomeTab(btn,tabId){
     const el=document.getElementById(id);if(!el)return;
     if(id===tabId){el.style.display='flex';el.style.flexDirection='column';el.style.width='100%';}else{el.style.display='none';}
   });
+  if(tabId==='tab-nearby' && !userGeo){ initNearbyReal(); }
 }
 
-// ── PET TABS ──
-function switchPetTab(btn,tabId){
-  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');
-  document.querySelectorAll('#sc-pet > div[id^="pt-"]').forEach(t=>{t.style.display='none';});
-  const t=document.getElementById(tabId);if(t){t.style.display='flex';}
+// ── 附近页筛选：全部/宠友/宠物店/医院/纪念服务 ──
+function setNearbyFilter(btn,cat){
+  document.querySelectorAll('.nb-filter').forEach(f=>f.classList.remove('on'));btn.classList.add('on');
+  document.querySelectorAll('.nb-section').forEach(sec=>{
+    sec.style.display=(cat==='all'||sec.dataset.cat===cat)?'block':'none';
+  });
+  document.querySelectorAll('.nb-pin').forEach(pin=>{
+    const isMatch=cat==='all'||pin.classList.contains('nb-pin-'+cat);
+    pin.style.opacity=isMatch?'1':'.25';
+  });
 }
+
+// ── 高德地图接入（真实POI，渐进增强：有 key 用真数据，没 key 保留现有示例数据不报错）──
+// ❗ 使用方法：去 https://lbs.amap.com 注册开发者并申请"Web服务API"类型Key（免费），填入下面即可真实生效
+const AMAP_KEY = 'fc8dbcf035ed9e6809754580988af7e8'; // ← 已填入高德 Web服务API Key
+let userGeo = null; // {lng, lat}
+
+function initNearbyReal(){
+  const bar=document.getElementById('geoStatusBar');
+  const text=document.getElementById('geoStatusText');
+  const btn=document.getElementById('geoStatusBtn');
+  if(!AMAP_KEY){
+    console.log('[附近页] 未配置 AMAP_KEY，当前为示例数据。在 index.html 搜索 AMAP_KEY 变量填入真实key即可接入高德地图真实POI。');
+    return;
+  }
+  if(!navigator.geolocation){
+    if(bar){bar.style.display='flex';text.textContent='当前环境不支持定位，显示示例数据';btn.style.display='none';}
+    return;
+  }
+  if(bar){bar.style.display='flex';text.textContent='正在获取定位…';btn.style.display='none';}
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      userGeo = { lng: pos.coords.longitude, lat: pos.coords.latitude };
+      fetchNearbyPOI('宠物店', 'shopList', 'shopSourceTag');
+      fetchNearbyPOI('宠物医院', 'hospitalList', 'hospitalSourceTag');
+      if(bar) bar.style.display='none'; // 定位成功后收起引导条
+    },
+    err=>{
+      console.log('[附近页] 定位失败，保留示例数据', err);
+      if(bar){
+        bar.style.display='flex';
+        // code 1 = 用户拒绝权限，需要引导去浏览器设置里手动开；其他情况可以直接重试
+        if(err.code===1){
+          text.textContent='定位权限被拒绝，请在浏览器地址栏左侧锁图标里开启定位权限后重试';
+          btn.textContent='我已开启，重试';
+        } else {
+          text.textContent='定位暂时失败，可能是GPS信号弱或网络问题';
+          btn.textContent='重试';
+        }
+        btn.style.display='inline-block';
+      }
+      showToast('未获取到定位权限，显示示例数据');
+    },
+    { timeout: 6000 }
+  );
+}
+
+async function fetchNearbyPOI(keyword, listElId, tagElId){
+  if(!userGeo) return;
+  try{
+    const url = `https://restapi.amap.com/v3/place/around?key=${AMAP_KEY}&location=${userGeo.lng},${userGeo.lat}&keywords=${encodeURIComponent(keyword)}&radius=5000&offset=6&page=1&extensions=all`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(data.status!=='1' || !data.pois || data.pois.length===0){
+      console.log('[附近页] 高德返回无数据或失败，保留示例数据', data);
+      return;
+    }
+    const listEl = document.getElementById(listElId);
+    const icon = keyword==='宠物店' ? '🏪' : '🏥';
+    const bg = keyword==='宠物店' ? '#fef3c7' : '#d1fae5';
+    const actionColor = keyword==='宠物店' ? '#b45309' : '#047857';
+    const actionText = keyword==='宠物店' ? '导航' : '预约';
+    listEl.innerHTML = data.pois.slice(0,6).map(poi=>{
+      const distKm = poi.distance ? (poi.distance/1000).toFixed(1) : '?';
+      const safeName = String(poi.name||'').replace(/'/g,"\\'");
+      return `<div style="background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);cursor:pointer" onclick="showToast('${safeName} 🐾')">
+        <div style="width:44px;height:44px;border-radius:var(--r8);background:${bg};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${icon}</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">${poi.name}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">距你 ${distKm}km · ${poi.address||'地址未提供'}</div></div>
+        <div style="font-size:11px;color:${actionColor};font-weight:600">${actionText}</div>
+      </div>`;
+    }).join('');
+    const tagEl = document.getElementById(tagElId);
+    if(tagEl){ tagEl.textContent='高德地图实时数据'; tagEl.style.color='#22a349'; }
+  }catch(e){
+    console.log('[附近页] 请求高德API异常，保留示例数据', e);
+  }
+}
+
 
 // ── CHAT ──
 const REPLIES=['喵～我在呢，你今天怎么样？🐾','嗯嗯，我听到你了，你要多吃点饭哦🍚','感觉你今天有点累，要不要先休息一下？😴','我最喜欢你陪我晒太阳了，什么时候再一起？☀️','你知道吗，我每天都在等你回来，听到开门声就跑过去 🏃'];
@@ -1086,46 +1434,107 @@ function toggleMic(){
   recog.start();micOn=true;btn.textContent='🔴';btn.style.background='#fee2e2';
 }
 
-// ── TELEPATHY ──
-const MOOD_MSGS={
-  '开心':'「主人，你今天有好好吃饭吗？我超级快乐，快来陪我晒太阳！」',
-  '撒娇':'「主人，我想要抱抱，你什么时候回来啊，我等你好久了 🥺」',
-  '困':'「别吵我……要睡觉了……晚安 zzzz 😴」',
-  '饿':'「喵！饿！现在！粮！快！🍗 喵！」',
-  '委屈':'「你今天有没有想我？不在的时候好冷清，我躲在你衣服里了… 😿」',
-};
-let curMood='开心';
-function setMood(el,mood){document.querySelectorAll('.mchip').forEach(c=>c.classList.remove('on'));el.classList.add('on');curMood=mood;document.getElementById('teleResult').textContent=MOOD_MSGS[mood];}
-function playTele(){
-  animBars();const msg=MOOD_MSGS[curMood];document.getElementById('teleResult').textContent=msg;
-  if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(msg);u.lang='zh-CN';u.rate=.9;window.speechSynthesis.speak(u);}
-  playDualTone(680,720,2.5);
+// ── TRANSLATION（合并进聊天时间线）──
+const CAT_SOUNDS={'喵喵喵':'我在这里！你今天有没有想我～你知道吗我一直在等你 🐟','嗷呜~':'我饿了……而且有点委屈，你今天回来好晚哦 😿','咕噜咕噜':'我很满足，你摸我摸得正好，继续吧不要停 😸','嘶~':'我不喜欢这个！你碰到我敏感的地方了，停手！','啾啾':'我睡眼惺忪……你叫我干嘛……好困……'};
+let curCatSound='喵喵喵';
+function setCatSound(el,s){document.querySelectorAll('#soundPicker .mchip').forEach(c=>c.classList.remove('on'));el.classList.add('on');curCatSound=s;}
+function toggleSoundPicker(){
+  const p=document.getElementById('soundPicker');
+  const btn=document.getElementById('translateBtn');
+  const showing=p.style.display==='block';
+  p.style.display=showing?'none':'block';
+  btn.style.background=showing?'rgba(255,36,66,.1)':'rgba(255,36,66,.18)';
 }
-function playFreq(){
-  animBars();const lbl=document.getElementById('freqLbl');
-  lbl.textContent='正在传递…';setTimeout(()=>lbl.textContent='680Hz + 720Hz 双声道',3000);
-  playDualTone(680,720,3);
-}
-function playDualTone(f1,f2,dur){
-  try{const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    [[f1,-0.5],[f2,0.5]].forEach(([f,pan])=>{
-      const o=ctx.createOscillator(),g=ctx.createGain(),p=ctx.createStereoPanner();
-      o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0.2,0);g.gain.linearRampToValueAtTime(0,dur);
-      p.pan.value=pan;o.connect(g);g.connect(p);p.connect(ctx.destination);o.start();o.stop(ctx.currentTime+dur);
-    });
-  }catch(e){}
-}
-function animBars(){
-  const bars=document.querySelectorAll('.tbar');let i=0;
-  const t=setInterval(()=>{bars.forEach(b=>{b.style.height=(20+Math.random()*75)+'%';b.classList.toggle('on',Math.random()>.4);});if(++i>25)clearInterval(t);},120);
+function translateAndInsert(){
+  const msgs=document.getElementById('chatMsgs');
+  const typing=document.getElementById('typingMsg');
+  const text=CAT_SOUNDS[curCatSound]||'它在表达一种复杂的情绪，大意是：我爱你，但你最好现在就过来摸我。';
+  const row=document.createElement('div');row.className='msg';row.style.alignItems='flex-start';
+  row.innerHTML=`<div class="msg-ava">🐱</div><div class="bubble" style="border:1.5px solid rgba(255,36,66,.25);background:rgba(255,36,66,.05)"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px;display:flex;align-items:center;gap:4px">🔊 AI翻译 · ${curCatSound}</div>「${text}」</div>`;
+  msgs.insertBefore(row,typing);msgs.scrollTop=msgs.scrollHeight;
+  toggleSoundPicker();
+  showToast('这只是娱乐翻译，想真正存它的声音可以点"录TA的声音" 🎙️');
 }
 
-// ── TRANSLATION ──
-const CAT_SOUNDS={'喵喵喵':'我在这里！你今天有没有想我～你知道吗我一直在等你 🐾','嗷呜~':'我饿了……而且有点委屈，你今天回来好晚哦 😿','呼噜呼噜':'我很满足，你摸我摸得正好，继续吧不要停 😸','嘶~':'我不喜欢这个！你碰到我敏感的地方了，停手！','咪咪':'我睡眼惺忪……你叫我干嘛……好困……'};
-let curCatSound='喵喵喵';
-function setCatSound(el,s){document.querySelectorAll('#pt-record .mchip').forEach(c=>c.classList.remove('on'));el.classList.add('on');curCatSound=s;}
-function translateTocat(){const ta=document.querySelector('#pt-record textarea');const txt=ta.value.trim();if(!txt)return;const res=document.getElementById('catResult');const maps=['「喵～ '+txt.replace('你','汪')+' 喵喵喵」','「喵呜～ 我知道了～ 你说的是：'+txt+'  喵～」','「嗷～ '+txt+' 呼噜呼噜～ 」'];res.textContent=maps[Math.floor(Math.random()*maps.length)];res.style.display='block';}
-function translateTohuman(){const res=document.getElementById('humanResult');res.textContent=CAT_SOUNDS[curCatSound]||'它在表达一种复杂的情绪，大意是：我爱你，但你最好现在就过来摸我。';res.style.display='block';}
+// ── 真实录音 / 上传 ── 真正驱动声音克隆进度的入口
+function toggleRecordPanel(){
+  const p=document.getElementById('recordPanel');
+  const btn=document.getElementById('recordBtn');
+  const showing=p.style.display==='block';
+  p.style.display=showing?'none':'block';
+  btn.style.background=showing?'rgba(255,36,66,.14)':'rgba(255,36,66,.22)';
+  // 互斥：打开录音面板时收起翻译面板
+  if(!showing){const sp=document.getElementById('soundPicker');if(sp)sp.style.display='none';}
+}
+let mediaRecorder=null,recChunks=[],isRecording=false,recStartTime=0;
+async function toggleRealRecording(){
+  const btn=document.getElementById('recBtnMain');
+  const icon=document.getElementById('recIcon');
+  const label=document.getElementById('recLabel');
+  if(!isRecording){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      mediaRecorder=new MediaRecorder(stream);
+      recChunks=[];
+      mediaRecorder.ondataavailable=e=>recChunks.push(e.data);
+      mediaRecorder.onstop=()=>{
+        const blob=new Blob(recChunks,{type:'audio/webm'});
+        const url=URL.createObjectURL(blob);
+        const durationSec=Math.max(1,Math.round((Date.now()-recStartTime)/1000));
+        insertRealAudioMessage(url,durationSec,'录音');
+        stream.getTracks().forEach(t=>t.stop());
+      };
+      mediaRecorder.start();
+      isRecording=true;recStartTime=Date.now();
+      icon.textContent='⏹️';label.textContent='正在录音…点击停止';
+      btn.style.background='#ef4444';
+    }catch(err){
+      showToast('无法访问麦克风，请检查浏览器权限 🎤');
+    }
+  } else {
+    mediaRecorder&&mediaRecorder.stop();
+    isRecording=false;
+    icon.textContent='⏺️';label.textContent='开始录音';
+    btn.style.background='var(--red)';
+  }
+}
+function handleAudioUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const url=URL.createObjectURL(file);
+  const audioProbe=new Audio(url);
+  audioProbe.addEventListener('loadedmetadata',()=>{
+    const dur=Math.round(audioProbe.duration)||3;
+    insertRealAudioMessage(url,dur,'上传');
+  });
+  audioProbe.addEventListener('error',()=>{
+    insertRealAudioMessage(url,3,'上传');
+  });
+}
+// 真实照片上传，接入同一条聊天时间线，并驱动记忆银行的 photo 计数
+function handlePhotoUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const url=URL.createObjectURL(file);
+  const msgs=document.getElementById('chatMsgs');
+  const typing=document.getElementById('typingMsg');
+  const row=document.createElement('div');row.className='msg';row.style.alignItems='flex-start';
+  row.innerHTML=`<div class="msg-ava">🐱</div><div class="bubble" style="padding:4px;border:1.5px solid rgba(52,199,89,.3);background:rgba(52,199,89,.06)"><div style="font-size:10px;font-weight:700;color:#22a349;margin:4px 6px">📷 新照片已存入记忆银行</div><img src="${url}" style="width:180px;border-radius:8px;display:block"/></div>`;
+  msgs.insertBefore(row,typing);msgs.scrollTop=msgs.scrollHeight;
+  updateBankCounts('photo');
+  prependBankTimeline('📷','新照片','从院伴页上传的一张新照片',url);
+  showToast('照片已存入记忆银行 📷');
+  e.target.value='';
+}
+function insertRealAudioMessage(url,durationSec,source){
+  const msgs=document.getElementById('chatMsgs');
+  const typing=document.getElementById('typingMsg');
+  const row=document.createElement('div');row.className='msg';row.style.alignItems='flex-start';
+  row.innerHTML=`<div class="msg-ava">🐱</div><div class="bubble" style="border:1.5px solid rgba(52,199,89,.3);background:rgba(52,199,89,.06)"><div style="font-size:10px;font-weight:700;color:#22a349;margin-bottom:4px;display:flex;align-items:center;gap:4px">🎙️ 真实${source} · ${durationSec}''</div><audio controls style="width:220px;height:32px" src="${url}"></audio></div>`;
+  msgs.insertBefore(row,typing);msgs.scrollTop=msgs.scrollHeight;
+  toggleRecordPanel();
+  updateBankCounts('audio');
+  prependBankTimeline('🎙️','新声音样本 · '+source,'时长 '+durationSec+' 秒，已存入声音记忆库');
+  showToast('已存入真实声音样本，声音克隆进度+1 🎙️');
+}
 
 // ── HERO BG ──
 const HERO_SETS=[
@@ -1158,13 +1567,152 @@ function changeHeroBg(){
 // ── MODAL ──
 function openModal(){document.getElementById('modal').classList.add('on');}
 function closeModal(){document.getElementById('modal').classList.remove('on');}
-function setPlan(el){document.querySelectorAll('.plan-tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');}
+// ── 邀请家人：真实生成二维码（用公开的 qrserver 图片接口，无需后端）──
+function getInviteLink(){
+  const pid = (window.__pawInviteId ||= Math.random().toString(36).slice(2,8));
+  return location.origin + location.pathname + '?invite=' + pid;
+}
+function openInviteModal(){
+  const link = getInviteLink();
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(link);
+  document.getElementById('inviteQrImg').src = qrUrl;
+  document.getElementById('inviteLinkText').textContent = link;
+  document.getElementById('inviteModal').classList.add('on');
+}
+function closeInviteModal(){document.getElementById('inviteModal').classList.remove('on');}
+function copyInviteLink(){
+  const link = getInviteLink();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(()=>showToast('邀请链接已复制 🔗')).catch(()=>showToast('复制失败，请手动复制'));
+  } else {
+    showToast('邀请链接：'+link);
+  }
+}
+function setPlan(el,plan){
+  document.querySelectorAll('.plan-tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
+  const monthly=document.getElementById('planFeatsMonthly');
+  const farewell=document.getElementById('planFeatsFarewell');
+  const btn=document.getElementById('modalCtaBtn');
+  if(plan==='farewell'){
+    monthly.style.display='none';farewell.style.display='flex';
+    btn.textContent='生成告别纪念 ¥299起';
+  } else {
+    monthly.style.display='flex';farewell.style.display='none';
+    btn.textContent='立即解锁 ¥19/月';
+  }
+}
 
 // ── TOAST ──
 let tTimer;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('on'),2200);}
 
 switchScreen('sc-home',0);
+
+// ── MEMORY BANK DATA UPDATE ──
+// When user does a translation, bump bank counts
+const _origStartRecording = typeof startRecording !== 'undefined' ? startRecording : null;
+function updateBankCounts(type){
+  const bankCount = document.getElementById('bankCount');
+  const bankText = document.getElementById('bankText');
+  const bankAudio = document.getElementById('bankAudio');
+  const bankPhotos = document.getElementById('bankPhotos');
+  const cloneBadge = document.getElementById('cloneBadge');
+  const cloneBarFill = document.getElementById('cloneBarFill');
+  if(type==='audio'){
+    let cur = parseInt(bankAudio.textContent)||0; cur++;
+    bankAudio.textContent = cur;
+    let total = parseInt(bankCount.textContent)||0; total++;
+    bankCount.textContent = total;
+    // update clone progress
+    const segs = document.querySelectorAll('.clone-seg.todo');
+    if(segs.length>0){
+      segs[0].className='clone-seg done';
+      segs[0].textContent='✓ '+segs[0].textContent.replace('⬜ ','');
+    }
+    const done = document.querySelectorAll('.clone-seg.done').length;
+    const total2 = document.querySelectorAll('.clone-seg').length;
+    if(cloneBadge) cloneBadge.textContent = done+' / '+total2+' 段';
+    if(cloneBarFill) cloneBarFill.style.width = Math.round(done/total2*100)+'%';
+  } else if(type==='text'){
+    let cur = parseInt(bankText.textContent)||0; cur++;
+    bankText.textContent = cur;
+    let total = parseInt(bankCount.textContent)||0; total++;
+    bankCount.textContent = total;
+  } else if(type==='photo'){
+    let cur = parseInt(bankPhotos.textContent)||0; cur++;
+    bankPhotos.textContent = cur;
+    let total = parseInt(bankCount.textContent)||0; total++;
+    bankCount.textContent = total;
+  }
+  syncMemCountEverywhere();
+}
+// 让“记忆总量”在全局所有出现过的地方保持一致（之前 48 这个数字在“我的”页和记忆银行页是两套独立写死的数据）
+function syncMemCountEverywhere(){
+  const total = document.getElementById('bankCount').textContent;
+  const profMemCount = document.getElementById('profMemCount');
+  const petCardMemCount = document.getElementById('petCardMemCount');
+  if(profMemCount) profMemCount.textContent = total;
+  if(petCardMemCount) petCardMemCount.textContent = total;
+  // 照片容量条也跟着 bankPhotos 同步，避免又出现一套独立数据
+  const bankPhotos = document.getElementById('bankPhotos');
+  const capUsed = document.getElementById('capUsed');
+  const capFill = document.getElementById('capFill');
+  const capHint = document.getElementById('capHint');
+  if(bankPhotos && capUsed){
+    const used = Math.min(parseInt(bankPhotos.textContent)||0, 100);
+    capUsed.textContent = used;
+    if(capFill) capFill.style.width = used+'%';
+    if(capHint) capHint.textContent = '还剩 '+(100-used)+' 张，继续记录吧 🐾';
+  }
+}
+// 记忆银行“近期存入”时间线的唯一写入入口，所有真实记录动作都调这个，不再各自硬编码
+ function prependBankTimeline(icon,title,desc,thumbUrl){
+  const list=document.getElementById('bankTlList');
+  if(!list)return;
+  const item=document.createElement('div');item.className='btl-item';
+  item.innerHTML=`<div class="btl-dot">${icon}</div><div class="btl-body"><div class="btl-date">刚刚</div><div class="btl-title">${title}</div><div class="btl-desc">${desc}</div>${thumbUrl?`<img class="btl-thumb" src="${thumbUrl}" alt=""/>`:''}</div>`;
+  list.insertBefore(item,list.firstChild);
+}
+
+// ── HEALTH ↔ MEMORY BANK 实时联动 ──
+// 健康档案新增记录（日常/医疗）时，同步计入记忆银行总量与健康数据联动卡
+document.addEventListener('DOMContentLoaded', function(){});
+function addHealthRecord(kind){
+  const bankCount = document.getElementById('bankCount');
+  const bankMedCount = document.getElementById('bankMedCount');
+  const bankDailyCount = document.getElementById('bankDailyCount');
+  if(kind==='medical'){
+    let cur = parseInt(bankMedCount ? bankMedCount.textContent : '0')||0; cur++;
+    if(bankMedCount) bankMedCount.textContent = cur;
+    prependBankTimeline('🏥','新增医疗记录','已同步至健康档案，可在“健康”页查看完整记录');
+    showToast('已添加医疗记录，已同步到记忆银行 🏦');
+  } else if(kind==='daily'){
+    let cur = parseInt(bankDailyCount ? bankDailyCount.textContent : '0')||0; cur++;
+    if(bankDailyCount) bankDailyCount.textContent = cur;
+    prependBankTimeline('📋','今日日常记录','已同步至健康档案，可在“健康”页查看完整记录');
+    showToast('已记录今日日常，已同步到记忆银行 🏦');
+  }
+  let total = parseInt(bankCount ? bankCount.textContent : '0')||0; total++;
+  if(bankCount) bankCount.textContent = total;
+  syncMemCountEverywhere();
+}
+
+// 一键导入：模拟从微信/抖音导入一批照片，真实增加记忆银行数据
+function importDataToBank(){
+  showToast('正在从微信相册扫描导入…');
+  setTimeout(()=>{
+    const bankCount = document.getElementById('bankCount');
+    const bankPhotos = document.getElementById('bankPhotos');
+    const imported = 6 + Math.floor(Math.random()*5);
+    let curP = parseInt(bankPhotos ? bankPhotos.textContent : '0')||0;
+    if(bankPhotos) bankPhotos.textContent = curP + imported;
+    let curT = parseInt(bankCount ? bankCount.textContent : '0')||0;
+    if(bankCount) bankCount.textContent = curT + imported;
+    syncMemCountEverywhere();
+    prependBankTimeline('📲','一键导入','从微信相册扫描导入了 '+imported+' 张新照片');
+    showToast('导入成功！新增 '+imported+' 张照片已存入记忆银行 🎉');
+  }, 1400);
+}
 
 // ── PARALLAX ──
 (function(){
