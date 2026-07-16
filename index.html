@@ -791,7 +791,6 @@ body::before{display:none}
         <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)"/>
         <button class="upbtn" id="recordBtn" onclick="toggleRecordPanel()" style="background:rgba(255,36,66,.14);color:var(--red);font-weight:700">🎙️ 录TA的声音</button>
         <button class="upbtn" id="translateBtn" onclick="toggleSoundPicker()">🔊 翻译一下</button>
-        <button class="upbtn" id="aiAskBtn" onclick="toggleAiAskPanel()" style="background:rgba(59,130,246,.12);color:#2563eb;font-weight:700">🤖 AI养宠问答</button>
         <button class="upbtn">📎 文件</button>
       </div>
       <!-- 真实录音/上传面板（默认收起）—— 这才是真正驱动声音克隆进度的入口 -->
@@ -815,24 +814,6 @@ body::before{display:none}
           <div class="mchip" onclick="setCatSound(this,'啾啾')">啾啾</div>
         </div>
         <button onclick="translateAndInsert()" style="width:100%;height:36px;border-radius:var(--rf);background:var(--ink);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">🔄 看看AI怎么翻译</button>
-      </div>
-      <!-- AI养宠问答面板：开口前自动带出宠物完整档案，回答基于真实数据而非通用建议 -->
-      <div id="aiAskPanel" style="display:none;flex-shrink:0;background:#eff6ff;border-bottom:1px solid rgba(59,130,246,.15);padding:14px;max-height:60vh;overflow-y:auto">
-        <div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:10px;display:flex;align-items:center;gap:5px">🤖 AI养宠问答 · 已自动带入档案，回答更精准</div>
-        <div id="aiAskProfile" style="background:#fff;border-radius:var(--r12);padding:10px 12px;font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px;border:1px solid rgba(59,130,246,.12)"></div>
-        <div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:6px">它现在有什么症状？</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px" id="aiSymptomChips">
-          <div class="mchip on" onclick="setAiSymptom(this,'呕吐')">呕吐</div>
-          <div class="mchip" onclick="setAiSymptom(this,'拉稀')">拉稀</div>
-          <div class="mchip" onclick="setAiSymptom(this,'食欲不振')">食欲不振</div>
-          <div class="mchip" onclick="setAiSymptom(this,'咳嗽')">咳嗽</div>
-          <div class="mchip" onclick="setAiSymptom(this,'精神萎靡')">精神萎靡</div>
-          <div class="mchip" onclick="setAiSymptom(this,'瘙痒抓挠')">瘙痒抓挠</div>
-        </div>
-        <textarea id="aiAskDesc" placeholder="补充描述一下具体情况（选填），比如持续了几天、频率如何…" style="width:100%;border:1px solid rgba(59,130,246,.2);border-radius:var(--r8);padding:9px 11px;font-size:12px;font-family:var(--font);resize:none;outline:none;color:var(--ink);min-height:50px;background:#fff;line-height:1.5;margin-bottom:10px"></textarea>
-        <button onclick="askAiVet()" style="width:100%;height:38px;border-radius:var(--rf);background:#2563eb;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🩺 获取建议</button>
-        <div id="aiAskResult" style="display:none;margin-top:10px;background:#fff;border-radius:var(--r12);padding:12px;font-size:12px;color:var(--ink);line-height:1.7;border:1.5px solid rgba(59,130,246,.25)"></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center">AI建议仅供参考，不能替代执业兽医诊断，情况严重请及时就医</div>
       </div>
       <div class="msgs" id="chatMsgs">
         <div class="msgs-date">今天</div>
@@ -902,6 +883,28 @@ body::before{display:none}
           <div class="hd-row"><div class="hd-em">🛍️</div><div class="hd-lbl">常吃猫粮</div><div class="hd-val">皇家室内猫</div></div>
           <div class="hd-row"><div class="hd-em">🐟</div><div class="hd-lbl">最爱零食</div><div class="hd-val">冻干小鱼干</div></div>
           <div class="hd-row"><div class="hd-em">🚫</div><div class="hd-lbl">过敏食物</div><div class="hd-val">无记录</div></div>
+        </div>
+      </div>
+
+      <!-- AI养宠问答：紧跟在日常记录之后，让"记录"自然延伸到"解读"，不用跳去别的页面 -->
+      <div>
+        <div class="hd-sec-title">🤖 AI养宠问答</div>
+        <div class="hd-card" style="padding:14px">
+          <div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:10px;display:flex;align-items:center;gap:5px">已自动带入档案，回答更精准</div>
+          <div id="aiAskProfile" style="background:var(--bg2);border-radius:var(--r12);padding:10px 12px;font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px"></div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:6px">它现在有什么症状？</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px" id="aiSymptomChips">
+            <div class="mchip on" onclick="setAiSymptom(this,'呕吐')">呕吐</div>
+            <div class="mchip" onclick="setAiSymptom(this,'拉稀')">拉稀</div>
+            <div class="mchip" onclick="setAiSymptom(this,'食欲不振')">食欲不振</div>
+            <div class="mchip" onclick="setAiSymptom(this,'咳嗽')">咳嗽</div>
+            <div class="mchip" onclick="setAiSymptom(this,'精神萎靡')">精神萎靡</div>
+            <div class="mchip" onclick="setAiSymptom(this,'瘙痒抓挠')">瘙痒抓挠</div>
+          </div>
+          <textarea id="aiAskDesc" placeholder="补充描述一下具体情况（选填），比如持续了几天、频率如何…" style="width:100%;border:1px solid var(--line2);border-radius:var(--r8);padding:9px 11px;font-size:12px;font-family:var(--font);resize:none;outline:none;color:var(--ink);min-height:50px;background:#fff;line-height:1.5;margin-bottom:10px"></textarea>
+          <button onclick="askAiVet()" style="width:100%;height:38px;border-radius:var(--rf);background:#2563eb;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🩺 获取建议</button>
+          <div id="aiAskResult" style="display:none;margin-top:10px;background:var(--bg2);border-radius:var(--r12);padding:12px;font-size:12px;color:var(--ink);line-height:1.7"></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center">AI建议仅供参考，不能替代执业兽医诊断，情况严重请及时就医</div>
         </div>
       </div>
 
@@ -1432,6 +1435,7 @@ function switchScreen(id,navIdx){
   curNav=navIdx;
   // hide bnav inside pet screen for immersion, show for health/timeline/profile
   document.getElementById('mainBnav').style.display=(id==='sc-pet')?'none':'flex';
+  if(id==='sc-health'){renderAiAskProfile();}
 }
 // 全局唯一的“存一条新记忆”入口：跳到院伴页并自动展开录音面板（时光轴/记忆银行里的“+存入新记忆”都走这个，不再各自弹假toast）
 function goRecordMemory(){
@@ -1616,54 +1620,8 @@ function toggleSoundPicker(){
   const showing=p.style.display==='block';
   p.style.display=showing?'none':'block';
   btn.style.background=showing?'rgba(255,36,66,.1)':'rgba(255,36,66,.18)';
-  if(!showing){const ap=document.getElementById('aiAskPanel');if(ap)ap.style.display='none';}
 }
 
-// ── AI养宠问答：开口前先自动拼接宠物完整档案，回答基于真实数据而非通用建议 ──
-let curSymptom='呕吐';
-function renderAiAskProfile(){
-  const pet=PETS[currentPetId];
-  const box=document.getElementById('aiAskProfile');
-  if(!pet||!box)return;
-  box.innerHTML=`<strong>${pet.emoji} ${pet.name}</strong>　${pet.species} · ${pet.gender} · ${pet.ageDetail}<br>体重 ${pet.weight} · ${pet.neutered?'已绝育':'未绝育'}<br>驱虫周期：${pet.dewormCycle}<br>过敏史：${pet.allergies}`;
-}
-function toggleAiAskPanel(){
-  const p=document.getElementById('aiAskPanel');
-  const btn=document.getElementById('aiAskBtn');
-  const showing=p.style.display==='block';
-  p.style.display=showing?'none':'block';
-  btn.style.background=showing?'rgba(59,130,246,.12)':'rgba(59,130,246,.22)';
-  if(!showing){
-    renderAiAskProfile();
-    const sp=document.getElementById('soundPicker');if(sp)sp.style.display='none';
-    const rp=document.getElementById('recordPanel');if(rp)rp.style.display='none';
-  }
-}
-function setAiSymptom(el,s){
-  document.querySelectorAll('#aiSymptomChips .mchip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');curSymptom=s;
-}
-const SYMPTOM_ADVICE={
-  '呕吐':{reason:'饮食（过快过多、不适应、吞食异物）、消化系统（胃炎等）、其他（应激、药物副作用）',advice:'定时定量喂食、选合适食物、增加水分摄入、观察记录、就医检查、减少应激'},
-  '拉稀':{reason:'饮食突然更换、肠道菌群失衡、寄生虫感染、着凉受寒',advice:'先禁食4-6小时观察、少量多次喂食易消化食物、注意保暖、若持续超过24小时或带血请立即就医'},
-  '食欲不振':{reason:'环境应激、口腔问题（牙结石/口炎）、发烧或全身性疾病、驱虫不及时',advice:'检查口腔有无异常、更换新鲜适口的食物、留意精神状态和体温、超过2天不进食建议就医'},
-  '咳嗽':{reason:'呼吸道感染、过敏原刺激、心脏问题（老年宠物）、异物卡喉',advice:'观察是否伴随喷嚏流涕、保持环境通风减少粉尘、避免剧烈运动、持续咳嗽建议拍片排查'},
-  '精神萎靡':{reason:'体力消耗过大、轻微不适早期信号、环境变化应激、潜在疾病前兆',advice:'检查体温和进食饮水情况、提供安静休息环境、密切观察24小时、若持续萎靡建议尽快就医'},
-  '瘙痒抓挠':{reason:'跳蚤虱子等体外寄生虫、食物或环境过敏、真菌感染、皮肤干燥',advice:'检查皮毛是否有寄生虫、避免频繁洗澡破坏皮肤屏障、更换低敏粮食试试、持续加重需皮肤镜检查'}
-};
-function askAiVet(){
-  const pet=PETS[currentPetId];
-  const desc=(document.getElementById('aiAskDesc').value||'').trim();
-  const data=SYMPTOM_ADVICE[curSymptom];
-  const result=document.getElementById('aiAskResult');
-  result.style.display='block';
-  result.innerHTML=`<div style="font-weight:700;color:#2563eb;margin-bottom:6px">🩺 基于 ${pet.name}（${pet.species}·${pet.age}·${pet.neutered?'已绝育':'未绝育'}）的分析</div>`+
-    `<div style="margin-bottom:6px"><strong>「${curSymptom}」</strong>${desc?'，'+desc:''}，可能原因：</div>`+
-    `<div style="margin-bottom:8px;color:var(--muted)">${data.reason}</div>`+
-    `<div style="margin-bottom:4px"><strong>建议：</strong></div>`+
-    `<div style="color:var(--muted)">${data.advice}</div>`;
-  showToast('已生成基于'+pet.name+'档案的建议 🩺');
-}
 function translateAndInsert(){
   const msgs=document.getElementById('chatMsgs');
   const typing=document.getElementById('typingMsg');
@@ -1916,6 +1874,40 @@ function addHealthRecord(kind){
   let total = parseInt(bankCount ? bankCount.textContent : '0')||0; total++;
   if(bankCount) bankCount.textContent = total;
   syncMemCountEverywhere();
+}
+
+// ── AI养宠问答（已迁移至健康档案页）：进入健康页就自动带出完整档案，回答基于真实数据而非通用建议 ──
+let curSymptom='呕吐';
+function renderAiAskProfile(){
+  const pet=PETS[currentPetId];
+  const box=document.getElementById('aiAskProfile');
+  if(!pet||!box)return;
+  box.innerHTML=`<strong>${pet.emoji} ${pet.name}</strong>　${pet.species} · ${pet.gender} · ${pet.ageDetail}<br>体重 ${pet.weight} · ${pet.neutered?'已绝育':'未绝育'}<br>驱虫周期：${pet.dewormCycle}<br>过敏史：${pet.allergies}`;
+}
+function setAiSymptom(el,s){
+  document.querySelectorAll('#aiSymptomChips .mchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');curSymptom=s;
+}
+const SYMPTOM_ADVICE={
+  '呕吐':{reason:'饮食（过快过多、不适应、吞食异物）、消化系统（胃炎等）、其他（应激、药物副作用）',advice:'定时定量喂食、选合适食物、增加水分摄入、观察记录、就医检查、减少应激'},
+  '拉稀':{reason:'饮食突然更换、肠道菌群失衡、寄生虫感染、着凉受寒',advice:'先禁食4-6小时观察、少量多次喂食易消化食物、注意保暖、若持续超过24小时或带血请立即就医'},
+  '食欲不振':{reason:'环境应激、口腔问题（牙结石/口炎）、发烧或全身性疾病、驱虫不及时',advice:'检查口腔有无异常、更换新鲜适口的食物、留意精神状态和体温、超过2天不进食建议就医'},
+  '咳嗽':{reason:'呼吸道感染、过敏原刺激、心脏问题（老年宠物）、异物卡喉',advice:'观察是否伴随喷喉流涕、保持环境通风减少粉尘、避免剧烈运动、持续咳嗽建议拍片排查'},
+  '精神萎靡':{reason:'体力消耗过大、轻微不适早期信号、环境变化应激、潜在疾病前兆',advice:'检查体温和进食饮水情况、提供安静休息环境、密切观察24小时、若持续萎靡建议尽快就医'},
+  '瘙痒抓挠':{reason:'跳躁螱子等体外寄生虫、食物或环境过敏、真菌感染、皮肤干燥',advice:'检查皮毛是否有寄生虫、避免频繁洗澡破坏皮肤屏障、更换低敏粮食试试、持续加重需皮肤镜检查'}
+};
+function askAiVet(){
+  const pet=PETS[currentPetId];
+  const desc=(document.getElementById('aiAskDesc').value||'').trim();
+  const data=SYMPTOM_ADVICE[curSymptom];
+  const result=document.getElementById('aiAskResult');
+  result.style.display='block';
+  result.innerHTML=`<div style="font-weight:700;color:#2563eb;margin-bottom:6px">🮺 基于 ${pet.name}（${pet.species}·${pet.age}·${pet.neutered?'已绝育':'未绝育'}）的分析</div>`+
+    `<div style="margin-bottom:6px"><strong>「${curSymptom}」</strong>${desc?'，'+desc:''}，可能原因：</div>`+
+    `<div style="margin-bottom:8px;color:var(--muted)">${data.reason}</div>`+
+    `<div style="margin-bottom:4px"><strong>建议：</strong></div>`+
+    `<div style="color:var(--muted)">${data.advice}</div>`;
+  showToast('已生成基于'+pet.name+'档案的建议 🩺');
 }
 
 // 一键导入：模拟从微信/抖音导入一批照片，真实增加记忆银行数据
