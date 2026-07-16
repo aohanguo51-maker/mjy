@@ -216,6 +216,12 @@ body::before{display:none}
 .nb-filter{flex-shrink:0;padding:6px 12px;border-radius:var(--rf);font-size:12px;font-weight:600;color:var(--muted);background:var(--bg2);cursor:pointer;white-space:nowrap;transition:all .18s var(--ease-spring)}
 .nb-filter.on{background:var(--ink);color:#fff}
 .nb-filter:active{transform:scale(.94)}
+/* 记账卡片 */
+.bill-item{background:#fff;border-radius:var(--r12);padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid var(--line)}
+.bill-icon{width:40px;height:40px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.bill-title{font-size:13px;font-weight:700;color:var(--ink)}
+.bill-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.bill-amount{font-size:13px;font-weight:700;color:var(--ink)}
 .tele-ta:focus{border-color:var(--red);background:#fff}
 
 /* ══════════════════════
@@ -399,6 +405,9 @@ body::before{display:none}
 .btl-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px}
 .btl-desc{font-size:12px;color:var(--muted);line-height:1.5}
 .btl-thumb{width:52px;height:52px;border-radius:var(--r8);object-fit:cover;margin-top:6px;border:1px solid var(--line)}
+/* 多宠物归属标签 —— 每条记忆/账单都可标注属于哪只宠物 */
+.btl-pettag{display:inline-flex;align-items:center;gap:3px;margin-top:6px;padding:2px 8px 2px 3px;border-radius:var(--rf);background:var(--bg2);font-size:10px;color:var(--muted);font-weight:600}
+.btl-pettag-ava{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
 
 /* 纪念入口 */
 .memorial-entry{background:linear-gradient(135deg,rgba(100,80,160,.08),rgba(160,100,200,.08));border:1px solid rgba(100,80,160,.2);border-radius:var(--r18);padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .2s var(--ease-spring),box-shadow .2s}
@@ -782,6 +791,7 @@ body::before{display:none}
         <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)"/>
         <button class="upbtn" id="recordBtn" onclick="toggleRecordPanel()" style="background:rgba(255,36,66,.14);color:var(--red);font-weight:700">🎙️ 录TA的声音</button>
         <button class="upbtn" id="translateBtn" onclick="toggleSoundPicker()">🔊 翻译一下</button>
+        <button class="upbtn" id="aiAskBtn" onclick="toggleAiAskPanel()" style="background:rgba(59,130,246,.12);color:#2563eb;font-weight:700">🤖 AI养宠问答</button>
         <button class="upbtn">📎 文件</button>
       </div>
       <!-- 真实录音/上传面板（默认收起）—— 这才是真正驱动声音克隆进度的入口 -->
@@ -805,6 +815,24 @@ body::before{display:none}
           <div class="mchip" onclick="setCatSound(this,'啾啾')">啾啾</div>
         </div>
         <button onclick="translateAndInsert()" style="width:100%;height:36px;border-radius:var(--rf);background:var(--ink);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">🔄 看看AI怎么翻译</button>
+      </div>
+      <!-- AI养宠问答面板：开口前自动带出宠物完整档案，回答基于真实数据而非通用建议 -->
+      <div id="aiAskPanel" style="display:none;flex-shrink:0;background:#eff6ff;border-bottom:1px solid rgba(59,130,246,.15);padding:14px;max-height:60vh;overflow-y:auto">
+        <div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:10px;display:flex;align-items:center;gap:5px">🤖 AI养宠问答 · 已自动带入档案，回答更精准</div>
+        <div id="aiAskProfile" style="background:#fff;border-radius:var(--r12);padding:10px 12px;font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px;border:1px solid rgba(59,130,246,.12)"></div>
+        <div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:6px">它现在有什么症状？</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px" id="aiSymptomChips">
+          <div class="mchip on" onclick="setAiSymptom(this,'呕吐')">呕吐</div>
+          <div class="mchip" onclick="setAiSymptom(this,'拉稀')">拉稀</div>
+          <div class="mchip" onclick="setAiSymptom(this,'食欲不振')">食欲不振</div>
+          <div class="mchip" onclick="setAiSymptom(this,'咳嗽')">咳嗽</div>
+          <div class="mchip" onclick="setAiSymptom(this,'精神萎靡')">精神萎靡</div>
+          <div class="mchip" onclick="setAiSymptom(this,'瘙痒抓挠')">瘙痒抓挠</div>
+        </div>
+        <textarea id="aiAskDesc" placeholder="补充描述一下具体情况（选填），比如持续了几天、频率如何…" style="width:100%;border:1px solid rgba(59,130,246,.2);border-radius:var(--r8);padding:9px 11px;font-size:12px;font-family:var(--font);resize:none;outline:none;color:var(--ink);min-height:50px;background:#fff;line-height:1.5;margin-bottom:10px"></textarea>
+        <button onclick="askAiVet()" style="width:100%;height:38px;border-radius:var(--rf);background:#2563eb;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🩺 获取建议</button>
+        <div id="aiAskResult" style="display:none;margin-top:10px;background:#fff;border-radius:var(--r12);padding:12px;font-size:12px;color:var(--ink);line-height:1.7;border:1.5px solid rgba(59,130,246,.25)"></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center">AI建议仅供参考，不能替代执业兽医诊断，情况严重请及时就医</div>
       </div>
       <div class="msgs" id="chatMsgs">
         <div class="msgs-date">今天</div>
@@ -1015,7 +1043,12 @@ body::before{display:none}
           <div style="flex:1"><div class="pet-card-name">小橘</div><div class="pet-card-sub">橘猫 · 3岁 · 已记录 <span id="petCardMemCount">48</span> 个瞬间</div></div>
           <div class="pet-card-arrow">›</div>
         </div>
-        <div class="pet-card" onclick="showToast('添加新宠物 🐾')">
+        <div class="pet-card" id="petCardDuoduo" style="display:none" onclick="showToast('多多的记忆页面即将上线 🐶')">
+          <div class="pet-card-ava" style="background:linear-gradient(135deg,#93c5fd,#3b82f6)">🐶</div>
+          <div style="flex:1"><div class="pet-card-name">多多</div><div class="pet-card-sub">柬基犬 · 2岁 · 已记录 3 个瞬间</div></div>
+          <div class="pet-card-arrow">›</div>
+        </div>
+        <div class="pet-card" id="addPetBtn" onclick="addNewPet()">
           <div class="pet-card-ava" style="background:var(--cream3);color:var(--muted);font-size:20px">➕</div>
           <div style="flex:1"><div class="pet-card-name" style="color:var(--muted)">添加新宠物</div><div class="pet-card-sub">为更多毛孩子建档</div></div>
           <div class="pet-card-arrow">›</div>
@@ -1035,6 +1068,7 @@ body::before{display:none}
       </div>
       <div style="height:8px"></div>
       <div class="prof-sec">
+        <div class="prof-row" onclick="switchScreen('sc-billing',4)" style="cursor:pointer"><div class="pr-em">💰</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">消费记账</div><div style="font-size:11px;color:var(--muted);margin-top:1px">粗食、玩具、医疗…多宠物分摊一目了然</div></div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="importDataToBank()" style="cursor:pointer"><div class="pr-em">📲</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">一键导入数据</div><div style="font-size:11px;color:var(--muted);margin-top:1px">从微信相册 · 抖音宠物号 · 本地照片 · 自动存入记忆银行</div></div><div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--rf);background:var(--red-l);color:var(--red);margin-right:4px">NEW</div><div class="pr-arrow">›</div></div>
         <div class="prof-row"><div class="pr-em">🔔</div><div class="pr-lbl">提醒设置</div><div class="pr-arrow">›</div></div>
         <div class="prof-row"><div class="pr-em">🔒</div><div class="pr-lbl">隐私与安全</div><div class="pr-arrow">›</div></div>
@@ -1044,6 +1078,92 @@ body::before{display:none}
       <div style="height:20px"></div>
     </div>
   </div><!-- /sc-profile -->
+  <!-- ══ BILLING (消费记账) ══ -->
+  <div class="screen" id="sc-billing">
+    <div class="tl-top" style="display:flex;align-items:center;gap:10px">
+      <div onclick="switchScreen('sc-profile',4)" style="font-size:22px;cursor:pointer;line-height:1">‹</div>
+      <div><h2 style="margin:0">💰 消费记账</h2>
+      <p style="margin:0">清晰支出情况，分摊宠物账单</p></div>
+    </div>
+    <div class="tl-scroll">
+      <!-- 宠物筛选 -->
+      <div style="display:flex;gap:8px;padding:12px 0 4px">
+        <div class="nb-filter on" onclick="setBillingFilter(this,'all')">全部</div>
+        <div class="nb-filter" onclick="setBillingFilter(this,'xiaoju')">🐱 小橘</div>
+        <div class="nb-filter" onclick="setBillingFilter(this,'duoduo')">🐶 多多</div>
+      </div>
+      <!-- 本月账单总览 -->
+      <div style="background:linear-gradient(135deg,#8b6f47,#6b5638);border-radius:var(--r18);padding:18px;margin:12px 0;color:#fff;box-shadow:0 6px 20px rgba(107,86,56,.25)">
+        <div style="font-size:11px;color:rgba(255,255,255,.7);margin-bottom:4px">本月账单</div>
+        <div style="font-size:28px;font-weight:800" id="billMonthTotal">¥ 926.00</div>
+        <div style="display:flex;gap:6px;margin-top:10px" id="billPetAvas">
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#ff8c5a,var(--red));display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid rgba(255,255,255,.3)">🐱</div>
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#93c5fd,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid rgba(255,255,255,.3)">🐶</div>
+        </div>
+      </div>
+      <!-- 账单列表 -->
+      <div id="billList" style="display:flex;flex-direction:column;gap:8px">
+        <div class="bill-item" data-pet="xiaoju">
+          <div class="bill-icon" style="background:#fef3c7">🍚</div>
+          <div style="flex:1">
+            <div class="bill-title">主粮</div>
+            <div class="bill-sub">法米娜猪肉蓝莓 · 03.02 周一</div>
+          </div>
+          <div style="text-align:right">
+            <div class="bill-amount">-¥323.00</div>
+            <div class="btl-pettag" style="margin-top:4px"><div class="btl-pettag-ava" style="background:linear-gradient(135deg,#ff8c5a,var(--red));color:#fff">🐱</div>小橘</div>
+          </div>
+        </div>
+        <div class="bill-item" data-pet="duoduo">
+          <div class="bill-icon" style="background:#dbeafe">🦴</div>
+          <div style="flex:1">
+            <div class="bill-title">牵引绳 + 磨牙棒</div>
+            <div class="bill-sub">03.01 周日</div>
+          </div>
+          <div style="text-align:right">
+            <div class="bill-amount">-¥86.00</div>
+            <div class="btl-pettag" style="margin-top:4px"><div class="btl-pettag-ava" style="background:linear-gradient(135deg,#93c5fd,#3b82f6);color:#fff">🐶</div>多多</div>
+          </div>
+        </div>
+        <div class="bill-item" data-pet="xiaoju">
+          <div class="bill-icon" style="background:#d1fae5">🏥</div>
+          <div style="flex:1">
+            <div class="bill-title">年度体检</div>
+            <div class="bill-sub">安心宠物医院 · 02.28 周五</div>
+          </div>
+          <div style="text-align:right">
+            <div class="bill-amount">-¥380.00</div>
+            <div class="btl-pettag" style="margin-top:4px"><div class="btl-pettag-ava" style="background:linear-gradient(135deg,#ff8c5a,var(--red));color:#fff">🐱</div>小橘</div>
+          </div>
+        </div>
+        <div class="bill-item" data-pet="duoduo">
+          <div class="bill-icon" style="background:#fce7f3">🧴</div>
+          <div style="flex:1">
+            <div class="bill-title">洗护用品</div>
+            <div class="bill-sub">02.25 周二</div>
+          </div>
+          <div style="text-align:right">
+            <div class="bill-amount">-¥56.00</div>
+            <div class="btl-pettag" style="margin-top:4px"><div class="btl-pettag-ava" style="background:linear-gradient(135deg,#93c5fd,#3b82f6);color:#fff">🐶</div>多多</div>
+          </div>
+        </div>
+        <div class="bill-item" data-pet="xiaoju">
+          <div class="bill-icon" style="background:#fef3c7">🐟</div>
+          <div style="flex:1">
+            <div class="bill-title">冻干零食</div>
+            <div class="bill-sub">02.20 周四</div>
+          </div>
+          <div style="text-align:right">
+            <div class="bill-amount">-¥81.00</div>
+            <div class="btl-pettag" style="margin-top:4px"><div class="btl-pettag-ava" style="background:linear-gradient(135deg,#ff8c5a,var(--red));color:#fff">🐱</div>小橘</div>
+          </div>
+        </div>
+      </div>
+      <div class="tl-add" onclick="addBillRecord()">＋ 记一笔</div>
+      <div style="height:16px"></div>
+    </div>
+  </div><!-- /sc-billing -->
+
 
   <!-- ══ MEMORY BANK ══ -->
   <div class="screen" id="sc-bank">
@@ -1124,6 +1244,7 @@ body::before{display:none}
               <div class="btl-date">今天 15:42</div>
               <div class="btl-title">呼噜声 · 真实录音</div>
               <div class="btl-desc">趴在胚子上打呼噜的那段，已存入声音记忆库 🐾</div>
+              <div class="btl-pettag"><div class="btl-pettag-ava" style="background:linear-gradient(135deg,#ff8c5a,var(--red));color:#fff">🐱</div>小橘</div>
             </div>
           </div>
           <div class="btl-item">
@@ -1133,6 +1254,7 @@ body::before{display:none}
               <div class="btl-title">窗台晒太阳</div>
               <div class="btl-desc">一整个下午都趴在那，肚子软软的 ☀️</div>
               <img class="btl-thumb" src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&q=70" alt=""/>
+              <div class="btl-pettag"><div class="btl-pettag-ava" style="background:linear-gradient(135deg,#ff8c5a,var(--red));color:#fff">🐱</div>小橘</div>
             </div>
           </div>
           <div class="btl-item">
@@ -1141,14 +1263,16 @@ body::before{display:none}
               <div class="btl-date">3天前</div>
               <div class="btl-title">年度体检 · 医疗记录</div>
               <div class="btl-desc">血常规、肝肾功能均正常，牛结石轻度，建议明年洁牙</div>
+              <div class="btl-pettag"><div class="btl-pettag-ava" style="background:linear-gradient(135deg,#ff8c5a,var(--red));color:#fff">🐱</div>小橘</div>
             </div>
           </div>
           <div class="btl-item">
             <div class="btl-dot">🎙️</div>
             <div class="btl-body">
               <div class="btl-date">上周</div>
-              <div class="btl-title">呼噜声 · 声音样本</div>
-              <div class="btl-desc">趴在肚子上打呼噜的那段 🐾</div>
+              <div class="btl-title">汪汪叫声 · 声音样本</div>
+              <div class="btl-desc">拆快递时兴奋得直跳的那段 🐾</div>
+              <div class="btl-pettag"><div class="btl-pettag-ava" style="background:linear-gradient(135deg,#93c5fd,#3b82f6);color:#fff">🐶</div>多多</div>
             </div>
           </div>
         </div>
@@ -1226,6 +1350,22 @@ body::before{display:none}
 <div class="toast" id="toast"></div>
 
 <script>
+// ── 多宠物系统 ── 记忆银行/记账里每条记录都可以标注归属宠物
+const PETS = {
+  xiaoju: { id:'xiaoju', name:'小橘', emoji:'🐱', species:'橘猫', age:'3岁', ageDetail:'2021年5月20日出生 · 3岁', gender:'公', neutered:true, weight:'4.2 kg', avaBg:'linear-gradient(135deg,#ff8c5a,var(--red))', dewormCycle:'每3个月一次，下次：2026年8月', allergies:'无记录' },
+  duoduo: { id:'duoduo', name:'多多', emoji:'🐶', species:'柯基犬', age:'2岁', ageDetail:'2024年3月1日出生 · 2岁', gender:'母', neutered:false, weight:'9.8 kg', avaBg:'linear-gradient(135deg,#93c5fd,#3b82f6)', dewormCycle:'每2个月一次，下次：2026年8月', allergies:'对鸡肉轻微过敏' }
+};
+let currentPetId = 'xiaoju';
+function addNewPet(){
+  const card=document.getElementById('petCardDuoduo');
+  const addBtn=document.getElementById('addPetBtn');
+  if(card && card.style.display==='none'){
+    card.style.display='flex';
+    showToast('已为多多建档，现在有2只宠物啦 🐶');
+  } else {
+    showToast('已经添加过多多啦，更多宠物即将支持 🐾');
+  }
+}
 // ── MEOW ──
 const MEOW='data:audio/mpeg;base64,//vUxAADwAABpAAAACAKAEABsAAENvnExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVT6V/hc/J3BLNzfKLzHCEBY2IB3KNwWR7DBTyxswhc74MwwMqTirG0gxkWLtPQ58PT4x7Mk4uGNJOjxrSzpXZdM3/lWtMmXCaTGpCVwyHQRuMBsE8jL0jlwyQgc7NGJVYTSxSu0wPoZYMOyDCzH+Byww1gEZMOML6DTql4g1fxAUMjSDJDABAMEwXEIrMHjAaTAfwBQwXUQ7MPtFBDMYjAwxMdVFNxDYwTO3xYMwYcHdPAj02/DTJ56MKs802FQABTCoFGAIAggyEwIAGCgUApxl7EBih5cd2i5bQkEivE00f2qIOPykI5ic612QJ0PCoPClM2/YAwRu6x4CXZBzDHkaWy96ACFUAcjgmH4cBQJ4HzIEDQJB0HsKykBw9BubjmO5UERKI6oQCwVCwXxHTCQpJZ+VyekJjIlvEg8KhMQzNowiOz9OfwGDJnGcHiQ8hM3jiI7fbP4FlTuNYsgWQr7LIl6+q+yyq99hyA8qv9Y4//vUxLgD7yG0Xg/xmMOKDo8B/33Y2/r+LObfYcgcMlnxFT7sS9k1YiRkMvONUDFoAls1RluNMeTIkzNmxcUzFN4VNZ+UkTQ5xXc4WpaoMqtEKTNqQek2LBYUMMEXSzUsQFYwGIEAMXeTA2lEaTdEwANnxFw6ei6DcUQ3N7VaoxOxOzGPHRMghKY6Gk7jRHKmMVi+o5TByTHjA/MLIIgwtwRwwMgwCQBgMC4AZDBvA8owm4mINUKHUDNTDQQwEkDlMC/AXDAOAB0wAMAMMAiAJQUATGAqAEDayOQ5U2FN2qCwVDYaBoSliwFCQVDYaEQlERYededJJKlldqK6e30f/pUyAM99MAaMsDMrjIIyawXCMpaJ6DJFCxIz1RW6NjyZPDa4F7I4Z9nRNNJIWTHgiTo0wYj0MOZDBTDkyU8wlsPwMJOOcDYpnVo73fRBPfX4Vzz77d85qlz9NKXHWzGOh1wx0QJhMcdJ1zLfyrEzLgm8MPqHNzPR1Hc2A1aLM4NJBzF+RIcxD0PrMIBDwDJGC5A0Q87lMpLAKDLhEwA16xmUNcCTADQjCzQy24roMmiHpDFCAhowXwMqMNOCqDBxgOowEoACMAFABzACQAUt+98MLvYnA7wImFlAEAAJqKrmADABACACF+KVgUABMADABTABQAFLsLAABgCYAiJABYWABjADgAwWABASAImAQgFJgEoAeQABxgG4ByYBaAKiMAAMAUAGjAGAA5LkwAUARMATAC06jACwBEwA0ABaEjwXgU0kLttfYg7lFK4fn6lJjKLG6enz1hukw33UojEsxlEs5/4UljdJyvT2+1LG6TlfOpGH8ik25EOVY3L8pRGL1Sxh/509+UOXI4g7k46aw7T24Fy0640uRYkCRN36OG5flUpLHBOCDhOD48oIMQOl3+wTmAQAMxgwZAdjBiA4MiYKUwNgpSoBoYUgFRgGghmM+KaY6gMBo6ocJThUAQwAQQA4BEwhQPDFZC0MEID5lRiFBtGBWHKZHr05h3iUp0mA//vUxP+ANiWIlBX/gAfhwJ5DPeABECEy4w1QWzB9BuMI4RAwYgqzDTCjN3k38AAEFgAIwcwLTE+C2MCoGAwmQ3zGdB0MNYEc0bFP38DgDEM1fsnMUsMswWgSTBJBDMCEAQwLwJjJ1BlGApDA0KKMgsGcwqwmXAijJIbyjZhFB1GHwDUYEYHJgUgimC+BKYsAgBhagyGC8OqYVwFANAAMIYU0z4g7lK01wUA/AGMbpzCqCWMKwIYyaRZTCfBNMFUCVoLKzAaBgMAMWw1lwtjFlCbMGUKQmC5KAKfnP/n/xDcwIQEU/FmAkAMBADq/a2YJgCBgRhdGA+AWIwBjAiALFAGFSMO/+4c//1yNOI56PbJ3bCoA4KAbYkYBAEQkAFCZAYAAC5gbAaGAWAOBACQuCMAhJwuBxn3DDC7bi/9i+uGBkAkYFIAaVD4mDMCIYEQChgNAGGESCOVgDr/MCoBxgtGYJ4GJhVgshcC0wIAgzB/DRMJMA8wZQkjBOBkMEMFkwQgGwqECYGQJhgBABf/////////////////////mAaAKmvfn6nLGfe65zf91//////////4qBMp+2QRjwBG+RTLSLgNooCNALgMQgoYJAQy4xTGsw3BgwfLY/wKMwQGQxmAEwQCwwcCgSIAwGEcwTDcwAAPzCgCvMZ5NU1vyvTGLBgMC4B8wUgCiUC8wWQNTAvAGDgYTBUDhMRoa8y8yijFOByMFcBMZBAMAcFURAOmAWAgTA/mBKCsYHIUxlGqOGl8ZwZHgeQFAnMDYAMwVAKjAIAbAgDhgTA+GAeAmYcophjDjomKOHiYVAA4JAWAgAJgRgBhwJRCA6YCwLYoA6Ygoixixh0mGmCaYCIIAUABHgCDABASCgFZZcwhAeSQbcx5ieDKMIQMYoKYKgMGBYB4RApiwA4FBcMJgNMxgiHzDRJIMdwRgw7A9jCmBaGAeyIDcGAKGBWA+VAAkPHsfR0RkABlCAMDACI8IelgCIwIQKh0IMwNQGygBEHABl2Ye//vUxKAD/hWG/h3fAA+EsOCB7vMQToa3DkJznt1OUPc7emkJeKxrQSIaZYcmII5AgBMiALMAIAJC0v2jIySQtMQqShMAsD4gA1MD8BFg4iABMBkBNlazXjX4YFIIwVApAAGAcCgOAAkgCBgPACQwFgHQoA6GAemD2DETBuGDOD+YK4GZgegxmEwCEX3MAEAwAgDBYC4FA9AYIUwXQeRoHswCQHwAAAYGwCxgAAAJjA4DkDAemAMA8FQBS5LwMrcOLWyCE50pgvjGGHUASYKQEAoBAYAQBoQBeYBQCQYE2YE4CxgwhEGJmnAZPgcRgiAChQCQUAPAwCYjANMAUBcwAADASBUYGIappyOPGUsLsYGABJgZgAmBkAeYCoGZgGgGGAOBIYJYIRIByYcgsJprEBGIwJMYDwHJgpgMmBgA6EAKGBiA6YBwERgCAmjgkBjtoRGr8RQbFH4OCQYtiaKCADALMKQsMHwDMFgrJA7NGhqNokeCCMBoHmBAMrXdAgBkCAyYDA6YpFmZSKoYhgGYcDcYeAGYfhSBQDMLwwHQTMAwZMKzKNJXaOMtBPVXxMgxMMyEE1KTTBoQFSIYiFYlMTJtAOe0Y84xTiJ7EJGMdBoDAItKYhELB/ZEFwUYjP5kULllQSDBYmoMmHQEoqYYCJkAQmSCAYwJRkoRFUHhwPTZVyGAdYk5R0eOP81TPsylYrXRwBIsKGJwL4dyLrydcv8YNBQkQTCYVZkvwiA4EAQhAAEAJhYKmGBqYKERikqmLRKZIEQKEAsAi3pMDQQIjAYsMdkoxoXwcoTF4RMBCoxsNAIEzFIWDg+YiK5oYnmGSqb2ORtmQnCYSbFDZl4eCIjg5XmWh4YJGhlsCGIyyZYLQ6LwUPzBIPUtRDEQaMBgUDB+jh7fpQ2MAAAwpFMiGwCAOFgDFgiUcS/BwlAYODBAAwCmxxQOxjoBw8Cw6AC6lBioAMpamYOAkZ3wwajN2ZVhYAhkT6FgJUyTfDgCQLIAEMbUMNp5NNPx/EgfDgIM//vUxCyA72WDFQ7zeoYUsGKV7u5zEQHXQgETlMAgXMIRsNJ4SNsbdOLjoMWBCMLQJZS+8GQeWtMNi4GC0zwoTZZrKCOWQZzGHeZy00wGIjJJwM3gg3E0DPhEEAJSiEQACgCEIBAI0MwnwzW+jqq2PaOoycejOAiMDCYw2LwMMgYAQqGDGZgNAn4FNMBQAxwOAcNWnoLu9OQ3BhYBjDBEqGxohQYsDCADTPd1qLcrqhphAGDQgiDFLi9Ebj6PmOH////6dh2JdWdF/HD5KIY3DDWkxi5TB0+k4QKFgoPn3/hTPy2sjMIEQoDGEjoyGGMBieqEpNMACBiIgY6MCw+ZYAmThRnwsGAAECDFwMCjCRwoPGYvAC9jnGU3uMPwijKRgwgJMbGx4TLNBAMPCyA4eQAMEiwcty+QAUCjAoI5gJgKmAiAQXLRFMAsBowFwEoYMAQAAwCwgjJDIZAweaYC95atJ3IODACxAAqYHoZhiMsRGOEGkYTwDxhqEq/AYAA8AaVS3wYAQjBUxAZcyJmQSgkxUG4xuAQwYAMuK00wGBlGswIGozAX88XLM5SQAxFJ0wlAggAseAJBCz4QACJAWXLMFhtM+wHCoRhwPuJG4Khh5GIwGYbkkZDseZWkqZNi6YHAkoGJBexRJgwBBEiEUyvVQ3daA3yHAy/McDJumwwZgiZCPxgKB44IRiYP5mkNhg6B5hAFQGBh+HYiLWF2mAAQVCjAS8xQYMWGEBObQbL4zCdJgIwZKWGUDJl4yYaAo32I3f5+v/WKx2H3Zm7LI2ypYzFdtGU0rcm3RZE2jdg4iAQgWoTojLTXvXgw0wwTMYEzKEsBTxow4YeGmFBCxFEE7AwBEJUa+tGuqBstIeEeGPKxvi0DkwwUrBQ+VgAMQjbJ05x9M6lDR5810bMdHS74KHkWR4DEADQ0xJU0QwQACwJ5MCUYKIAalKUYsAuIwEVoGAYAClmYHYFhjlD0GF+AQDgOU4iIABGdDeomaNAJA4HQxBx2DW3SdMSsAIwY//vUxCGA8D2BFw93mo3rMKMh33XpgCDAhANMAEAUcAGHAAwwAdrgBALMAQGkxRiHzOaGaMAIKwWAxfByXSEABxgEgJmCGBoYCwFRhUDXmRoruZg4TpgNApCwBrhMNxcluJcQMA4xKHs0uMwvAsNAFuvDDbDAGBUDRAQJmZDpuSHhhEEwCEcwIAYWCVhLmofCoAqHmTatGxh8nMZomDQgNoGAZYaUy5MlOYEgsYbjEZtiuLBq66wcHzF5ichGAiYIAphgKmQB81wwCCVWxiTU0ysswWCmLmDRU3CBQEEMP///9qYkwLnJTC8P20d7fepCvDu/qXZt/VZFMkrzDgWYw3dzlN1BYMSlMMBkwsDzBI4MljI0cSAYFy7CUyT5dQvsYQDZgEJGZT4ZFB51wxGbyGYRA5eMLBQHDABAwChAxaFACAwgWGHykZNNYGRRhsAlsxYBrB0EiYZm2YFgiYKBYJA4BgkMBAIBIUGEIGCQSlQPQsMxmjjBqcMxgeCLYC2cCDIEuavWNiEBUdAnMz5p4xMACxYBYwGAAAEAgpejYNAYIJy9BCDWYLwfhosB6mHKGKYH4ExMCqTABqaK3BcCkwLAHwCAQYBAIRg9Czmp2L2YLIEZgUAMCwBEpfN3HYYk+6NBkuJxkYEAsCS/VjxGPUqZQcAQ4BphsWp1YBRWDpj6H5hyC48ALtvlmz4eFAwAA0xZBs79IgwPGEBD2gBgaBLcAtnaiIgVMKjTMOBCL0rEQlqxuHANK1llKzAEJZjMGRgMAiab9rrgeo/rOV4odDB4EyIGwwAluZSyvT9/T7BcAlewMveX08shmrbrSq3qUP/Rz33qahX2IwNDAzBwBpRwxTWpVehl8gcFhgYUpheBZgyBqRjpLNoVvMZMCgCMFRmMf0iN7VLMqSdMlwrBQOmAgJmA4JhAFVFwF1SEICAWjM0gzFAPDDwEk5nEq0obwgAAMyATHw4xgUMHCjFgwlCEqDBAkHBJdIFAhwt+bnBQjHDhgMAC5OtmXmioYChS//vUxBiA66WDHw33i8W4sGQRv215YiAocVxmdmDQYshiYMAgYBAIYAgCBAaTka2qoQgqYgFwc3wgdEi+YZhoGBSXsTBMBQFMDgHEgoLvGAoUGLIPmfGtGgxIGFgFmAIAp8O+/kolcw3cw0JzOiFMghtcqx5yWRuXzCeoICRnXAHtZmbALgMAz3uPIoq35gIGgIYmEBmael5yaXGpjkTEgQAoGg9t8MrzvqqmLDaaGMxjAFK8ZM2empM6kTSNMDDEygMDFoBJgfOv0rvPWMdg8qgwwiCUa3zWm8drv/xyTAAFL9QmLvi1aX0mv/9wYzuD8Z524AwdBgsTC4IhwvW8bWINoI+u1nZcMwgHx0lFwU812LmdgugTAAumPCoZD5pRZma6YbyRxpEzlBTAwkMDgVuaHRLwFA5fgkFjIg1MZguKiTUAgAKMRjwAASEwYZARqY4RGNAxngw3QyUHTHMUwzJiCIKAaUW0gbUYiKHRBOYAQBxgNg5mHEUaapxJRiOArGAuBKBQEzAKAoAQDjU4JYAXXWWYZQqJo6gkmF+HuYMIEgOBBZEHAImAaAYHAGjIAsAmAEAmYOo4xi1k0mJ6GuTBHhgCq1orZ5nGASIGBoBxJgaECGGATMF0QlkcDpFg4CMFGjMtc5/3MjPTSylnxgIaHB6aTNW7igmYcImcLhnuiY8oGBBZjYWn5Yb9ExXq2AYCCg8Y+bmfGRoQ08rIFKFNI7F19rCDgcZANGTl5n46Dj+G3nvZVdtlgoUCgCDoPonvA6lTen2cotaYQAoXAIIQHvWxbHX62+DCi5a8lAHhhqkhuBX1XQierIFwFFRIxgjXGDkAGsAXZBgYCRYwciIR8ZBRwIMCFgsBUtUwYcBAOHNJk78UggTbmaEhjB0aodGMEBfFV7CxoGLTSJ16ai+AAAAKhLGBIAKGAvgIAIYAOTtAIC4sBSYA4BhgDgMEoCYVCKMUgeswLQDBAACjC9NSy4qQ5gBAFGA+BeTCWGUqgmZLQGhg1gRmA2BOYAwL//vUxCgA8U2FHw9zWsWisGRRr214gIAyQTtkVTKoERg1A7GGYAcY9ScJmyGqGEAB+AgDjAKAMGgZDAjBhL1mAwBgRAGhQA0wHQGDARCNMNA04xRAYgSAWwqho5DPVVFGPjQZMWN8cEhKBnIkb8GHAAXaGi4Cg2YuBpjwxmuqidsxhooGAIuGAwGycxeLw4zigSEiYFSsYlM5nBRnCJqdLO5EEjAYGTmAoHKwXTkw3TKVeLCwwkTzX6FDBOMCIoErZAgYxMwEB3bAQeIiAXXMOmAywIG8t872AWYypg68RI6Bh7HamHPgpsc4XdUDcgSNo+b//stUUWd8IAGSHmWAGPIruTvV+QAl0t8MiRYeIR4VJARKQLg60OlQUSLzkAgeABU0kYKDAK0EhgdvNYaEqQ9oFgRogpt2ZkwLWjWKwucMKHMVLEMoBJKeERBVBzthywhgAw2QXYmXNAowWYMOQACZM9LgCgWtA0aY6YxzptgYO02112V5NLjJgFA5mC6n2YnQFZgYgHRUwEwEBYFhQVkCSZgDAIGDaEqYKYAJhECYGqca2YRQGA0CGQAOGAGCiYN4IRUABMCEFoFAiP4YBIBQQCCYSIkRj4APhgFSxGHv3LJmCH+iS6jBgMJaUEiJMWaIMhqeBhJ0PFhMZAARFl0BUx6BWZiHGhg0jMiDDIwowMsBymYSOGKEBjZoaa6mL1gBDTBBdqI6UjTKzcxIJRaX0heAh0xhPHrIRBBEK1jGwCuoZyImDhQWDQAVGJCMHXdd/6tLDMO5luZ2pINfH1jw9KkqbxIDiyI8c///L0FYsj4yBAIYEVF41F0YkxxGBSNNWPLEXaTAoWHjQwQBAJZ1HUtIAA0tYZiEGCBhAIBwqCSk22NDgxgAOTjHUA0YgNSBAYbBx6YSGgoEDhMxALAzakHWgyfyBRgGoBgZg2GCcACDQDRUA1NIUAhBIAwoAAHABjQFxUABLACplgDiigAyni6jivU6TepPSaDDAeAnMPpt0xzQdQMEeVAAQ4Ao//vUxCQA8EmDHo9zeo3SsGRRr3F4eCtgldb4mAWAGYNwihgYgPmBqJccqoGZgog9mCECEYCwDgBApAQapgIBJGFMBQAgDWcp1DQCJgXEImX4GQDAHVftf3YtNYvZ+kWZFRYGHAsAIpARgEFA0HGHhYYeCJdsw+JhCTzAEDNUDQkFJhEFw4YlGgWLAY5zBwQDg0YEHyGJiw5g9mCEEAAPRkFAEIC5QRRIfDQdGQqNmDEphtQdOQkAsW1S/MMBX5McKiYEhlQR+THyo30RHgek/D///3aICBg8qUJ/1GxGBX8kqoqxkHGiBrb27+Ciawg0BwyCgN8ACSmOCiUKA5DqygeGwqCAYpCDKBwoKGLCAhXDXiBFt2QIFGQDRiiGY6VmEEhCJmOEJlhsavpGeD5hKcAl4zkRMuiTiH4ZD2QGUE6bYQjGpgIXUSgufWFUE4IE1qFYABqmYFCAkNRWQGQeGQOHGFoPGQLEAUeCmPeNQj6PADFgAIaAOaAy1OZQ1NJHUwDQOhlMEwhAtjB1AVBIB5gcAMAoLllzVQoAAYBYKpgghwhgOKvzX+P/MT0JowrgMDAJAJIgDE/wgDIwKAM1DkRktDANAHHQJTOMA4MJICQiA/SoYIzNlD+WaGMJ/mREkKC2G6K++AgHYkgTDIIhxDoYNAQoUw1AhYEDQadkwMFTAA2MxEEwYFn+IAQFQChsZxpBlIbGBgWo4hIhowOIDGIgjEPqwNHAIeFxcYzFpgwEZw8xgABFLCkjUqFgQYICJEI8M/////4SgxMcaAje4delInmfLrSRkNISF6Q3a9sLnJqxvBkzOTHwpQnPNNQaPBYZAJdgoAz+FQNIcjAJFGmgIwVDYUBBg0DKjMLhAwuATDIeMGhQwuNASBDnY6MPg0w4ExEEBpMAowmPS4Y3CpiQIoWhgYHAIEBUxGFwEGWHT8tRCyQBIAgZmDEhySMHb7h/NSgILwoKkUPhzWYeBaZhPgVodmNrQgN/K61C15gDACGBGAaYhQ15s4EmGHcD//vUxB4A7r2HIo17i8WHsOQRr3F5YYDgJBgCAOgwA1CQyOaMCEIMwbwODAlAqMA0Q4yBXbjR/InMFABxXJgCABDIAJgFAAmAaAdL4bLyFQBswNASzDXLBMB4BcFAdsEVItNwnw7GIbEQEICQZ8QAKFk7KIDBQaVtDgAYSAgCBRbcoAhgEUHFkIYUBRMHpklBAUCg6EFZAgKlgAjoBDB6AIOYLBQMAiExj7gIeqcV0VUrSAAmEjmSq40IDm9lDtL5hNvkEA0AGCQkNA6bt/zff//WCRPEYFXbAliZpLXPysJVBcCDATMGgd7rEllcC59Zyz0Eggw2KjCAFZJSypW1hDLpSAQOmmIQqYaB5lIumdyqREYwAAgQClUAMFDCoNBQLRGEQ6MwDsz4VzIs4ODIwBA0xoLgUMCEEq9HgwWhAIMHi8YDCRhIJgwbCQMp7+AiLARACps2IMzpY55JGMmWkoRbhcwxY4AATHujEkJAMUcCQaA1DAAkoWzqzJqW5l+SEAEwHQTTVVU/MCgBMIALMJEIZwnTQ6CECMEAlAQHwwBwETBsCGMbcF09excTFbBFIhABYFcIAYEgD0gHYbq8C7jAHARMBI3swDQdiIFOCpRD7OFELschskCRKBDIoNEohC6SJmBACPAVqiX5gMBmDA2OAMSABruQmDgQNCKmdokB5gQHAwDCQmLKoVBgTMKGk6MWEAYOBMexpsJG8sSIQOAQKYgBxSJWH39dx3zLeFdrKJesK/f/7sbWSgmAQhZfY7///94ocp2DBRT2uf/8ybCx1FYwyXDQASdHLGVJ+yItiIwqYHByHIwCBDGQ3NOgcxUKzDQVAACCofMCi0w4CzGApGTIYJDJIDTEAHN58kxejDHA5Eh2YRDQXHKthhEUGHwEmKs8BAEVCRkkYolTvVUNiAEgEn8SfAEIZgiSj2goVtwGjCCAKhzFUjDLLqMNADwHAdgoARna5FV1BWEMxS+MAYAMwPgxDXmSgMIUE0AgKmFUD+sCtZPEOAfBQfgG//vUxCeBarGFII17i81XsKShr3F5IEMFcDgwSQ4DENYxMshnIxQROTALBiBAFIjAMQLXIzRi7LEjxEBuYPpyYOLMLvoxtvFXmVZjfijByQBGG46YcBrKJLBUNtjWmiC6ytyPZhQnHRiwRDtVSvG4IFAGo0YIAsAtULqmIjAYDXoYTwgHzG/oHfjc6m6YKCxmphGwh+PC+jsYfyA2v2udGAMTA/vcd//7jkpVvIRcTAax3//+dwjRg4CGGA6khXp4cx1/ZSz0AgUiGRmQjolY9uhUBRolADNRGAxkBhcTGKDkaDEyaoKCCDg8GwgRg4AA4Mq/CBYYwGBlCAHhooEX4wiNQwLCQOKAuEA8HAJIJOZ3y15jUVmQyIx+cWHYEYeaV1R0iZMiPKgYeFCIOJCwgmEEwcCDTDHGpMOIBEmAqGgEW+hxljBJfPNmURMBsJA0ET0TBjAPYKYLYPjK3gT3CgCxgPgpmAiCmYAQBxgWgemMoKedpxBhiOBLGDGAqYFQAQGAnBwAiRbvwc/TLQqBGYYBO5hjBLFx0s2ltKBAAWbcm5QIwGhYZUBJl0IxjPbZCIQsDTWsjIDCwSMKkA2yjQcMDAICBwtRjRnEgc0oiINR8DAwiMQno3WUzCwEoqO932vUGDYzAIEMQmw0gDC4UM0178RkEw93/KoGahr7vf/9U15KUBAVDej5////ugSWMAhVCvr0uZzv/7Y0pCQSGRg0vaW2rKQvCQAEQ0SnIhKYjDRkskGZh8YMDBh8ThwgLlGFAkOgYdGZQDhGKDEQRMumgx3DTGJ4UxgYwuIQqETBQMYpByfdKlgYgFZiAJynIWoOxgIgACgAAGMec4hkgD1iwI62rKHRF/BZF6BC+YEAxpgggKlxEnWGNuytirZ4w08eABMBMDwy2A5jDLACEIFYABbRWXKzJfJgVggGA2A0BAAzAQAFMIkIQ1+0czA5B2MAABl6H4am3tWEsGUBTjMEQEEyEAIA4FAaRYKA4qEDBwSWrC3Vf4qBUqBMxWMx//vUxEcAZxmHK6z7i8TKMGTxr3Fx5XSLHGCg4DRlAlGEjQCAAqDSw7RIRKUFqWbJ+yekL54RJb62DKBHARJjWeW62rv5iwVCoHNDg2rCKOz/qGxTmV13hIN2vt9///DCIqooVc/////uMlIAamzqUQn9//1aJmBgkDKetY1qba2mwzLI0TCUOmUw2BgI6wCBQcDDAYEQSJNhUICwBMBDUvsZUHx14cjwpMEB8GggwUBRgHqeScYtmj8kgGAFV1nIGWIBAAYYCMJKwUiMKBMoHRSTSIjhhwwRFBxExoQwwgNBIg4mAhWfII28cvbo19QQDABmBgCwZ4pbRhEAXGAsBkYGANxcuVPSkUPBshwZpgLgMGBaBkYNpaZhSNwGGsG6KAeGAEASnMkfLnsjTxswGRKCKAfGPZkAGGEQiYDAJgYDGGwQRAeKZ+VAeKAsxMByZfZ/q66bXEpXlfCkQ0NYEUahTUWVxBeM5QtMi9RBMpIy6tCgBwFIe7uztN16HDAI5MuFRJG5Z/8qkO83UWFEhlF87PP/94/0UAKD+/////7ygMEBplUmdKQ6x//wpxCADDAjcfD//t9uyWjCWCEI5MAiYdArrJzIUtAUuh8GBESD4WBxhsPmKakLh0yWCzD4ES4vigFhA6AG2jz2LDmEx1FFqhLYAkAAIAAAO6B6QbsWHOh6WZMqb0QGCyyZVIJGiNwYKBJhg8gYDgBadjxwRDsGMjZQjeBAEjA9CfMjBY8wwQUTALAfMHUEsaAYgaBxgA4wZwezBPAfMC4BEwMwezBwHEN/6EMw/ANTBZBNJgZSqASXwXuoq2jAUtgsJzE7AP2tcEAAgAqSRMDAMZxoVOrVqEgZFRqYvEgGc2WWrVLWVlWuyqATB4mMgUI12DgoA4eiNuM46jVPGRCITGsFGhMvWrZ/POctR5HcCAUKKMWDLv0meHPyy3UR7DARdznKLv/vDUfQfEgV3////9W0nAYOknYfw5vv//aFD8GFAaEdr//6vGLNQVTGQEYyRIkE//vUxIaAZwGFJa17i4TXsORtr3F4F/KZIHMrTJe4v0IQEYXBRhIugkQnoVGZfAgOHSNCilq7M2q0yKBEwURb3Q2qACAIdzGAYixQxZowogDFgKDIQBCFHA6zjJIjDxGeMSoD4aAjX4uuYdhucBMjSUKoBpgQAdGCqykYGwKQ0BYDhgQwBJOFDoSAUhYJQgA+GQTzCMBbMHUKE+/QIDLNA0AwIoQDcBgSFBgcAQ6EvZY9wAABMB0C0y8QIyICcMBCPCZYwEZRT/MJko6jpIDGE5lS9vUrbCrqKOcYQBBu2DGSCEJApiEPxuk3SVKSwYAEpoRkAo70Wt56ll2pL2skAtNzgoSD0Ui9i3nrf7zFAWUFjfxy9//dq4wSEACRXu////7uN0MWhtH5/t/znc/zjAqDzEwTDAl3D/5lgpjDgyESQhGwwiDgeLAJeyJydYNAj9pwmAQMAgCYDMJr6LE5CMMB0KAVJZMWYvUlLfgACAgxuPmb17cF5AFAA3YbgsbIEysBJAwgAihiyQIAgQaDRBhl5hZk+mJMBSYCYAjLVdP7i6SyWxCIAMKgDCgTplvtjg4SQwEwCDCxBgBQGpa5iJgGgOGEUFGYQANJgogSGFKIkYvheJ3sT2GRgG+YKYEhgiAZoBggAVYzkxNiCE8LAgMsKcNnUMAaXUWItcIAVbmdnbYXGEYoAol5vWWVNjLnaaSIQGFQNHJXMEgTbBAMxev2e4dVQQFmP6jlAiSaXflKZTTRl2X6MCg5M4iqLuuNS5c///k2nuUE5OVI9v//dH9GIgIUvx////5nYEYAhAagYJ2KZ71X3+8ZeDANMMQ8Rwpef+8OzUBjgEkQNGT45EQ0rGkpgIBbphgQobjIGBwBmE4VmHQCmSKnG9Y5mIAjorOgVgbbqV56NPQpcYaAjOwNZSkoCARFwVILMOAGAy7KiyG6AtHYdBGllmGwYOYZ4J5gGADK7TUSLfeVtEXSXTHgADABDiNeJUQw1wEzAzAPMNYIcOAbXIlWYBgFRhZg//vUxMUA57WHII17q40VMGPhr3F5mmJiDWPA+GDCHSYoUFxv1T7mV4IUYUoMpgeAXGAqAmYAwAQGAHL5o+PukOLAAmE+W+YewABECZBzFG+hCtEvqXYqzcwoWDD4SkeH2/uSl2XKZKYGXR/4QGVQAnC51i1VmInMZiIAGBTWaoaAOMgkCH/qcrO3TWZaqkY6bhsIuiwEanFLeGt63WbCuowoB5Rg/1/n/8cpVFQSImdX////WOUYHRKYzGAcMoZ1+WP4V6hYAIyATPBJDiDWx1he1uy4Y6JzOrRNLHUw8AXynmNmBQqleYCAzBiICOUYuaB4TUHNVMDjKkQ/7So3UgNXeSZRiI4GEguRAI0sCUBAADApCtBQXRbIDAeF+DARAZBgABgBABgkAYFALGA4BGYFYLxkgIbGPOBwYJADYKAKVhc5mzDWZRFewjB9MNUMI5i4XyAIIoBYMVsMwwLQFDAKAJMAcBQwHgWTCfBvMdkTIxBg1TBRApMxD0u+N0RGmTCiQUAwRoCDMCHAPjASABkBAJxWAFLsd1Y4UABgsBOmAgCm5gPQDuYCQAHBAAWpulQkm1HHCVr4CoAqYBGAZEAADIbOVBHX2ayqVAEAgB0wLECOMRnBTzARQEADADqa0JoIZjVnstAoAcYDcAsg4TMKoBoEACrJpb1siezI3SZsYKCBolwG/icTCJisHzlvPD/+qYaDIsBre8KPet0EvkqfAOYDpyKz3//W7kEiFMmLBUqCf5//huo9b4GUFkZ2DAYM3lnrz4vvQSmWpDmBhYdcJhnsahwKoZWywKDgoA4qGWViMVGGC+ZvshozdmGSAgwY9BQYW2mT9mOEQLWsFQ8I44aVKyEUhvqjsAAYVCiUCkSg0h6DQSHAQDAPkjvAgAxCApgsGxynxxrIKxg+EIAAgGgCXUSET7SBAQFGCASmCYOmDVFmJkECxgMQGmYAqALmC/AGoKATVigUASCgC+YAUB6mBeALxgAoBQYF8CEGCNDT5tGYa8YaGBChAVoY//vUxPkA742HFw9/lw2yMaMh3/ZRFSAAGAtAAIOAXh4HWKuomeTAQYRhAcCV2btjuBhEQBrnWgFwJduTS6Mx4ZB0GCelhL5yfeyROq15NIgAkcCAwzpM0FQgxfFkwSAgvmtRs0DRmaht3AaBJjmJpswEohExMyAqGpPRyIv8toQAQYjr6YXB2sM/sapctbwzwpzBECIHvc3z/3UiT3hQRjCQCl0SO93mt49xY0YiDyVQVREldSpnh3uFZKwHNkYrAg70ix7fe6HY06SIJg0ngjFglAwAgWozDjSmoA0AwgQosYNAMYPkuZOZMYOngIg5JgMEgsanSXfbAkpFx0GzL0MDDUB0Ab+Rukt4KwgAAEAhAMMHkAYaAgMAkBgSAebENAAAoCYUANKAETAJAkMCgK0xa1mTE+B3MC0BgGAArym4GhlPQhABTmJQNTBKBfMTqrEwWgUjBCAkIjHgwDdCeW0MCsAsw/gGjKwB+MSEFwwFcJUMOZPGzSlS8gwKAFFMCQAxjADQGcRgEBgA4AqYAUAJICGJt2LigUB8MC1Blg4aeGgCEaAA0q15EgBHHakruRMEAGIKAhlObNv4jEHriTzKEGALgBpgYQCWGEHpgGYAMGADaODE3/hiV0kTfQhACzApABUwngAPAgBMhm/Fe48awLdJtcgGJZiIvm/QEX4geKS+kw7+G9g4cN5bzw3/6uuUxcDAIw+SZdZv8//53FMoOMwGx6rM9fnhXpIbQYMAiUwUbTWgXaBP4deB/ofsOGi8CB0cfeRr4FmJxCYfCi/WVgwAmGA0CgISBgxyFjHijMBKI1T8SUiJgjRHAxGhmmqvAkinSAACYYUJpofFACouqhSGG5MmP4BAwFXLFgEMCAnGQPMAgHMFgGMEQDAABGJownV1CnBImmHgEDQZo0LrdNJ5AWUAAIgVMCyIMKilMP1JbjANQG8wCEBpMGQASCIB8JgA8FAABgI4BsYGEAmGFZAiZgc4HoFAYgw8xBtNbQGkDCfAVMwHUBKMCSAd//vUxPoB7t2HFw9/lw3QMSLh3/ZRzAJwEhCtb5apJNbkRMHxAMTMcOPxQQlo3NopIKAfE5mdiUPjAMgIHG0peU0qh2NO6oCFwCMCgtMgTCPJ1VMUQ6IABZ9BcjkM9Z00lS4w4SY1yCklCgiCevreLS3uYiwkqAsYjKINJkyGglNzv/+TW4OMNQRlnf+/rerrkL1MCQrMPwqZvRWsO6xx6/ABBcwNC8HIkpbW73nbNuQpnGAgJGNB4CQmrPvd1BrD3Cf0RAGYJgABAwNlDdAIJmDoMGDILKgsmDIEGCoIFAiGAQNgwGDCcQTFkWzrsjjCcFQKAJgoDafUHU1SeaYmiAglC5cgY2V0Rei6BgGAAAAwZATAENuGA0hgCwYA6VQCAwBsZATYAYAYBxgEgTioOxgbNcGA0GMBQKRgARNN2FcKxgoAAwBwATAiAcMEME8wkjoDxSWVMqIOYwTAzDETBlMEkC0UAAHQAwaAYYBI9RkIA+GBCCoYHuAZGKvnf5uLQxaYBUAKmAPgHgGAiBGABBAApEFTrrfgBAGRBib07gY2jUYbguXgLkLDoaK41GPZQKA+EBIJAhEaObuwG/z6s5LrAIaDFp9z0EoBYhhYGH6cTCn5KoOTuMHA7NgTFMFhXMCAaMAQaR9d6M31/MHiaEwxCDQah4wpBqH4Yxqfnnu0swwLDkIGtofMNzP6r0Ci5gCCZhwKIOC1tZFZ7vv/cWQIxjMUxQMQQBj9//+3uXvCYJheYIm4UE4/lDMXsHoUUabKmcGEZJmfarGQ4SGLYSIBVfIwsYMCgHGQsKA3BoZAYaTMN6TDBOjR8Fx4G0HwoDYcFle72NslGAXMBihMBBHKgErMn7CQJgwCPIxZCAwfBsoBsAAK1xNMwhBotECg4MFQWMLDZPOflNkhLMHQGDABb59lhi/paowCA8wRCoxKJ81DWAypsMfMBWAMTAAACMwLEAMMB9ANDAGAAUwBUAOMAgAGTAjQXwwgYGEMEiAlTB1A10w/1RLNSqD5zBUw//vUxPoB73mHFQ9/tg3sMKLh3/ZRXgwHoCRMAfAOjAGACcLgAiE1kzuNXIQKBBAmPdbmcAEoDtYv7NNXpb0Ew6WAPFmOHgMsy664bDnZUCVMYEAmYri4Y6CAdioEYOACpcy3PcPch6kTqMKCCNXkNMTw8QdBAIvXlS7biqpDCM5jeQ5muVBQI8St5d1rda4IQKFALBxDT+v3V3+6jOwMDBhCLxQG89l+GNvHrAFKjBQADIYCQcFUK13f46qtuYDAGBBWMQA/LjInN7axrNFKgBsuMEwIMMgYMlkhBSQGAoBGBQIoAkRhYIAoDZg6FYsGJgYEA0CRhYEZv0aZhaKhftl6cLXorUp0ZEjzAoITC4MyUMhYK5TZmhjBAAAwBQyDAPBZMCUAAMAZAoAhgAAIigAqIoVAHVaQgDmAiCgaXgWICEHCgAZWAatyD37hlLMwEgCgwA8wKgYTHPZbOMMlgwkwJTAtBFMIgK8wZAEl7mAGAqYDgLhgyhqmIyUKYCoOxgyYLeZEo3imHLBMphEAC8YEaAqmAYAAxgFYAGYA4AFAIA0i0fF7mAwAGPqymhJmByLgYKFTvu7ENvzSStkBKEJjmR5jOFAOAV5rPtiQkLCqZFvjAQIzKtfT1t5gxSgcQqlToy7eWpMkWBAyMem2MPwYJALT1SEZdS5UjMxYBFLTAoADKgVCACEz4VIM/3utMpLGEgcGJIUJVUvedx5vsAgIEzBcMDAAEy3kX/9Um8poUBJGwx+DcSCgeBKdw3+s6jdxkDTC0fzGoIyQBkrmJUN/l2cb5zjBgHDJEYDEEEiAIjEsHDAQOzBgHggQgENJgYFphMERheGpgqIZnOzJloQJh8BAXB1H2gjMFQq9KgsDBgmDgOJEsAsCAFVxP4rGEiACOBaGBAAERBOAUAwZAkCAOw4F8MABMBEAAwCQADAFAIOM0sgwLQGAMCGvlIVtaaGU0S5hgMgEGAgBoYi3LZ2biemJaBYVQLzAAEpDB5EYwEASBQCjAaARNIwUYweA//vUxPQB8O2FFw9/tg38L+HB7/bbnjAuxH8zHul4MLRBfDBAAAkwHUBEMAKAE2XF6VTO6/T6KTMAgDYzA3gF8HACalr1SyLTO7Na6YAqANmDEACxgIIBK9VXm2NhgCC0uQNHMAOADjAtBQswosEpMBlAUR4ABkD/V79LNT8sMECkNRYLMOwQEhFkzfhwfUv8fYcCwrAQxVKk2GAUwnAhiUdw7/9pbQWAUztDgZBkaB2kv71ruFd3DCYwTDYJwEDycNNvmcLgrN2CoDRjMSpggAZgWBz3Wf/+/sVBEwaHQWWswSBEEgCxa62Xn6tIcQYJBmyOhhyA5gUBhECQNBEIBsWDIHDMlkY2AyYGg4YghQarKQcAk4YOA6MiS2IiBaCYrIuV30MBRIMhjBMPgSCBBDgb43U0qzOkKDBwRkRgQAIDkxoXMAEDABkYFQuHGOoZjsQX2YAIARgUAJCACYoACEN0b0OBAABjIAUCAB0wCUCaGS9cyNEBYMExASzAMQC0wEADjMDuAEAsAJmAMgCRgHwAmBgRswzEBoMC6BIzBzgucxliQjMAQDPTASwPwwIYBtMBdAJgMA6iwCGAgQFACRdYEQAsZFOmYzDoGBGwxpbxwRBMFQy8SqZgYB5paIhhWGS+XqhmHmghwaoCgsAJgADZhaMhhfz50aVgsrxcpasKpJqhiDK14GEYPGfkgCMWiYBGAMtAwAwNLIbXgthAEYEDyDuYBws2Mcsf/K7JIWY8EGAiDTgldTDPW8oJSqCgZmTQIBwDK5jWOWPYVVdAKAKWC0LAAJiyDPDf9pI2XdVIGKEUANM2qtDh9t2BkCR0ADEYgSIxzBwCGTjoMkoKFAJmCQBCAMAEI5gABIUAgxTK487RcWSoGgMlk3B5IfkOnTcsZBYwdSAwSFwwNAuB41UIoMBUdToDwy8rBBCNAAwPGAiYOBTCAgwgfMmDDDmUxukQeMA8AQTAAQAJmMKxctlEYUzMAoADgQAjmEymapiPIWMYEiAXA4AEMA8AuQUD//vUxOYA76WBEA3/q42IsGIhv/VwkTDsoNCICjMNCAyzAuwBIwcocqMz+g8DHgQR8wDwArMAFACEHWhOJDczGnJROMrUXNageQNhVjLG/KKtaIAQHDPBEzCAV0k5RvcGmEwCLVizKjAwUTOHVTpgyjJ8EYjIKOxYz+SGBwAGJZlm1YzGZQhu3D6DRZqi/ssBoFGCYKmVh0GZBQiQQSu5v/1rcFGAAXGHxSA414zl///7oDAgBjBoPjEoMVbrNP/6hqHOtEMCwJFh+AREz/O8/96ug0ETA0TTAEHkg9cry3HV16hUBTCMNzKwyjLUPBYeQIDRbkwDBhGwID0QAABgwC4OAYFDOMVzTRiBKhwEKkNxikp6SrRmCANGAYGmFRoGEYagoQi7z2dVEAABg8onukSYxFxjgTGMhAQB0DBUGgEwODRoZGGx2ZQFhlIweWYGEAemAEgA40AaIHOQpgJABZMACkAAOYB0AzGBXg2ZhGSMqZIaEDmCNABxgGwDIYD6CbmBZAB5IACmARAExgLYDGYHICEGJzgTZh1YIQYTua9GXLNmZhKQckYMeBSmA0AKhgB4CCYAAAaGAEgEJgIAHBgBiZ6MxgFA2mCeXSYqAPoGA4VrpICgN+GnM5ZEvgwBQGTIjATAQEBgTgIIqw9DheckAfMBIAov2YAgExguiKmOMy2YsIZJg6AXGBaAiDgFEK10Og1VRp9zABAkMEwd8x7A9AwTwwAwAHsLlIaK05yp4U5DAVBFMYMBgwaABBYBBVrTodpruWTdDAAAAMBcDYMHxMAwA6H6lPnz/xWAMBkAwwaQjwKAgyZJqk//uq4T3HQBTANCTDAJ0aabmWP/uYTLVyYMwCAsBAlna3u3ezgh7QqBKAg8DDIAQMBoAsHAsmASBYPAKI6iMA4MANIgCxIAgwCwHTADC0NOoSkxTAhQwLMeCIAwDDpxN+IkIQA0lgMCcYLopY4CGGAAgIC4aAGhcszMAwIQmTA0BLMCEARDuUAOCEARMUwAAGWLgYAY//vUxOuC92mFDK5/y4WOMGKh7/bAIAdMFUEU2gwfzCrAKBwMpMBkEACI7sNCoCacIkBUYJgApgdgFGcMeebQYLRhJAOGBMCMIA+zAABdHQHBQCElBQCgdYQECYh42hh0IUObDqK5EQ6mYHYArmBBgDBgHQAiAgEImAHVfrza010mAMzSKcwbANAyRyykzw7jTSwwjPUzhCBDNXGPfTICAYTVhtxjBgLTRDLDOcQzA4AlrQJlexmoilMOB2ZQrSaKDSCggf/bwKbWaSnhhAXJzRoEzAAD04ZTawwv4zLGgCFZiqHZiEB7TqLD+/ljBQgBEwFEcwrBRPeLs5qY/vFpL6mAALGKAAtQpb/P//5Nr/AgXJIpONXz//1+i95gGE5jiOAMAZBVXqs6TLSiQFGAmBADAoEzAgXTKtgjL4bTHsMGdwgrAzC7KqUZAVIcwpD8xoDomDowEBtOJ6XlwQHCAQAHpDblm9KFgCBCISCE5gDAgDgIaYBIGBghCKmjMX4YKQIpgHgFGAAACoMulkJCAQDQBSECIZBbMDkXgygqCDJLFMGAQzAZAHMFgB8wVgBQwB5JUsoYA4H5hEDfgY+Qzr+FTvRL0MU0FswCAECgBNNpWp9Hbk81XgEy3KIaIq3jj3nbN9+QuARj0AZiyCgyBoiAV3qWqnMOAUm+KgIIQdMelOO6kZEikSKY698Jr51rjllQejX4hTFgDC29FjdoJ3+VwQDBjYIRioEbhOLGscop/KsRMExDAw8PNDVfDfdd1ThUCDEYChoClaa12Q/vV1oxIAgIDJAYiTq1///eWjAoDjAIDUZ7uGe//9XSyhg8GoKDVdqxX2cRemBaMGAQDglMFSVM4TlNSDrMCgcMHQIVpBIJrNyxmsyoA4yDxisHpIB6NkNz1JTIUAYHoqBgogGmAgA+YAgEQQBOAQFSECAwEgAx0CwCgUGAIC2YBI+Bl3LcmCaDsDQJxEAcMgAp6MyHgBAwCcHAkGDWCSYmwZhuAk7mvUJUYQ4J5gngymB8//vUxNGA6YGBFo17qcXSsGIV7/bCHoIglBkA0BAJl9TBJAhMMYLE0nBBzEQEzU0CUJaDgN4wAwBiFgGAwAYAaL0xpL9ljqMjBoAmiRPmDYHQdGMJ/dBOwYsCYAgkYwvILH5AaJ6Z0CxpB1GMxXAYmBUwWFcxJZ4+eEUSDcUBlYz4vBjRyyAFKQoRBsWmZiwB4KCKfjdWGpjDKImCoOGQ6dER3Ps6MipbcRsW6g6AJhQP5mYJShFuWZ4Ya/BuZgAAhh6MqXSJNqGIh38MmYAUBgIDJjQHRMDk9vLP+6us8MDw4MNw1BQfZZ61vtJUsmBIPGJIVGKQDQ1CCoAxgsDg0CtQwSCAOCVHIwyJc1eZsyrN4KAKYLgy1kwCB0WAOkqTcvFARMAhTMbCFMZQpDgV3+UT6gNAAAAwBwjjCzASDgegwE4eAUMA8BQwGQAQoBECgBCABMwJAEDCvGZOAk4oxEwJwED4CgHwwAhA9TZD8UAeMAsD8LBAGE6NOYIHk5huEFmFYD8YIwJBhEgZmDWBCYFwAgCA7CAXDBPBNMWYCw0jhgTDh1Usxq4MeMEgBXTALAD4wCQA7AoA4qmCQARm9PKKALiKa6kkrGs23Y5dnJ9/GPjwEGNahApgQYFQNAhsMon3sKAmJiWCAoMJBfMiH8PVSRMJRELACryYDKK9udf6ZMDxsNzD1IhBXrAM/cq0uckfcRBeYSH4AirU9D2OrsN4bqQeYQCkYKhHIX/nLeHO8tSwRgsYmDWYGAit2Yj8G5f9ZYKElQRDGoC1YZ7/z/9ZoyRsxgAJ+Ypbw5+DPmOwQFgPMRwlIQHQmEAEGCgGDwvMBTyMFwVMEQoMIwOMDQJM4QxNzjFMNBTDglZuKAUUBPhhN1RgATBUBzCwcDF8GqGtzsZnDB8GSMG8H8wOAXigD4wCwFxQBcwLADRkAowDACRgC8wPQQjD+EHOEorAw7AMTAdAaMAwAUIAGR9QCg4AomApIgMzA8B1MLcY438oiDQlDwMOQCwUBOMEAIkw//vUxOaB7mmDEQ9/tgXtL2IB7/bBcAgx4DYGABIWgUAUwTw9jPWFOMKLW5zNQgQcwPEBRMAgARDAHgAcwCMADMACADEjUz13y8gAIwQEk1iFgwYANi2EUjGMbgCCaMwHD0x/asaKgv0EBUt2FUVGIgnMNwJDgaMCw6MbIUPnzYEISopObam5qNQCocBAPMSwJOKQXHgcZ/BnZqZp8rDxmAYtmXI+mJoDEwIwqlrVXXkfKpAAQMJYxxApNb89bxyxiTBDA0JTKUHhYE34uSm7lzPBuRYAIwxHMFB69FfLD7mMpYepsYLgiYwAK207lurG33CoFsBZ0BADCEgAQOAEAFcAYETAEHmDAIPDBAAzBIPTCEFzAUOzDmjTNgXRIP2ANOL3JrU9aAXvegwpAcyICkOCWV0gkGoGJAAAGBZvGEINGAgJoHmHoDA4RxIRhQDJswFBwYBsEQMZIU6YPBkVQLR0Wm1iOQy5TTTANAOMBwLE2NSLjE4AHAoA4jABFADgoCUIQAzAEAIMBUBkwMgTjCbD3Mc4TQyIe8zICExMHQFgwEwJwAAgWfSIZfDlJMyoQAZGD4AnDE/e7utdqTbZCYBAwfAjAEBOpuPAGwinlDts0cQiATAgRxhLFaGGmB0gPciVzFPYvW4wnuZDXndmyuY1j+OVWpN1C1pOePUs2ex78elnzaUZl6IuKvh//+8qqfY6ZmCgVL3eqX//1ZAYPGIiSk73f3X7jViIWBjIi9tabf13lpYUnjBaMoGFwUSs1Xm/o6HqxEoMFAIAD4cOBYFMDZTy2wONi3lfDOx3U22QxQgNyL43GAw4CpjvTWMkEgLCRBQhCQVGhiwjjgMMKgA08Pz8pAM0rAQTBvQBIwFoA7MAfAEC4s80lfSlYsAEGARgMJgVAJsaU0KPmDPAJ48A5GADgB4VAPDAUwGkwAIA3MADAUhABImACAiw6FPmFbA75qfgiwZHiBOmFaAk5goIFsYE4A7mAngJhgDgBaBQA5VdJIuigKHDMNUA4Hgf//vUxOSB5kF3GI77b85SsOFBz/VwZI67yQmBn5h6QJpmEKHHFwhmBwFCgDGBIIMHl7sKBmAgHApQzFcADIFeDm3xTCUYDCsHQUACm78SOzNvqTAMYYDwbARoZJg4JCox+Dp21jNQahwEAYmRZsiTIgUEhUAFmyK918ERIQnSYBluHJSEAJK6mfL9qdiy6TA0UzKERhGCbmU92ar3v+wYAhKZCi6DQEYdf5u49ERjT/AwFjEUujCYDhYGn5t5zI8ExUAYvkYEggAAvMNzXJgITDBIOsFZuBBBGRFMDg5MWAgAAomDwvGLyCG/ZqGR4kmJQkmDADtrIu2Zp8B0DzAMFDKMtzAwDhoMkiX6pYJXW+DyW+UIAAGEQN+CidTArAPT1JgDhoGwwSgFjAHARGQATAIAJMAcJAwhWSTRXPiMM0GEGgVGAOAuDADB0AMkAHAIAgsBiYA2ANGA7ANpgtIFAaEyKDmEigTxQCImAEAHhgFwCmYEOAQA0AUC4AeYAAABGAggGJgEwL0YEiBhGlOoghg+wSkYEyAIgkAFEgBssxCZtnbRWHBQADMBnAhTAiAE1AdDMkvXJynp4KRUMA8BZDBOgBcaAJ2ZhcAWU5iERaIMgDJgCwBqYAQA3GBdgy5il4LIYE2ALCwAiVgAbaw9RVYBjoCI5gdcHF8mYYDwQLWGQ3bnLW5IOAAEBo4AhQaEYGGQPPc3UgNo8MA0DmAnCYKCpQHZ+x3DfP3FxArVwDwdc/DC7h/O2RUqgUHCQPbzn7rdhuXP0IBYZ2NJEMYepe23oVaVAUkUUAwwIMjTAehSYojAgUBBggBKVGGQgYjFRgQOGBCIYCOZ38DGFR4ZGG5gccEw6fOWtbn8YNIAEY4GRs0MBxGiGc3alxgYMGUQLXIggEAYV4mpi3AimCWBKFQMCyxMBIYDwDIcB8YBwDJgSAomBODUYZiPZvfDvGGsDCYH4FRgCACoDi/wwAoXdMA8CwwDAezAYD6MG5P812ozjC+DZMGQAAOAoEgYh4dA//vUxPaA8e2DDK9/kY3hMKHh7/bAiBQKgBYOAIMAcA4CCgGPmEwaKQZDmETAgpgJQAuNAGBgEIAwsdL1NVkS7VHACAZi0V40TTDpFTTMnVXft5EkhkKTJUCzPQDhoKmFlQElZqfJpMgBowjQsmHVknhY2mGIEqRnHKj8olMVLdxMwFBU4jCww7AsmB114RUmbnGlAQDh4NAVHZQE7Y3ed7HLG6ng3IwHAkwOIZCS3vdc/H81sgIBjEgVlBWa2v/HLVt1F/mCAHgYG13wzU3rccYey9KUwHDwwcAJiMJyzrXE5BQECoABgWAY6ORlQEhEEMPxMqhAYNACy0wPC4wOAxlYkFxhuQZ00VhlSByGKsUCxaywiBHhUJULMkxWMLwUYvUjsEVTAAEAYHRhgD0t4gSAAAAwNBrTBUAnMAkBciAgMBIAVEuHxQBYaAACwBJgUgCGHwLcbownYYF4UAXIWKbs8CADhYBkaAeFgYDBjA4MgZFQ63j/zHCAYME8CEwDwJQoB4YIIGwNAJWUQgEiEBIwNQNzJWLKP+VIAxww5DCEBrMEMC4wHgFTALAGLWqbRWtLHJMCIGASA+otY/5fTlRhYUAEMDIUEwdAAabBmSm+EvhxVYwAgKRkNsyFgtDF9CoLbs2iMbd+ctRIlBzBHQ7QTOxWgoEssm6S9ljJIiGA5j6yZGVLXf9MWZo+ZzDzBQAEQ0bEfrdn+V8//D1+GUCxnIekxn///9pBGCmHlIVGB4CobN/n/TQWvwvwTFQkG0W+1Llwv/GRITMVJx53MSIWLvJB4yCIXOAYJDxg8QGLxCZtYpukUnJIyZBJiz4nTXu0sVZGHAAdKpkoqhg0ovklM+4FDZgYEQt7JQwAoQBgNBCmBSD2kg65gDgBGA2AgYFYBIiAPMBUBQSA/MA8B0sJlG8cCsYGwCgBADAwDAOAHHgDDAAAnIQAhkBcLAlGAeGWYp9Bxn7D+mEGDQYDoEJgFgCgID0wPwFjBNAFMBgAgwIQLTBUBWMI0Pcx2bOD//vUxOgA66WFEw9vns3lMSHh7vMRlROkMdIOMwkQdDAgAhMBsBYsqCgAnFd6dYGDAoM3g/QggOQX7MwDQBdRxwoAQ4JRumEYBAEvQyhla1aLUAkIOEILmHzfnTMPmqIZpogoBnJWlbkc1Tq4Aq4PqqUyGCRIGy+Bc+5VplVIxkHjZJMQcgqWVlw8x+ldswSGDPBVMIhFA7Gmwt63yLAwiGbwSKhoeBtJnhzvLUcJQ+YEHBhADN/hL5nDfLbKDAAbMZkYxEGhoK1udvTcEDoPWHMFBEwyXCZGEgACotYIg5cViUBAoRCgzMWMkxh8jhAfMXC8xCHCqD0AtNLe4RgwMHjLKCMsChHkBEGQU9PKnVLQF4DLgbHiG+Vu8tUJAAGoZhyIqZGNjxkZATITjVxcmDxQGBhGFADzDSaYNcwPcHBKGAuAenkvdEVwSgA5fZgNAvAANsxRJgDc9DHMKUKAmBYLTCwHJgIgLgoH9AAYCIDJgPAkGDSKqZRldR38AmGKEEGYLYGBgOAPmAiAQGAEojM5e7q8zAR8Npj1EqP1p38L00tMLBwxmzTTQ2BoLWEjDL1CIdiDXwoBjEpRNjbw+zrjf4qBQfYc6txljrvw4YMCxk06nCgInuxB/5ZL79mmY2FwEDU8buJoCNtBei1izrGJoIwsLjJ5WMrgqiuY7t2r0ldIwIVDNAxMMBlEm3hnnr8H3MBkEyWEknlvbiVH//TofDIEFj2BiC6uf/SXpQYABxc8wmLxITGDwMnyWAasgszBY6BTB4KAgZMFBEyDLTf70NMogeOw4CwsAg4BSHVVlYqFjFxIMxiQwmEVAF/ZcjbTnZFQmOAQyg+gMJHLfyvoPMFUOgxCwjgqAsCghjABAnMCYCoaDPMAsAMGAHGCWAsYIwOhhIyGG2kEsYKYCgqAQW3GgAWnorBYAsuYFgCTAJCGMaD2I3XR+DA5CHMBoCoMAsDALzAkBDDgDIuWBgAAEgJ4AAYDEGE6Qy2gOvMCVA0jAPAEMwCMAeMAMADy//vUxPIB7NmLDq37id3+MSFB7/aJ5SsqmzkxEVAAwSR4xfF4WBOYobm6sBNGBwAGDwFmPcSmVQhoyMzd9vGpOwyNIQAgeYWBwBfMNCyRAgChwbO7KpcgEVhV0giMFgfM05XM1AvAgWMpgqvYnY1LXWAgKmMY9AZTC9cmmqFpVyvYYy3YCFMDgSMBAPp73aBsEMxqBkMTEcPjCoIBoCorax7+8rqTxhkBxgmBaobW6a7jqvGC5hguOYNAROmLY942OfdMZAkwMCgyMDQICKCR4BRAC7gBwbOkXhMOw/MSQJMNyANeonMVTJMJQ6BQjPy7y533uQGzgCgiZZhWHAuYPAas+itWVLlgFLVZCAczbNWw4eHhoNlVlTRPo/+FMool3DCcYWNGZghoo2YADGPgIMAXDAvR5Ax+YBMAQMMYA4AGhgBURAEgcANlAAGskwAYAUMA3AUTAcgb4wGZCOMLaB4jBKQKkwF4BYMAqAJjAKQBUwCYAMCwAwYAyASmAWAIRgMIE2YKcHEGBfLsxigYRmYB4A5GACAGoBAHAYAIhUAIS9TOajNmBATGEquGBgCCwHvJIpbPSKEqZCwNiwxGoCXmSIBDQQMvguAn1cNpCq4WBQwJHk5ZcU0BDQxSB8iB5Rh750UBVNmypQWB+OBilAQpiQ6u7cxyyqv+tMgCYy8QkwmAkHAdLb12VUcTtEAFDIXFUuQEB69nW5utAKt7nxcACUZgDOJBiwaW2ufx92vhcBQMEZimAAsA0ty1nezuXWZmDoQiAGhIBHQp8N6lSsb8DwJmBwtGMoMo1Q7GXZnc4cS+MBgEBI5mGwIHg6PGTorGHIDBgcP3I1NXhTnUvdQx3JUyOAda6TzJscI2FgHTvEALGDo6mHqumqZvGDgAtajNaZVUwWiGjEPA8BAMpgFAQioBRgTgJGAOA8GAWhQBQwMQBgcCiZK4mxu6A/mEeBQRAiBwCZchD8tiHALEQIgOCXCBoTX3USNtgJQxMwGTBaAkMAwCgRgakANAIAQL//vUxPQD8bmJCg3/qc3GMWGB7vMR1jwCpgYgPGCwLueMLMJqclpGL8E2YPIKBgaAUmAyAgYBAAYGAGWq/UoW+ZZoyz5/quGeu2H/EYBAkTTaE7g4aygBYHr1qsMvAz8cBowmH05iOoID0woAcSAppsDQKrWNBouqLAUAqg9WOzCYYMBANpURrZ38FyKtMAIg2aDgKAozlztmrTFxBAIDFSWM8hAu6jXrerrRGRkQDUwGFQGLhb07fvfzj0uACAcY';
 let mR=false,mB=null,mC=null;
@@ -1322,6 +1462,38 @@ function setNearbyFilter(btn,cat){
     const isMatch=cat==='all'||pin.classList.contains('nb-pin-'+cat);
     pin.style.opacity=isMatch?'1':'.25';
   });
+}
+
+
+// ── 记账：按宠物筛选账单，并实时重算筛选后的总额 ──
+function setBillingFilter(btn,petKey){
+  document.querySelectorAll('#sc-billing .nb-filter').forEach(f=>f.classList.remove('on'));btn.classList.add('on');
+  let total=0;
+  document.querySelectorAll('.bill-item').forEach(item=>{
+    const match=petKey==='all'||item.dataset.pet===petKey;
+    item.style.display=match?'flex':'none';
+    if(match){
+      const amtText=item.querySelector('.bill-amount').textContent.replace(/[^0-9.]/g,'');
+      total+=parseFloat(amtText)||0;
+    }
+  });
+  document.getElementById('billMonthTotal').textContent='¥ '+total.toFixed(2);
+}
+// 记一笔：模拟新增一笔归属当前宠物的支出
+function addBillRecord(){
+  const pet=PETS[currentPetId];
+  const list=document.getElementById('billList');
+  const amount=(20+Math.floor(Math.random()*80));
+  const item=document.createElement('div');
+  item.className='bill-item';item.dataset.pet=currentPetId;
+  const today=new Date();
+  const dateStr=(today.getMonth()+1)+'.'+today.getDate();
+  item.innerHTML=`<div class="bill-icon" style="background:#fef3c7">🛍️</div><div style="flex:1"><div class="bill-title">新增支出</div><div class="bill-sub">${dateStr}刚刚记录</div></div><div style="text-align:right"><div class="bill-amount">-¥${amount}.00</div><div class="btl-pettag" style="margin-top:4px"><div class="btl-pettag-ava" style="background:${pet.avaBg};color:#fff">${pet.emoji}</div>${pet.name}</div></div>`;
+  list.insertBefore(item,list.firstChild);
+  const totalEl=document.getElementById('billMonthTotal');
+  const cur=parseFloat(totalEl.textContent.replace(/[^0-9.]/g,''))||0;
+  totalEl.textContent='¥ '+(cur+amount).toFixed(2);
+  showToast('已为'+pet.name+'记一笔 ¥'+amount+' 💰');
 }
 
 // ── 高德地图接入（真实POI，渐进增强：有 key 用真数据，没 key 保留现有示例数据不报错）──
@@ -1444,6 +1616,53 @@ function toggleSoundPicker(){
   const showing=p.style.display==='block';
   p.style.display=showing?'none':'block';
   btn.style.background=showing?'rgba(255,36,66,.1)':'rgba(255,36,66,.18)';
+  if(!showing){const ap=document.getElementById('aiAskPanel');if(ap)ap.style.display='none';}
+}
+
+// ── AI养宠问答：开口前先自动拼接宠物完整档案，回答基于真实数据而非通用建议 ──
+let curSymptom='呕吐';
+function renderAiAskProfile(){
+  const pet=PETS[currentPetId];
+  const box=document.getElementById('aiAskProfile');
+  if(!pet||!box)return;
+  box.innerHTML=`<strong>${pet.emoji} ${pet.name}</strong>　${pet.species} · ${pet.gender} · ${pet.ageDetail}<br>体重 ${pet.weight} · ${pet.neutered?'已绝育':'未绝育'}<br>驱虫周期：${pet.dewormCycle}<br>过敏史：${pet.allergies}`;
+}
+function toggleAiAskPanel(){
+  const p=document.getElementById('aiAskPanel');
+  const btn=document.getElementById('aiAskBtn');
+  const showing=p.style.display==='block';
+  p.style.display=showing?'none':'block';
+  btn.style.background=showing?'rgba(59,130,246,.12)':'rgba(59,130,246,.22)';
+  if(!showing){
+    renderAiAskProfile();
+    const sp=document.getElementById('soundPicker');if(sp)sp.style.display='none';
+    const rp=document.getElementById('recordPanel');if(rp)rp.style.display='none';
+  }
+}
+function setAiSymptom(el,s){
+  document.querySelectorAll('#aiSymptomChips .mchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');curSymptom=s;
+}
+const SYMPTOM_ADVICE={
+  '呕吐':{reason:'饮食（过快过多、不适应、吞食异物）、消化系统（胃炎等）、其他（应激、药物副作用）',advice:'定时定量喂食、选合适食物、增加水分摄入、观察记录、就医检查、减少应激'},
+  '拉稀':{reason:'饮食突然更换、肠道菌群失衡、寄生虫感染、着凉受寒',advice:'先禁食4-6小时观察、少量多次喂食易消化食物、注意保暖、若持续超过24小时或带血请立即就医'},
+  '食欲不振':{reason:'环境应激、口腔问题（牙结石/口炎）、发烧或全身性疾病、驱虫不及时',advice:'检查口腔有无异常、更换新鲜适口的食物、留意精神状态和体温、超过2天不进食建议就医'},
+  '咳嗽':{reason:'呼吸道感染、过敏原刺激、心脏问题（老年宠物）、异物卡喉',advice:'观察是否伴随喷嚏流涕、保持环境通风减少粉尘、避免剧烈运动、持续咳嗽建议拍片排查'},
+  '精神萎靡':{reason:'体力消耗过大、轻微不适早期信号、环境变化应激、潜在疾病前兆',advice:'检查体温和进食饮水情况、提供安静休息环境、密切观察24小时、若持续萎靡建议尽快就医'},
+  '瘙痒抓挠':{reason:'跳蚤虱子等体外寄生虫、食物或环境过敏、真菌感染、皮肤干燥',advice:'检查皮毛是否有寄生虫、避免频繁洗澡破坏皮肤屏障、更换低敏粮食试试、持续加重需皮肤镜检查'}
+};
+function askAiVet(){
+  const pet=PETS[currentPetId];
+  const desc=(document.getElementById('aiAskDesc').value||'').trim();
+  const data=SYMPTOM_ADVICE[curSymptom];
+  const result=document.getElementById('aiAskResult');
+  result.style.display='block';
+  result.innerHTML=`<div style="font-weight:700;color:#2563eb;margin-bottom:6px">🩺 基于 ${pet.name}（${pet.species}·${pet.age}·${pet.neutered?'已绝育':'未绝育'}）的分析</div>`+
+    `<div style="margin-bottom:6px"><strong>「${curSymptom}」</strong>${desc?'，'+desc:''}，可能原因：</div>`+
+    `<div style="margin-bottom:8px;color:var(--muted)">${data.reason}</div>`+
+    `<div style="margin-bottom:4px"><strong>建议：</strong></div>`+
+    `<div style="color:var(--muted)">${data.advice}</div>`;
+  showToast('已生成基于'+pet.name+'档案的建议 🩺');
 }
 function translateAndInsert(){
   const msgs=document.getElementById('chatMsgs');
@@ -1669,8 +1888,10 @@ function syncMemCountEverywhere(){
  function prependBankTimeline(icon,title,desc,thumbUrl){
   const list=document.getElementById('bankTlList');
   if(!list)return;
+  const pet=PETS[currentPetId];
+  const petTagHtml=pet?`<div class="btl-pettag"><div class="btl-pettag-ava" style="background:${pet.avaBg};color:#fff">${pet.emoji}</div>${pet.name}</div>`:'';
   const item=document.createElement('div');item.className='btl-item';
-  item.innerHTML=`<div class="btl-dot">${icon}</div><div class="btl-body"><div class="btl-date">刚刚</div><div class="btl-title">${title}</div><div class="btl-desc">${desc}</div>${thumbUrl?`<img class="btl-thumb" src="${thumbUrl}" alt=""/>`:''}</div>`;
+  item.innerHTML=`<div class="btl-dot">${icon}</div><div class="btl-body"><div class="btl-date">刚刚</div><div class="btl-title">${title}</div><div class="btl-desc">${desc}</div>${thumbUrl?`<img class="btl-thumb" src="${thumbUrl}" alt=""/>`:''}${petTagHtml}</div>`;
   list.insertBefore(item,list.firstChild);
 }
 
