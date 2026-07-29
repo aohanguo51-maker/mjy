@@ -970,8 +970,8 @@ body::before{display:none}
         <!-- 悬浮用户信息卡 -->
         <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px;">
           <div style="background:rgba(255,255,255,0.72);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-radius:16px;border:1px solid rgba(255,255,255,0.6);padding:12px 14px;display:flex;align-items:center;gap:12px">
-            <div class="prof-ava" id="profAvaEmoji">😺</div>
-            <div style="flex:1"><div class="prof-name" id="profNameDisplay">小橘的主人</div><div class="prof-num" id="profBioDisplay">加入 237 天</div></div>
+            <div class="prof-ava" id="profAvaEmoji" onclick="openAccountProfile('me')" style="cursor:pointer">😺</div>
+            <div style="flex:1;cursor:pointer" onclick="openAccountProfile('me')"><div class="prof-name" id="profNameDisplay">小橘的主人</div><div class="prof-num" id="profBioDisplay">加入 237 天</div></div>
             <button class="prof-edit-btn" onclick="openEditProfile()">编辑</button>
           </div>
         </div>
@@ -1008,6 +1008,7 @@ body::before{display:none}
       </div>
       <div style="height:8px"></div>
       <div class="prof-sec">
+        <div class="prof-row" onclick="openAccountProfile('me')" style="cursor:pointer"><div class="pr-em">📝</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">我的动态</div><div style="font-size:11px;color:var(--muted);margin-top:1px">查看我发布的所有宠物内容</div></div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="switchScreen('sc-billing',4)" style="cursor:pointer"><div class="pr-em">💰</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">消费记账</div><div style="font-size:11px;color:var(--muted);margin-top:1px">粗食、玩具、医疗…多宠物分摊一目了然</div></div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="importDataToBank()" style="cursor:pointer"><div class="pr-em">📲</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">一键导入数据</div><div style="font-size:11px;color:var(--muted);margin-top:1px">从微信相册 · 抖音宠物号 · 本地照片 · 自动存入记忆银行</div></div><div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--rf);background:var(--red-l);color:var(--red);margin-right:4px">NEW</div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="openReminderModal()" style="cursor:pointer"><div class="pr-em">🔔</div><div class="pr-lbl">提醒设置</div><div class="pr-arrow">›</div></div>
@@ -1192,10 +1193,83 @@ body::before{display:none}
   <nav class="bnav" id="mainBnav">
     <button class="bn-item on" onclick="switchScreen('sc-home',0)"><div class="bn-icon">🏠</div><div class="bn-lbl">首页</div></button>
     <button class="bn-item" onclick="switchScreen('sc-bank',1)"><div class="bn-icon">🏦</div><div class="bn-lbl">记忆银行</div></button>
-    <button class="bn-item" onclick="switchScreen('sc-pet',2)"><div class="bn-post" style="font-size:22px">💬</div><div class="bn-lbl">陪伴</div></button>
+    <button class="bn-item" onclick="openPublishModal()"><div class="bn-post">＋</div><div class="bn-lbl">发布</div></button>
     <button class="bn-item" onclick="switchScreen('sc-health',3)"><div class="bn-icon">🏥</div><div class="bn-lbl">健康</div></button>
     <button class="bn-item" onclick="switchScreen('sc-profile',4)"><div class="bn-icon">😺</div><div class="bn-lbl">我的</div></button>
   </nav>
+</div>
+
+
+<!-- ── 发布动态 弹窗 ── -->
+<div class="modal-bg" id="publishModal" onclick="if(event.target===this)closePublishModal()">
+  <div class="modal-sheet" style="max-height:92vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title">发布宠物动态</div>
+    <div style="padding:0 16px 16px">
+      <!-- 选图片 -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">配图（可选）</div>
+        <div id="publishPhotoPreview" style="display:none;margin-bottom:8px">
+          <img id="publishPhotoImg" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--r12)" alt=""/>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px dashed var(--line2);border-radius:var(--r12);cursor:pointer;color:var(--muted);font-size:13px">
+          <span style="font-size:18px">🖼️</span> 选择照片
+          <input type="file" id="publishPhotoInput" accept="image/*" style="display:none" onchange="handlePublishPhoto(event)"/>
+        </label>
+      </div>
+      <!-- 标题 -->
+      <div style="margin-bottom:10px">
+        <input id="publishTitle" placeholder="起个有趣的标题…" style="width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:var(--r12);font-size:14px;font-family:var(--font);color:var(--ink);background:#fff;outline:none" maxlength="30"/>
+      </div>
+      <!-- 正文 -->
+      <div style="margin-bottom:10px">
+        <textarea id="publishContent" placeholder="写下和毛孩子的故事…" style="width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:var(--r12);font-size:13px;font-family:var(--font);color:var(--ink);background:#fff;outline:none;resize:none;height:80px;line-height:1.5" maxlength="500"></textarea>
+      </div>
+      <!-- 选宠物 -->
+      <div style="margin-bottom:10px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">关联宠物</div>
+        <div id="publishPetPicker" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <!-- 选标签 -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">话题标签</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="publishTagPicker">
+          <div class="bc-pick" onclick="selectPublishTag('🐱 猫咪',this)">🐱 猫咪</div>
+          <div class="bc-pick" onclick="selectPublishTag('🐶 狗狗',this)">🐶 狗狗</div>
+          <div class="bc-pick" onclick="selectPublishTag('🐰 兔子',this)">🐰 兔子</div>
+          <div class="bc-pick" onclick="selectPublishTag('🐹 仓鼠',this)">🐹 仓鼠</div>
+          <div class="bc-pick" onclick="selectPublishTag('🦔 刺猬',this)">🦔 刺猬</div>
+          <div class="bc-pick" onclick="selectPublishTag('🐠 鱼类',this)">🐠 鱼类</div>
+          <div class="bc-pick" onclick="selectPublishTag('📝 日常',this)">📝 日常</div>
+          <div class="bc-pick" onclick="selectPublishTag('🏥 健康',this)">🏥 健康</div>
+        </div>
+      </div>
+      <button class="modal-cta" onclick="submitPublishPost()">发布动态 ✨</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 头像裁剪 弹窗 ── -->
+<div class="modal-bg" id="cropAvaModal" onclick="if(event.target===this)closeCropAva()">
+  <div class="modal-sheet" style="overflow:hidden">
+    <div class="modal-handle"></div>
+    <div class="modal-title">裁剪头像</div>
+    <div style="position:relative;background:#000;overflow:hidden;touch-action:none" id="cropCanvasWrap">
+      <canvas id="cropCanvas" style="display:block;max-width:100%;touch-action:none"></canvas>
+      <div id="cropCircleOverlay" style="position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.55)"></div>
+        <div id="cropCircleHole" style="position:relative;width:200px;height:200px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 0 0 2000px rgba(0,0,0,0.55);background:transparent"></div>
+      </div>
+    </div>
+    <div style="padding:12px 16px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-align:center">缩放</div>
+      <input type="range" id="cropScaleSlider" min="50" max="300" value="100" style="width:100%;accent-color:var(--red)" oninput="onCropScale(this.value)"/>
+    </div>
+    <div style="display:flex;gap:10px;padding:0 16px 20px">
+      <button onclick="closeCropAva()" style="flex:1;padding:12px;border:1.5px solid var(--line2);border-radius:var(--r12);background:#fff;font-size:14px;font-weight:600;color:var(--muted)">取消</button>
+      <button onclick="confirmCropAva()" style="flex:2;padding:12px;border:none;border-radius:var(--r12);background:var(--red);color:#fff;font-size:14px;font-weight:700">确认裁剪</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -1614,6 +1688,13 @@ const ACCOUNTS = {
 };
 let curAccountId=null;
 function openAccountProfile(accountId){
+  if(accountId==='me'){
+    ensureMeAccount();
+    const me=ACCOUNTS['me'];
+    me.name=USER_PROFILE.name;
+    me.bio=USER_PROFILE.bio||'这是我的宠物日记 🐾';
+    me.ava=USER_PROFILE.avaType==='photo'?'我':USER_PROFILE.ava;
+  }
   const acc=ACCOUNTS[accountId];
   if(!acc){ showToast('该账号暂无主页 🐾'); return; }
   curAccountId=accountId;
@@ -1626,16 +1707,20 @@ function openAccountProfile(accountId){
   renderAccountFollowBtn();
   const posts=FEED_POSTS.filter(p=>p.accountId===accountId);
   const grid=document.getElementById('accProfGrid');
-  grid.innerHTML=posts.length?posts.map(p=>`
-    <div onclick="openPostDetail('${p.id}')" style="cursor:pointer;border-radius:var(--r8);overflow:hidden;position:relative;aspect-ratio:1">
-      <img src="${p.img}" style="width:100%;height:100%;object-fit:cover" alt=""/>
-    </div>
-  `).join(''):'<div style="grid-column:1/-1;text-align:center;padding:30px 0;color:var(--muted2);font-size:12px">还没有发布过内容</div>';
+  grid.innerHTML=posts.length?posts.map(p=>{
+    const safeId=p.id.replace(/'/g,'');
+    return '<div onclick="openPostDetail(\''+safeId+'\')" style="cursor:pointer;border-radius:var(--r8);overflow:hidden;position:relative;aspect-ratio:1"><img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover" alt=""/></div>';
+  }).join(''):'<div style="grid-column:1/-1;text-align:center;padding:30px 0;color:var(--muted2);font-size:12px">还没有发布过内容</div>';
   switchScreen('sc-accprofile',0);
 }
 function renderAccountFollowBtn(){
   const acc=ACCOUNTS[curAccountId];if(!acc)return;
   const btn=document.getElementById('accProfFollowBtn');
+  if(curAccountId==='me'){
+    if(btn){btn.style.display='none';}
+    return;
+  }
+  if(btn)btn.style.display='inline-block';
   btn.textContent=acc.followed?'已关注':'+ 关注';
   btn.style.background=acc.followed?'var(--bg2)':'var(--red)';
   btn.style.color=acc.followed?'var(--muted)':'#fff';
@@ -1644,6 +1729,7 @@ function toggleAccountFollow(){
   const acc=ACCOUNTS[curAccountId];if(!acc)return;
   acc.followed=!acc.followed;
   FEED_POSTS.filter(p=>p.accountId===curAccountId).forEach(p=>{ p.followed=acc.followed; });
+  saveState();
   renderAccountFollowBtn();
   renderFollowingFeed();
   showToast(acc.followed?'已关注'+acc.name+' 💛':'已取消关注');
@@ -1703,12 +1789,8 @@ function selectEditAva(emoji,el){
 }
 function handleEditAvaPhoto(e){
   const file=e.target.files[0];if(!file)return;
-  const url=URL.createObjectURL(file);
-  editSelectedAva=url;
-  editSelectedAvaType='photo';
-  document.querySelectorAll('#editAvaPicker .bc-pick').forEach(x=>x.classList.remove('on'));
-  renderEditAvaPreview();
-  showToast('已选择新头像照片 📸');
+  openCropAva(file);
+  e.target.value='';
 }
 function saveEditProfile(){
   const name=document.getElementById('editProfileName').value.trim();
@@ -1720,6 +1802,16 @@ function saveEditProfile(){
   USER_PROFILE.bio=bio;
   if(editSelectedAva){ USER_PROFILE.ava=editSelectedAva; USER_PROFILE.avaType=editSelectedAvaType; }
   renderUserProfileDisplay();
+  ensureMeAccount();
+  // 改了昵称/头像后，自己已发布的帖子要同步更新，否则旧帖还挂着旧名字
+  FEED_POSTS.filter(p=>p.accountId==='me').forEach(p=>{
+    p.author=USER_PROFILE.name;
+    p.authorAva=USER_PROFILE.ava;
+    p.authorAvaType=USER_PROFILE.avaType||'emoji';
+  });
+  renderDiscoverFeed();
+  renderFollowingFeed();
+  saveState();
   closeEditProfile();
   showToast('资料已保存 ✅');
 }
@@ -1804,6 +1896,13 @@ const FEED_POSTS = [
 ];
 let curFeedPostId=null;
 
+// 帖子作者头像：支持 emoji 和用户上传的照片两种形态
+function postAvaHtml(p){
+  if(p.authorAvaType==='photo' && p.authorAva && p.authorAva.startsWith('data:')){
+    return `<img src="${p.authorAva}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>`;
+  }
+  return p.authorAva;
+}
 function renderDiscoverFeed(){
   const el=document.getElementById('discoverFeed');
   if(!el)return;
@@ -1813,7 +1912,7 @@ function renderDiscoverFeed(){
       <div class="card-body">
         <div class="card-title">${p.title}</div>
         <div class="card-foot">
-          <div class="card-ava" onclick="event.stopPropagation();openAccountProfile('${p.accountId||''}')" style="background:${p.authorBg};color:#fff;cursor:pointer">${p.authorAva}</div>
+          <div class="card-ava" onclick="event.stopPropagation();openAccountProfile('${p.accountId||''}')" style="background:${p.authorBg};color:#fff;cursor:pointer;overflow:hidden">${postAvaHtml(p)}</div>
           <div class="card-author" onclick="event.stopPropagation();openAccountProfile('${p.accountId||''}')" style="cursor:pointer">${p.author}</div>
           <div class="card-like" id="cardLike_${p.id}">${p.liked?'❤️':'🤍'} ${formatCount(p.likeCount)}</div>
         </div>
@@ -1834,7 +1933,7 @@ function renderFollowingFeed(){
   el.innerHTML=shown.map(p=>`
     <div style="background:#fff;border-radius:var(--r12);padding:14px;margin-bottom:10px;border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.05)">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div onclick="event.stopPropagation();openAccountProfile('${p.accountId||''}')" style="width:36px;height:36px;border-radius:var(--rf);background:${p.authorBg};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:#fff;cursor:pointer">${p.authorAva}</div>
+        <div onclick="event.stopPropagation();openAccountProfile('${p.accountId||''}')" style="width:36px;height:36px;border-radius:var(--rf);background:${p.authorBg};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:#fff;cursor:pointer;overflow:hidden">${postAvaHtml(p)}</div>
         <div onclick="event.stopPropagation();openAccountProfile('${p.accountId||''}')" style="cursor:pointer"><div style="font-size:13px;font-weight:700;color:var(--ink)">${p.author}</div><div style="font-size:11px;color:var(--muted)">${p.time}</div></div>
         <div id="followBtn_${p.id}" style="margin-left:auto;font-size:11px;font-weight:600;cursor:pointer;color:${p.followed?'var(--muted)':'var(--red)'}" onclick="event.stopPropagation();toggleFollow('${p.id}')">${p.followed?'已关注':'+ 关注'}</div>
       </div>
@@ -1869,6 +1968,7 @@ function toggleFollow(id){
   const p=FEED_POSTS.find(x=>x.id===id);if(!p)return;
   p.followed=!p.followed;
   if(p.accountId&&ACCOUNTS[p.accountId]){ ACCOUNTS[p.accountId].followed=p.followed; }
+  saveState();
   showToast(p.followed?'已关注 '+p.author+' 🎉':'已取消关注');
   renderFollowingFeed();
   if(document.getElementById('postDetailModal').classList.contains('on')&&curFeedPostId===id){renderPostDetail();}
@@ -1907,15 +2007,26 @@ function openPostAuthorProfile(){
 function renderPostDetail(){
   const p=FEED_POSTS.find(x=>x.id===curFeedPostId);if(!p)return;
   document.getElementById('postDetailImg').src=p.img;
-  document.getElementById('postDetailAva').textContent=p.authorAva;
+  const pdAva=document.getElementById('postDetailAva');
+  if(p.authorAvaType==='photo' && p.authorAva && p.authorAva.startsWith('data:')){
+    pdAva.innerHTML=`<img src="${p.authorAva}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>`;
+    pdAva.style.overflow='hidden';
+  } else {
+    pdAva.textContent=p.authorAva;
+  }
   document.getElementById('postDetailAva').style.background=p.authorBg;
   document.getElementById('postDetailAuthor').textContent=p.author;
   document.getElementById('postDetailTime').textContent=p.time;
   document.getElementById('postDetailTitle').textContent=p.title;
   document.getElementById('postDetailContent').textContent=p.content;
   const followBtn=document.getElementById('postDetailFollow');
-  followBtn.textContent=p.followed?'已关注':'+ 关注';
-  followBtn.style.color=p.followed?'var(--muted)':'var(--red)';
+  if(p.accountId==='me'){
+    followBtn.style.display='none';
+  } else {
+    followBtn.style.display='inline-block';
+    followBtn.textContent=p.followed?'已关注':'+ 关注';
+    followBtn.style.color=p.followed?'var(--muted)':'var(--red)';
+  }
   const likeBtn=document.getElementById('postDetailLike');
   likeBtn.innerHTML=(p.liked?'❤️':'🤍')+' '+formatCount(p.likeCount);
   likeBtn.style.color=p.liked?'var(--red)':'var(--muted)';
@@ -2037,8 +2148,11 @@ function renderQuickMemoryPhotoGrid(){
 }
 function handleQuickMemoryPhoto(e){
   const files=Array.from(e.target.files||[]);
-  files.forEach(file=>{ quickMemoryPhotos.push(URL.createObjectURL(file)); });
-  renderQuickMemoryPhotoGrid();
+  const promises=files.map(file=>fileToBase64(file,600));
+  Promise.all(promises).then(function(urls){
+    urls.forEach(u=>quickMemoryPhotos.push(u));
+    renderQuickMemoryPhotoGrid();
+  });
   e.target.value='';
 }
 function selectQuickMood(el){
@@ -2064,6 +2178,7 @@ function submitQuickMemory(){
   const title=quickMemoryMood?quickMemoryMood+' 新记忆':'新记忆';
   prependBankTimeline('📝',title,text||'存入了'+quickMemoryPhotos.length+'张新照片',quickMemoryPhotos[0]);
   syncMemCountEverywhere();
+  saveState();
   closeQuickMemory();
   showToast('已存入记忆银行 🎉');
 }
@@ -2433,7 +2548,7 @@ function handleAudioUpload(e){
 // 真实照片上传，接入同一条聊天时间线，并驱动记忆银行的 photo 计数
 function handlePhotoUpload(e){
   const file=e.target.files[0];if(!file)return;
-  const url=URL.createObjectURL(file);
+  fileToBase64(file,600).then(function(url){
   const msgs=document.getElementById('chatMsgs');
   const typing=document.getElementById('typingMsg');
   const row=document.createElement('div');row.className='msg';row.style.alignItems='flex-start';
@@ -2442,13 +2557,14 @@ function handlePhotoUpload(e){
   updateBankCounts('photo');
   prependBankTimeline('📷','新照片','从院伴页上传的一张新照片',url);
   showToast('照片已存入记忆银行 📷');
+  });
   e.target.value='';
 }
 function insertRealAudioMessage(url,durationSec,source){
   const msgs=document.getElementById('chatMsgs');
   const typing=document.getElementById('typingMsg');
   const row=document.createElement('div');row.className='msg';row.style.alignItems='flex-start';
-  row.innerHTML=`<div class="msg-ava">🐱</div><div class="bubble" style="border:1.5px solid rgba(52,199,89,.3);background:rgba(52,199,89,.06)"><div style="font-size:10px;font-weight:700;color:#22a349;margin-bottom:4px;display:flex;align-items:center;gap:4px">🎙️ 真实${source} · ${durationSec}''</div><audio controls style="width:220px;height:32px" src="${url}"></audio></div>`;
+  row.innerHTML=`<div class="msg-ava">🐱</div><div class="bubble" style="border:1.5px solid rgba(52,199,89,.3);background:rgba(52,199,89,.06)"><div style="font-size:10px;font-weight:700;color:#22a349;margin-bottom:4px;display:flex;align-items:center;gap:4px">🎙️ 真实${source} · ${durationSec}''</div><audio controls style="width:220px;height:32px" src="${url}"></audio><div style="font-size:10px;color:var(--muted2);margin-top:4px">⚠️ 录音仅本次会话有效</div></div>`;
   msgs.insertBefore(row,typing);msgs.scrollTop=msgs.scrollHeight;
   toggleRecordPanel();
   updateBankCounts('audio');
@@ -2469,9 +2585,10 @@ function changeHeroBg(){
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
   inp.onchange=e=>{
     const f=e.target.files[0];if(!f)return;
-    const url=URL.createObjectURL(f);
-    document.getElementById('heroPhotoImg').src=url;
-    showToast('已替换为你的宠物照片 🐾');
+    fileToBase64(f,900).then(function(url){
+      document.getElementById('heroPhotoImg').src=url;
+      showToast('已替换为你的宠物照片 🐾');
+    });
   };
   if(confirm('换一张精选图片？取消则上传你自己的宠物照片')){
     heroPhotoIdx=(heroPhotoIdx+1)%HERO_PHOTO_POOL.length;
@@ -2524,9 +2641,462 @@ function setPlan(el,plan){
 let tTimer;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('on'),2200);}
 
-renderDiscoverFeed();
-renderFollowingFeed();
-switchScreen('sc-home',0);
+// ════════════════════════════════════════════════════════
+// PERSISTENCE: saveState / loadState
+// ════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// ── 数据访问层 DataStore（后续切后端只改这一处）──
+// mode='local'  → localStorage（key: pawmemory_v2_state）
+// mode='api'    → 预留，fetch GET/PUT ${apiBase}/state
+// 业务层只调 saveState() / loadState()，不直接碰 localStorage
+// ════════════════════════════════════════════════════════════════
+const STORAGE_KEY = 'pawmemory_v2_state'; // keep for legacy compat
+
+const DataStore = {
+  mode: 'local',   // 'local' | 'api'
+  apiBase: '',     // 后端接口前缀，如 '/api'；切到 api 模式时填入
+
+  // ── 读取全量状态 ──
+  async load() {
+    if (this.mode === 'api') {
+      try {
+        const r = await fetch(this.apiBase + '/state', { credentials: 'include' });
+        if (!r.ok) throw new Error('api load ' + r.status);
+        return await r.json();
+      } catch(e) {
+        console.warn('[DataStore] api load failed, fallback to local', e);
+      }
+    }
+    // local
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) {
+      console.warn('[DataStore] localStorage read error', e);
+      return null;
+    }
+  },
+
+  // ── 保存全量状态 ──
+  async save(state) {
+    if (this.mode === 'api') {
+      try {
+        await fetch(this.apiBase + '/state', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state),
+          credentials: 'include'
+        });
+        return;
+      } catch(e) {
+        console.warn('[DataStore] api save failed, fallback to local', e);
+      }
+    }
+    // local – trim base64 to stay within 5 MB
+    this._saveLocal(state);
+  },
+
+  _saveLocal(state) {
+    const trimState = (s) => {
+      // Trim album base64 images to at most 30 per pet
+      const MAX_B64 = 30;
+      const out = JSON.parse(JSON.stringify(s));
+      if (out.pets) {
+        Object.values(out.pets).forEach(pet => {
+          if (!pet.album) return;
+          const b64items = pet.album.filter(i => i.url && i.url.startsWith('data:'));
+          if (b64items.length > MAX_B64) {
+            // keep newest MAX_B64, drop oldest from the end
+            let removed = 0, target = b64items.length - MAX_B64;
+            for (let i = pet.album.length - 1; i >= 0 && removed < target; i--) {
+              if (pet.album[i].url && pet.album[i].url.startsWith('data:')) {
+                pet.album.splice(i, 1); removed++;
+              }
+            }
+          }
+        });
+      }
+      return out;
+    };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(trimState(state)));
+    } catch(e) {
+      if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
+        // aggressive fallback: strip all base64
+        try {
+          const s2 = JSON.parse(JSON.stringify(state));
+          if (s2.USER_PROFILE && s2.USER_PROFILE.ava && s2.USER_PROFILE.ava.startsWith('data:'))
+            s2.USER_PROFILE.ava = '';
+          if (s2.pets) Object.values(s2.pets).forEach(pet => {
+            pet.album = (pet.album||[]).filter(i => !i.url || !i.url.startsWith('data:'));
+            pet.timeline = (pet.timeline||[]).slice(0,20).map(t=>({...t, thumb: t.thumb&&t.thumb.startsWith('data:')?'':t.thumb}));
+            (pet.medical||[]).forEach(m => { m.photos=[]; });
+          });
+          if (s2.myPosts) s2.myPosts = s2.myPosts.map(p=>({...p, img: p.img&&p.img.startsWith('data:')?'':p.img}));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(s2));
+          showToast('存储空间不足，部分照片未能保存');
+        } catch(e2) { /* silently fail */ }
+      }
+    }
+  }
+};
+
+// ── saveState / loadState：业务层唯一入口 ──
+function saveState() {
+  // Limit base64 images to most recent 30 to avoid quota
+  const state = {
+    USER_PROFILE: USER_PROFILE,
+    // Only persist user-created posts (accountId === 'me')
+    myPosts: FEED_POSTS.filter(p => p.accountId === 'me'),
+    // Persist followed status per account
+    accountsFollowed: Object.fromEntries(
+      Object.entries(ACCOUNTS).map(([k, v]) => [k, v.followed])
+    ),
+    // Persist PETS data (timeline, bank counts, album, medical, daily, foodPrefs)
+    pets: Object.fromEntries(
+      Object.entries(PETS).map(([k, pet]) => [k, {
+        bank: pet.bank,
+        timeline: pet.timeline.slice(0, 50),
+        album: pet.album ? pet.album.slice(0, 50) : [],
+        medical: pet.medical,
+        daily: pet.daily,
+        foodPrefs: pet.foodPrefs,
+        clone: pet.clone
+      }])
+    )
+  };
+  DataStore.save(state).catch(e => console.warn('[saveState]', e));
+}
+
+// loadState returns a Promise so boot can use .then()
+function loadState() {
+  return DataStore.load().then(function(state) {
+    if (!state) return;
+    try {
+      // Restore USER_PROFILE
+      if (state.USER_PROFILE) {
+        Object.assign(USER_PROFILE, state.USER_PROFILE);
+      }
+      // Restore followed states
+      if (state.accountsFollowed) {
+        Object.entries(state.accountsFollowed).forEach(([k, v]) => {
+          if (ACCOUNTS[k]) ACCOUNTS[k].followed = v;
+        });
+      }
+      // Restore PETS data
+      if (state.pets) {
+        Object.entries(state.pets).forEach(([k, saved]) => {
+          if (PETS[k]) {
+            if (saved.bank) PETS[k].bank = saved.bank;
+            if (saved.timeline) PETS[k].timeline = saved.timeline;
+            if (saved.album) PETS[k].album = saved.album;
+            if (saved.medical) PETS[k].medical = saved.medical;
+            if (saved.daily) PETS[k].daily = saved.daily;
+            if (saved.foodPrefs) PETS[k].foodPrefs = saved.foodPrefs;
+            if (saved.clone) PETS[k].clone = saved.clone;
+          }
+        });
+      }
+      // Restore user's own posts
+      if (state.myPosts && state.myPosts.length > 0) {
+        // Remove any existing 'me' posts and prepend saved ones
+        const nonMyPosts = FEED_POSTS.filter(p => p.accountId !== 'me');
+        FEED_POSTS.splice(0, FEED_POSTS.length, ...state.myPosts, ...nonMyPosts);
+      }
+      // Make sure 'me' account exists if there are my posts
+      ensureMeAccount();
+    } catch(e) {
+      console.warn('[loadState] apply error', e);
+    }
+  }).catch(function(e) {
+    console.warn('[loadState] error', e);
+  });
+}
+
+function ensureMeAccount() {
+  if (!ACCOUNTS['me']) {
+    ACCOUNTS['me'] = {
+      id: 'me',
+      name: USER_PROFILE.name,
+      ava: USER_PROFILE.avaType === 'photo' ? '我' : USER_PROFILE.ava,
+      bg: 'linear-gradient(135deg,var(--red),#ff6b6b)',
+      type: 'user',
+      bio: USER_PROFILE.bio || '这是我的宠物日记 🐾',
+      followed: false,
+      fans: '1'
+    };
+  } else {
+    // Update me account with latest profile info
+    ACCOUNTS['me'].name = USER_PROFILE.name;
+    ACCOUNTS['me'].bio = USER_PROFILE.bio || '这是我的宠物日记 🐾';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// fileToBase64: unified image-to-base64 converter
+// ════════════════════════════════════════════════════════
+function fileToBase64(file, maxWidth) {
+  maxWidth = maxWidth || 600;
+  return new Promise(function(resolve) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const img = new Image();
+      img.onload = function() {
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = function() { resolve(ev.target.result); };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// AVATAR CROP MODAL
+// ════════════════════════════════════════════════════════
+let cropImg = null, cropScale = 1, cropX = 0, cropY = 0;
+let cropDragging = false, cropDragStartX = 0, cropDragStartY = 0, cropImgStartX = 0, cropImgStartY = 0;
+let cropRawFile = null;
+
+function openCropAva(file) {
+  cropRawFile = file;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    cropImg = new Image();
+    cropImg.onload = function() {
+      // Canvas size = display size of the wrap element
+      const canvas = document.getElementById('cropCanvas');
+      const wrap = document.getElementById('cropCanvasWrap');
+      const size = Math.min(window.innerWidth, 390);
+      canvas.width = size;
+      canvas.height = size;
+      wrap.style.width = size + 'px';
+      wrap.style.height = size + 'px';
+      // initial scale to fill the 200x200 circle
+      const minDim = Math.min(cropImg.width, cropImg.height);
+      cropScale = 200 / minDim * (size / 200) * 1.1;
+      document.getElementById('cropScaleSlider').value = Math.round(cropScale * 100);
+      cropX = (size - cropImg.width * cropScale) / 2;
+      cropY = (size - cropImg.height * cropScale) / 2;
+      drawCropCanvas();
+      setupCropEvents(canvas);
+      document.getElementById('cropAvaModal').classList.add('on');
+    };
+    cropImg.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function drawCropCanvas() {
+  const canvas = document.getElementById('cropCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(cropImg, cropX, cropY, cropImg.width * cropScale, cropImg.height * cropScale);
+}
+
+function onCropScale(val) {
+  const newScale = val / 100;
+  // Scale around center of visible area
+  const cx = document.getElementById('cropCanvas').width / 2;
+  const cy = document.getElementById('cropCanvas').height / 2;
+  const ratio = newScale / cropScale;
+  cropX = cx - (cx - cropX) * ratio;
+  cropY = cy - (cy - cropY) * ratio;
+  cropScale = newScale;
+  drawCropCanvas();
+}
+
+function setupCropEvents(canvas) {
+  // Mouse events
+  canvas.onmousedown = function(e) {
+    cropDragging = true;
+    cropDragStartX = e.clientX; cropDragStartY = e.clientY;
+    cropImgStartX = cropX; cropImgStartY = cropY;
+  };
+  canvas.onmousemove = function(e) {
+    if (!cropDragging) return;
+    cropX = cropImgStartX + (e.clientX - cropDragStartX);
+    cropY = cropImgStartY + (e.clientY - cropDragStartY);
+    drawCropCanvas();
+  };
+  canvas.onmouseup = canvas.onmouseleave = function() { cropDragging = false; };
+  // Touch events
+  canvas.ontouchstart = function(e) {
+    e.preventDefault();
+    const t = e.touches[0];
+    cropDragging = true;
+    cropDragStartX = t.clientX; cropDragStartY = t.clientY;
+    cropImgStartX = cropX; cropImgStartY = cropY;
+  };
+  canvas.ontouchmove = function(e) {
+    e.preventDefault();
+    if (!cropDragging) return;
+    const t = e.touches[0];
+    cropX = cropImgStartX + (t.clientX - cropDragStartX);
+    cropY = cropImgStartY + (t.clientY - cropDragStartY);
+    drawCropCanvas();
+  };
+  canvas.ontouchend = function() { cropDragging = false; };
+}
+
+function closeCropAva() {
+  document.getElementById('cropAvaModal').classList.remove('on');
+}
+
+function confirmCropAva() {
+  const canvas = document.getElementById('cropCanvas');
+  const size = canvas.width;
+  const cx = size / 2, cy = size / 2;
+  const radius = 100; // circle is 200x200 centered
+  // Output a 200x200 canvas with the cropped circle area
+  const out = document.createElement('canvas');
+  out.width = 200; out.height = 200;
+  const octx = out.getContext('2d');
+  // Draw the relevant portion: cropCanvas region [cx-radius, cy-radius, 200, 200]
+  const sx = cx - radius, sy = cy - radius;
+  octx.drawImage(canvas, sx, sy, 200, 200, 0, 0, 200, 200);
+  const dataUrl = out.toDataURL('image/jpeg', 0.8);
+  editSelectedAva = dataUrl;
+  editSelectedAvaType = 'photo';
+  document.querySelectorAll('#editAvaPicker .bc-pick').forEach(x => x.classList.remove('on'));
+  renderEditAvaPreview();
+  // 裁完就直接落库，避免用户忘记点"保存"导致白裁一场
+  USER_PROFILE.ava = dataUrl;
+  USER_PROFILE.avaType = 'photo';
+  renderUserProfileDisplay();
+  ensureMeAccount();
+  FEED_POSTS.filter(p => p.accountId === 'me').forEach(p => {
+    p.authorAva = dataUrl;
+    p.authorAvaType = 'photo';
+  });
+  renderDiscoverFeed();
+  renderFollowingFeed();
+  saveState();
+  closeCropAva();
+  showToast('头像已更新 ✅');
+}
+
+// ════════════════════════════════════════════════════════
+// PUBLISH POST MODAL
+// ════════════════════════════════════════════════════════
+let publishPhotoBase64 = null;
+let publishSelectedPet = null;
+let publishSelectedTag = '📝 日常';
+
+function openPublishModal() {
+  publishPhotoBase64 = null;
+  publishSelectedPet = Object.keys(PETS)[0];
+  publishSelectedTag = '📝 日常';
+  document.getElementById('publishTitle').value = '';
+  document.getElementById('publishContent').value = '';
+  document.getElementById('publishPhotoPreview').style.display = 'none';
+  renderPublishPetPicker();
+  document.querySelectorAll('#publishTagPicker .bc-pick').forEach(el => el.classList.remove('on'));
+  document.getElementById('publishModal').classList.add('on');
+}
+
+function closePublishModal() {
+  document.getElementById('publishModal').classList.remove('on');
+}
+
+function renderPublishPetPicker() {
+  const box = document.getElementById('publishPetPicker');
+  if (!box) return;
+  box.innerHTML = Object.values(PETS).map(function(p){
+    const cls = p.id === publishSelectedPet ? 'bc-pick on' : 'bc-pick';
+    return '<div class="'+cls+'" onclick="selectPublishPet(\''+p.id+'\',this)">'+p.emoji+' '+p.name+'</div>';
+  }).join('');
+}
+
+function selectPublishPet(id, el) {
+  publishSelectedPet = id;
+  document.querySelectorAll('#publishPetPicker .bc-pick').forEach(x => x.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function selectPublishTag(tag, el) {
+  publishSelectedTag = tag;
+  document.querySelectorAll('#publishTagPicker .bc-pick').forEach(x => x.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function handlePublishPhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  fileToBase64(file, 600).then(function(base64) {
+    publishPhotoBase64 = base64;
+    document.getElementById('publishPhotoImg').src = base64;
+    document.getElementById('publishPhotoPreview').style.display = 'block';
+  });
+  e.target.value = '';
+}
+
+function submitPublishPost() {
+  const title = (document.getElementById('publishTitle').value || '').trim();
+  const content = (document.getElementById('publishContent').value || '').trim();
+  if (!title && !content) {
+    showToast('写点什么再发布吧 🐾');
+    return;
+  }
+  ensureMeAccount();
+  const me = ACCOUNTS['me'];
+  const relPet = PETS[publishSelectedPet];
+  const isCatPet = relPet && /猫/.test(relPet.species);
+  const fallbackImg = isCatPet
+    ? 'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=600&q=80'
+    : 'https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?w=600&q=80';
+  const newPost = {
+    id: 'post_' + Date.now(),
+    accountId: 'me',
+    author: USER_PROFILE.name,
+    authorAva: USER_PROFILE.ava,
+    authorAvaType: USER_PROFILE.avaType || 'emoji',
+    authorBg: 'linear-gradient(135deg,var(--red),#ff6b6b)',
+    tag: publishSelectedTag,
+    img: publishPhotoBase64 || fallbackImg,
+    title: title || '我的宠物日记',
+    content: content || '记录毛孩子的美好瞬间 🐾',
+    time: '刚刚',
+    liked: false,
+    likeCount: 0,
+    followed: false,
+    comments: []
+  };
+  FEED_POSTS.unshift(newPost);
+  closePublishModal();
+  saveState();
+  renderDiscoverFeed();
+  renderFollowingFeed();
+  showToast('动态已发布！✨');
+}
+
+// ════════════════════════════════════════════════════════
+// Override existing functions to add saveState calls
+// ════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════
+// LOAD STATE (must happen before first render)
+// ════════════════════════════════════════════════════════
+// ── 启动：先 loadState() 再渲染，确保持久化数据到位后再展示 ──
+loadState().then(function() {
+  renderDiscoverFeed();
+  renderFollowingFeed();
+  switchScreen('sc-home', 0);
+}).catch(function(e) {
+  console.warn('[boot]', e);
+  renderDiscoverFeed();
+  renderFollowingFeed();
+  switchScreen('sc-home', 0);
+});
+
+// renderAccountFollowBtn: see original function (patched directly below)
+
+// (initial render moved to loadState().then() – see DataStore boot below)
 
 // ── MEMORY BANK DATA UPDATE ──
 // When user does a translation, bump bank counts
@@ -2657,10 +3227,10 @@ function renderMedPhotos(){
 }
 function handleMedPhotoUpload(e){
   const file=e.target.files[0];if(!file)return;
-  const url=URL.createObjectURL(file);
   const rec=findMedRecord(curMedPetId, curMedId);if(!rec)return;
-  rec.photos.push(url);
-  renderMedPhotos();
+  fileToBase64(file,600).then(function(url){
+    rec.photos.push(url);
+    renderMedPhotos();
   const hint=document.getElementById('medOcrHint');
   hint.style.display='block';
   hint.textContent='正在识别图片内容…';
@@ -2668,7 +3238,9 @@ function handleMedPhotoUpload(e){
     hint.textContent='✓ 已自动识别：'+(rec.badge==='疫苗'?'疫苗名称、接种日期、下次接种提醒已提取，可核对后保存':'就诊医院、诊断结果、用药信息已提取，可核对后保存');
     updateBankCounts('photo');
     showToast('图片已识别并存入记忆银行 📷');
+    saveState();
   },1200);
+  });
   e.target.value='';
 }
 let pendingMedUploadUrl=null;
@@ -2683,7 +3255,8 @@ function openMedicalUpload(){
 function closeMedUpload(){document.getElementById('medUploadModal').classList.remove('on');}
 function handleMedUploadOcr(e){
   const file=e.target.files[0];if(!file)return;
-  pendingMedUploadUrl=URL.createObjectURL(file);
+  fileToBase64(file,600).then(function(base64){
+  pendingMedUploadUrl=base64;
   document.getElementById('medUploadImg').src=pendingMedUploadUrl;
   document.getElementById('medUploadPreview').style.display='block';
   document.getElementById('medUploadBtn').style.display='none';
@@ -2699,6 +3272,7 @@ function handleMedUploadOcr(e){
     result.textContent=templates[Math.floor(Math.random()*templates.length)];
     document.getElementById('medUploadConfirmBtn').style.display='block';
   },1400);
+  });
   e.target.value='';
 }
 function confirmMedUpload(){
@@ -2926,6 +3500,7 @@ function confirmImportPhotos(){
   importedPhotoUrls.forEach(u=>{ pet.album.unshift({type:'photo',url:u,date:'刚刚导入'}); });
   syncMemCountEverywhere();
   prependBankTimeline('📲','一键导入','从微信相册扫描导入了 '+imported+' 张新照片',importedPhotoUrls[0]);
+  saveState();
   closeImportPhotos();
   showToast('导入成功！新增 '+imported+' 张照片已存入记忆银行 🎉');
 }
@@ -3029,8 +3604,11 @@ function renderFarewellPhotoGrid(){
 }
 function handleFarewellPhotoUpload(e){
   const files=Array.from(e.target.files||[]);
-  files.forEach(file=>{ farewellPhotos.push(URL.createObjectURL(file)); });
-  renderFarewellPhotoGrid();
+  const promises=files.map(file=>fileToBase64(file,600));
+  Promise.all(promises).then(function(urls){
+    urls.forEach(u=>farewellPhotos.push(u));
+    renderFarewellPhotoGrid();
+  });
   e.target.value='';
 }
 async function toggleFarewellRecording(){
@@ -3095,6 +3673,7 @@ function saveFarewellVideo(){
   pet.timeline.unshift({icon:'🕊️',date:'刚刚',title:pet.name+'的纪念视频',desc:'AI 根据它的照片、声音和你写下的话生成，会永久保存在这里'});
   closeFarewellCreate();
   if(currentBankPetId===farewellPetId){ renderBankTimeline(); }
+  saveState();
   showToast('纪念视频已保存，随时可以回来看看它 🕊️');
 }
 
