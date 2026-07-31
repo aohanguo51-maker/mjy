@@ -1,0 +1,98 @@
+{
+  "envId": "pawmemory-d5gjmq8i444ffb334",
+  "version": "2.0",
+  "functionRoot": "functions",
+  "functions": [
+    {
+      "name": "auth",
+      "timeout": 15,
+      "runtime": "Nodejs18.15",
+      "memSize": 128,
+      "triggers": [],
+      "envVariables": {}
+    },
+    {
+      "name": "user",
+      "timeout": 15,
+      "runtime": "Nodejs18.15",
+      "memSize": 128,
+      "triggers": [],
+      "envVariables": {}
+    },
+    {
+      "name": "pet",
+      "timeout": 15,
+      "runtime": "Nodejs18.15",
+      "memSize": 128,
+      "triggers": [],
+      "envVariables": {}
+    },
+    {
+      "name": "memory",
+      "timeout": 15,
+      "runtime": "Nodejs18.15",
+      "memSize": 128,
+      "triggers": [],
+      "envVariables": {}
+    },
+    {
+      "name": "post",
+      "timeout": 20,
+      "runtime": "Nodejs18.15",
+      "memSize": 128,
+      "triggers": [],
+      "envVariables": {}
+    },
+    {
+      "name": "interact",
+      "timeout": 15,
+      "runtime": "Nodejs18.15",
+      "memSize": 128,
+      "triggers": [],
+      "envVariables": {}
+    },
+    {
+      "name": "medical",
+      "timeout": 15,
+      "runtime": "Nodejs18.15",
+      "memSize": 128,
+      "triggers": [],
+      "envVariables": {}
+    },
+    {
+      "name": "bill",
+      "timeout": 15,
+      "runtime": "Nodejs18.15",
+      "memSize": 128,
+      "triggers": [],
+      "envVariables": {}
+    },
+    {
+      "name": "audit",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memSize": 256,
+      "triggers": [],
+      "envVariables": {
+        "CMS_REGION": "ap-shanghai"
+      }
+    },
+    {
+      "name": "seed",
+      "timeout": 60,
+      "runtime": "Nodejs18.15",
+      "memSize": 256,
+      "triggers": [],
+      "envVariables": {}
+    }
+  ],
+  "hosting": {
+    "type": "static",
+    "files": [
+      {
+        "src": "static",
+        "dest": "/"
+      }
+    ]
+  }
+}

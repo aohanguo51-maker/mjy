@@ -1,0 +1,12 @@
+{
+  "name": "pawmemory-cloud-scripts",
+  "version": "1.0.0",
+  "description": "PawMemory CloudBase 初始化脚本",
+  "scripts": {
+    "init-db": "node scripts/init-db.js",
+    "seed": "node scripts/seed-official.js"
+  },
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.7.0"
+  }
+}

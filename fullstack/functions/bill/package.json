@@ -1,0 +1,9 @@
+{
+  "name": "bill",
+  "version": "1.0.0",
+  "description": "PawMemory 消费记账云函数",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.7.0"
+  }
+}

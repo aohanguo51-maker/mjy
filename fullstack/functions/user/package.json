@@ -1,0 +1,9 @@
+{
+  "name": "user",
+  "version": "1.0.0",
+  "description": "PawMemory 用户资料云函数",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.7.0"
+  }
+}

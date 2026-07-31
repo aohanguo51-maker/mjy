@@ -6,6 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <title>毛记忆 PawMemory</title>
 <!-- @cowork-spa-host -->
+<!-- CloudBase JS SDK -->
+<script src="https://imgcache.qq.com/qcloud/cloudbase-js-sdk/1.3.5/cloudbase.full.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 button,a{outline:none;-webkit-tap-highlight-color:transparent}
@@ -577,9 +579,57 @@ body::before{display:none}
 .cv-bar:nth-child(6){animation-delay:.5s;height:14px}
 .cv-bar:nth-child(7){animation-delay:.6s;height:22px}
 @keyframes cvWave{0%{transform:scaleY(.4)}100%{transform:scaleY(1)}}
+
+/* ── LOGIN PAGE ── */
+#loginPage{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#fff5f7 0%,#fff 60%,#fff0f5 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px}
+#loginPage.hidden{display:none}
+.login-logo{font-size:52px;margin-bottom:8px}
+.login-title{font-size:22px;font-weight:800;color:var(--ink);margin-bottom:4px;letter-spacing:-.5px}
+.login-subtitle{font-size:13px;color:var(--muted);margin-bottom:36px}
+.login-card{background:#fff;border-radius:20px;padding:24px 20px;box-shadow:0 4px 24px rgba(0,0,0,.08);width:100%;max-width:360px}
+.login-input-wrap{margin-bottom:14px}
+.login-input-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.3px}
+.login-input{width:100%;height:44px;border:1.5px solid var(--line2);border-radius:10px;padding:0 14px;font-size:15px;color:var(--ink);font-family:var(--font);background:#fff;outline:none;transition:border-color .15s}
+.login-input:focus{border-color:var(--red)}
+.login-code-row{display:flex;gap:8px}
+.login-code-row .login-input{flex:1}
+.login-send-btn{flex-shrink:0;height:44px;padding:0 14px;background:var(--red-l);color:var(--red);border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:var(--font)}
+.login-send-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-submit-btn{width:100%;height:48px;background:var(--red);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;font-family:var(--font);transition:opacity .15s}
+.login-submit-btn:disabled{opacity:.6;cursor:not-allowed}
+.login-hint{font-size:11px;color:var(--muted2);text-align:center;margin-top:12px;line-height:1.6}
+.login-hint b{color:var(--red)}
+body::before{display:none}
+
+
 </style>
 </head>
 <body>
+<!-- ── 登录页（未登录时显示）── -->
+<div id="loginPage">
+  <div class="login-logo">🐾</div>
+  <div class="login-title">毛记忆 PawMemory</div>
+  <div class="login-subtitle">记录每一个与TA在一起的瞬间</div>
+  <div class="login-card">
+    <div class="login-input-wrap">
+      <div class="login-input-label">手机号</div>
+      <input class="login-input" id="loginPhone" type="tel" placeholder="请输入手机号" maxlength="11" inputmode="numeric"/>
+    </div>
+    <div class="login-input-wrap">
+      <div class="login-input-label">验证码</div>
+      <div class="login-code-row">
+        <input class="login-input" id="loginCode" type="text" placeholder="请输入验证码" maxlength="6" inputmode="numeric"/>
+        <button class="login-send-btn" id="loginSendBtn" onclick="sendLoginCode()">获取验证码</button>
+      </div>
+    </div>
+    <button class="login-submit-btn" id="loginSubmitBtn" onclick="submitLogin()">登录 / 注册</button>
+    <div class="login-hint">
+      原型测试阶段，验证码固定为 <b>123456</b><br/>
+      首次登录将自动为您创建账号
+    </div>
+  </div>
+</div>
+
 <canvas id="particleCanvas"></canvas>
 <div class="app">
 
@@ -2159,6 +2209,29 @@ function savePetForm(){
     showToast(name+' 的档案建好啦，去存第一条记忆吧 🎉');
   }
   closePetForm();
+  // 同步到云端（fire-and-forget）
+  if (_petFormEditId && PETS[_petFormEditId]) {
+    const updatedPet = PETS[_petFormEditId];
+    const payload = { action: 'update', petId: updatedPet._cloudId || _petFormEditId,
+      name: updatedPet.name, emoji: updatedPet.emoji, species: updatedPet.species,
+      gender: updatedPet.gender, neutered: updatedPet.neutered, weight: updatedPet.weight,
+      allergies: updatedPet.allergies, birthday: updatedPet.birthday };
+    if (typeof callFn === 'function') callFn('pet', payload).catch(e => console.warn('[savePetForm] cloud update failed', e));
+  } else {
+    // 新建宠物
+    const newPetKeys = Object.keys(PETS);
+    const newId = newPetKeys[newPetKeys.length - 1];
+    const newPet = PETS[newId];
+    if (newPet && typeof callFn === 'function') {
+      const payload = { action: 'create', name: newPet.name, emoji: newPet.emoji,
+        species: newPet.species, gender: newPet.gender, neutered: newPet.neutered,
+        weight: newPet.weight, allergies: newPet.allergies, birthday: newPet.birthday,
+        kind: newPet.kind };
+      callFn('pet', payload).then(function(res) {
+        if (res && res.petId) { newPet._cloudId = res.petId; newPet.id = res.petId; }
+      }).catch(e => console.warn('[savePetForm] cloud create failed', e));
+    }
+  }
   if(typeof saveState==='function')saveState();
   renderProfPetCards();
   syncMemCountEverywhere();
@@ -2634,6 +2707,8 @@ function closeDeletePost(){ document.getElementById('deletePostModal').classList
 function confirmDeletePost(){
   const idx=FEED_POSTS.findIndex(x=>x.id===curFeedPostId);
   if(idx<0){ closeDeletePost(); return; }
+  const post = FEED_POSTS[idx];
+  const cloudId = post && (post._cloudId || post.id);
   FEED_POSTS.splice(idx,1);
   closeDeletePost();
   closePostDetail();
@@ -2641,6 +2716,11 @@ function confirmDeletePost(){
   renderDiscoverFeed();
   renderFollowingFeed();
   showToast('动态已删除');
+  // 异步同步到云端
+  if (cloudId && typeof callFn === 'function') {
+    callFn('post', { action: 'delete', postId: cloudId })
+      .catch(e => console.warn('[confirmDeletePost] cloud delete failed', e));
+  }
 }
 function scrollToDetailComments(){
   const el=document.getElementById('postDetailComments');if(!el)return;
@@ -3178,6 +3258,17 @@ function saveMemoryEdit(){
   if(desc) item.desc=desc;
   item.mood=window._memEditCurrentMood||item.mood||'';
   saveState();
+  // 同步到云端（有 _memoryId 说明是云端记录）
+  if(item._memoryId && typeof callFn==='function'){
+    const fids=[];
+    if(item.thumb && String(item.thumb).startsWith('cloud://')) fids.push(item.thumb);
+    (item.photos||[]).forEach(function(u){ if(String(u).startsWith('cloud://')) fids.push(u); });
+    callFn('memory', {
+      action:'update', memoryId:item._memoryId,
+      title:item.title, desc:item.desc, mood:item.mood,
+      fileIds: fids
+    }).catch(function(e){ console.warn('[memory/update]', e); });
+  }
   closeMemoryEdit();
   // Re-open detail to reflect changes
   openMemoryDetail(petId, tlIdx);
@@ -4119,32 +4210,137 @@ document.addEventListener('error', function(e){
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('on'),2200);}
 
 // ════════════════════════════════════════════════════════
-// PERSISTENCE: saveState / loadState
-// ════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════
-// ── 数据访问层 DataStore（后续切后端只改这一处）──
-// mode='local'  → localStorage（key: pawmemory_v2_state）
-// mode='api'    → 预留，fetch GET/PUT ${apiBase}/state
-// 业务层只调 saveState() / loadState()，不直接碰 localStorage
+// ── 云端数据访问层（CloudBase）──
 // ════════════════════════════════════════════════════════════════
-const STORAGE_KEY = 'pawmemory_v2_state'; // keep for legacy compat
 
+// CloudBase 环境配置
+const TCB_ENV_ID = 'pawmemory-d5gjmq8i444ffb334';
+const STORAGE_KEY = 'pawmemory_v2_state'; // localStorage fallback key
+
+// 全局 CloudBase app 实例（SDK 加载后初始化）
+let _tcbApp = null;
+let _currentUid = null;
+
+function getTcbApp() {
+  if (!_tcbApp && window.cloudbase) {
+    _tcbApp = window.cloudbase.init({ env: TCB_ENV_ID });
+  }
+  return _tcbApp;
+}
+
+// 调用云函数的统一封装
+async function callFn(name, data) {
+  const app = getTcbApp();
+  if (!app) throw new Error('CloudBase SDK 未加载');
+  // 自动携带会话 token（登录时由 auth 云函数签发，存于 localStorage）
+  const payload = Object.assign({}, data || {}, { __token: getSessionToken() });
+  const res = await app.callFunction({ name, data: payload });
+  const result = res.result;
+  if (!result) throw new Error('云函数无返回');
+  if (result.code !== 0) throw new Error(result.msg || '云函数错误 code=' + result.code);
+  return result.data;
+}
+
+// ── 会话 token 管理（登录态，30天有效）──
+const TOKEN_KEY = 'pawmemory_token';
+function getSessionToken() {
+  try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
+}
+function setSessionToken(t) {
+  try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+}
+function parseTokenUid(t) {
+  if (!t || t.indexOf('.') < 0) return null;
+  try {
+    let s = t.split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    const payload = JSON.parse(decodeURIComponent(escape(atob(s))));
+    if (!payload.uid || !payload.exp || Date.now() > payload.exp) return null;
+    return payload.uid;
+  } catch (e) { return null; }
+}
+
+// ── 图片上传到云存储 ──
+// 将 blob 或 File 上传，返回 fileID
+async function uploadToCloud(file, cloudPath) {
+  const app = getTcbApp();
+  if (!app) throw new Error('CloudBase SDK 未加载');
+  const res = await app.uploadFile({ cloudPath, filePath: file });
+  return res.fileID;
+}
+
+// 将 fileID 列表换取临时访问 URL（batch）
+async function getTempUrls(fileIds) {
+  if (!fileIds || fileIds.length === 0) return {};
+  const app = getTcbApp();
+  if (!app) return {};
+  try {
+    const res = await app.getTempFileURL({ fileList: fileIds });
+    const map = {};
+    (res.fileList || []).forEach(f => { if (f.status === 0) map[f.fileID] = f.tempFileURL; });
+    return map;
+  } catch (e) {
+    console.warn('[getTempUrls]', e);
+    return {};
+  }
+}
+
+// ── 临时 URL 缓存（避免重复调用 getTempUrls，临时URL约2小时有效）──
+const _tempUrlCache = {};
+
+// 带缓存的 getTempUrls：已缓存的 fileID 不重复请求
+async function getTempUrlsCached(fileIds) {
+  if (!fileIds || fileIds.length === 0) return {};
+  const missing = fileIds.filter(id => id && id.startsWith('cloud://') && !_tempUrlCache[id]);
+  if (missing.length > 0) {
+    const fresh = await getTempUrls(missing);
+    Object.assign(_tempUrlCache, fresh);
+  }
+  const result = {};
+  fileIds.forEach(id => {
+    if (id) result[id] = _tempUrlCache[id] || id;
+  });
+  return result;
+}
+
+// ── XSS 防护：所有用户可控文本插入 innerHTML 前必须转义 ──
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// 把容器内所有 data-cloudsrc="cloud://..." 的 img 异步替换成真实可访问地址
+// 先同步渲染占位（不阻塞界面），拿到临时URL后再回填
+async function hydrateCloudImages(container) {
+  if (!container) return;
+  try {
+    const imgs = Array.from(container.querySelectorAll('img[data-cloudsrc]'));
+    const ids = imgs.map(el => el.getAttribute('data-cloudsrc'))
+                    .filter(v => v && v.startsWith('cloud://'));
+    if (ids.length === 0) return;
+    const map = await getTempUrlsCached(Array.from(new Set(ids)));
+    imgs.forEach(el => {
+      const fid = el.getAttribute('data-cloudsrc');
+      if (fid && map[fid]) el.src = map[fid];
+    });
+  } catch (e) {
+    console.warn('[hydrateCloudImages]', e);
+  }
+}
+
+// ── LocalStorage fallback（离线 / 未登录时） ──
 const DataStore = {
-  mode: 'local',   // 'local' | 'api'
-  apiBase: '',     // 后端接口前缀，如 '/api'；切到 api 模式时填入
+  mode: 'cloud',   // 'cloud' | 'local'
 
-  // ── 读取全量状态 ──
   async load() {
-    if (this.mode === 'api') {
-      try {
-        const r = await fetch(this.apiBase + '/state', { credentials: 'include' });
-        if (!r.ok) throw new Error('api load ' + r.status);
-        return await r.json();
-      } catch(e) {
-        console.warn('[DataStore] api load failed, fallback to local', e);
-      }
-    }
-    // local
+    // Cloud mode: load happens through initCloudData()
+    // Local fallback:
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) : null;
@@ -4154,71 +4350,549 @@ const DataStore = {
     }
   },
 
-  // ── 保存全量状态 ──
   async save(state) {
-    if (this.mode === 'api') {
-      try {
-        await fetch(this.apiBase + '/state', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(state),
-          credentials: 'include'
-        });
-        return;
-      } catch(e) {
-        console.warn('[DataStore] api save failed, fallback to local', e);
-      }
-    }
-    // local – trim base64 to stay within 5 MB
+    // 同时写 localStorage 作为本地缓存（离线时不丢数据）
     this._saveLocal(state);
+    // Cloud writes happen directly in each action handler (callFn calls)
   },
 
   _saveLocal(state) {
-    const trimState = (s) => {
-      // Trim album base64 images to at most 30 per pet
-      const MAX_B64 = 30;
-      const out = JSON.parse(JSON.stringify(s));
-      if (out.pets) {
-        Object.values(out.pets).forEach(pet => {
-          if (!pet.album) return;
-          const b64items = pet.album.filter(i => i.url && i.url.startsWith('data:'));
-          if (b64items.length > MAX_B64) {
-            // keep newest MAX_B64, drop oldest from the end
-            let removed = 0, target = b64items.length - MAX_B64;
-            for (let i = pet.album.length - 1; i >= 0 && removed < target; i--) {
-              if (pet.album[i].url && pet.album[i].url.startsWith('data:')) {
-                pet.album.splice(i, 1); removed++;
-              }
-            }
-          }
-        });
-      }
-      return out;
-    };
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(trimState(state)));
-    } catch(e) {
-      if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
-        // aggressive fallback: strip all base64
-        try {
-          const s2 = JSON.parse(JSON.stringify(state));
-          if (s2.USER_PROFILE && s2.USER_PROFILE.ava && s2.USER_PROFILE.ava.startsWith('data:'))
-            s2.USER_PROFILE.ava = '';
-          if (s2.pets) Object.values(s2.pets).forEach(pet => {
-            pet.album = (pet.album||[]).filter(i => !i.url || !i.url.startsWith('data:'));
-            pet.timeline = (pet.timeline||[]).slice(0,20).map(t=>({...t, thumb: t.thumb&&t.thumb.startsWith('data:')?'':t.thumb}));
-            (pet.medical||[]).forEach(m => { m.photos=[]; });
-          });
-          if (s2.myPosts) s2.myPosts = s2.myPosts.map(p=>({...p, img: p.img&&p.img.startsWith('data:')?'':p.img}));
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(s2));
-          showToast('存储空间不足，部分照片未能保存');
-        } catch(e2) { /* silently fail */ }
-      }
-    }
+      // trim large base64 before local storage
+      const out = JSON.parse(JSON.stringify(state));
+      if (out.pets) Object.values(out.pets).forEach(pet => {
+        if (pet.album) pet.album = pet.album.slice(0, 30).map(i => ({
+          ...i, url: (i.url && i.url.startsWith('data:')) ? '' : i.url
+        }));
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(out));
+    } catch(e) { /* quota */ }
   }
 };
 
-// ── saveState / loadState：业务层唯一入口 ──
+// ── 从云端初始化应用数据 ──────────────────────────────────
+async function initCloudData() {
+  try {
+    // 1. 获取用户资料
+    const userData = await callFn('user', { action: 'get' });
+    if (userData) {
+      USER_PROFILE.name = userData.name || '宠物达人';
+      USER_PROFILE.bio = userData.bio || '';
+      USER_PROFILE.years = userData.petYears || 1;
+      USER_PROFILE.avaType = userData.avatarType || 'emoji';
+      USER_PROFILE.ava = userData.avatarType === 'emoji'
+        ? (userData.avatarEmoji || '😺')
+        : (userData.avatarUrl || '😺');
+      USER_PROFILE.joinDays = userData.joinedAt
+        ? Math.floor((Date.now() - new Date(userData.joinedAt).getTime()) / 86400000)
+        : 0;
+    }
+
+    // 2. 获取宠物列表
+    const petData = await callFn('pet', { action: 'list' });
+    if (petData && petData.pets && petData.pets.length > 0) {
+      // 清空内存中的默认宠物数据，用云端数据替换
+      Object.keys(PETS).forEach(k => delete PETS[k]);
+      for (const p of petData.pets) {
+        const petId = p._id;
+        PETS[petId] = {
+          id: petId,
+          _cloudId: petId,
+          name: p.name,
+          emoji: p.emoji || '🐾',
+          species: p.species || '',
+          kind: p.kind || 'other',
+          age: p.birthday ? calcAge(p.birthday) : '未知',
+          ageDetail: p.birthday ? (p.birthday + ' 出生') : '',
+          birthday: p.birthday || '',
+          gender: p.gender || '未知',
+          neutered: !!p.neutered,
+          weight: p.weight || '',
+          avaBg: p.avaBg || 'linear-gradient(135deg,#ff8c5a,#ff2442)',
+          dewormCycle: p.dewormCycle || '',
+          allergies: p.allergies || '',
+          daily: p.daily || { food: '正常', water: '正常', poop: '正常', weight: '', state: '正常', mood: '开心' },
+          foodPrefs: p.foodPrefs || { brand: '', snack: '', allergy: '' },
+          isMemorial: !!p.isMemorial,
+          medical: [], // loaded on demand
+          bank: { count: 0, photos: 0, audio: 0, text: 0, medCount: 0, dailyCount: 0 },
+          album: [],
+          clone: { done: 0, total: 8, segs: ['⬜ 撒娇声','⬜ 呼噜声','⬜ 催促叫','⬜ 低吼声','⬜ 兴奋叫','⬜ 惊吓声','⬜ 睡梦呢喃','⬜ 告别声'] },
+          timeline: [],
+        };
+      }
+      currentPetId = Object.keys(PETS)[0] || currentPetId;
+    }
+
+    // 3. 获取 Feed（社区动态）
+    // 先为第一只宠物拉取 medical / memory / album（初始化时）
+    if (Object.keys(PETS).length > 0) {
+      const firstPetId = Object.keys(PETS)[0];
+      const firstPet = PETS[firstPetId];
+      if (firstPet && firstPet._cloudId) {
+        try {
+          const [medRes, memRes, albumRes] = await Promise.all([
+            callFn('medical', { action: 'list', petId: firstPet._cloudId }),
+            callFn('memory', { action: 'list', petId: firstPet._cloudId, page: 1, pageSize: 30 }),
+            callFn('memory', { action: 'album', petId: firstPet._cloudId, page: 1, pageSize: 30 }),
+          ]);
+          if (medRes && medRes.list) {
+            firstPet.medical = (medRes.list || []).map(r => ({
+              id: r._id, date: r.date, title: r.title,
+              badge: r.badge, badgeClass: r.badgeClass || 'mb-checkup',
+              icon: r.icon || '🏥', note: r.note || '',
+              photos: (r.fileIds || []), fileIds: r.fileIds || [],
+            }));
+            firstPet._medLoaded = true;
+          }
+          if (memRes && memRes.list) {
+            firstPet.timeline = (memRes.list || []).map(m => ({
+              icon: m.icon || '📝', date: formatRelTime(m.createdAt),
+              title: m.title || '记忆', desc: m.desc || '',
+              thumb: (m.fileIds && m.fileIds[0]) || null,
+              fileIds: m.fileIds || [], _memoryId: m._id,
+            }));
+            firstPet.bank.count = memRes.list.length;
+            firstPet._memLoaded = true;
+          }
+          if (albumRes && albumRes.list) {
+            firstPet.album = (albumRes.list || []).map(m => ({
+              type: 'photo', url: (m.fileIds && m.fileIds[0]) || '',
+              fileId: (m.fileIds && m.fileIds[0]) || null,
+              fileIds: m.fileIds || [], date: formatRelTime(m.createdAt),
+            }));
+            firstPet.bank.photos = firstPet.album.length;
+          }
+        } catch (e) {
+          console.warn('[initCloudData] pet data preload failed', e);
+        }
+      }
+    }
+
+    const feedData = await callFn('post', { action: 'feed', page: 1, pageSize: 20 });
+    if (feedData && feedData.list) {
+      // 替换 FEED_POSTS 内容
+      const cloudPosts = feedData.list.map(p => cloudPostToLocal(p));
+      FEED_POSTS.splice(0, FEED_POSTS.length, ...cloudPosts);
+    }
+
+  } catch (e) {
+    console.warn('[initCloudData]', e);
+    // 降级：继续使用内存默认数据
+  }
+}
+
+// 将云端 post 转换为前端 FEED_POSTS 格式
+function cloudPostToLocal(p) {
+  return {
+    id: p._id,
+    _cloudId: p._id,
+    accountId: p.authorId || 'official',
+    author: p.authorName || '未知',
+    authorAva: p.authorAvatarType === 'emoji' ? (p.authorAvatarEmoji || '🐾') : (p.authorAvatar || '🐾'),
+    authorAvaType: p.authorAvatarType || 'emoji',
+    authorBg: 'linear-gradient(135deg,#ff8c5a,var(--red))',
+    tag: p.tag || '',
+    img: p.imgUrl || '', // 官方内容用 imgUrl；用户上传的用 fileIds 换临时 URL
+    fileIds: p.fileIds || [],
+    title: p.title || '',
+    content: p.content || '',
+    time: formatRelTime(p.createdAt),
+    liked: !!p.liked,
+    likeCount: p.likeCount || 0,
+    followed: false,
+    comments: (p.comments || []).map(c => ({ user: c.userName, text: c.text })),
+    isOfficial: !!p.isOfficial,
+  };
+}
+
+// 计算宠物年龄字符串
+function calcAge(birthday) {
+  if (!birthday) return '未知';
+  const birth = new Date(birthday.replace(/年|月/g, '-').replace('日', ''));
+  if (isNaN(birth)) return '未知';
+  const now = new Date();
+  const years = now.getFullYear() - birth.getFullYear();
+  const months = now.getMonth() - birth.getMonth();
+  const totalMonths = years * 12 + months;
+  if (totalMonths < 12) return totalMonths + '个月';
+  return Math.floor(totalMonths / 12) + '岁';
+}
+
+// 相对时间格式化
+function formatRelTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const now = Date.now();
+  const diff = now - d.getTime();
+  if (diff < 60000) return '刚刚';
+  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+  if (diff < 172800000) return '昨天';
+  if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
+  return d.getMonth() + 1 + '月' + d.getDate() + '日';
+}
+
+// ── 登录逻辑 ──────────────────────────────────────────────
+let _loginCodeCooldown = 0;
+
+async function sendLoginCode() {
+  const phone = (document.getElementById('loginPhone').value || '').trim();
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    showToast('请输入正确的手机号 📱');
+    return;
+  }
+  if (Date.now() < _loginCodeCooldown) {
+    showToast('请稍候再试 ⏳');
+    return;
+  }
+  const btn = document.getElementById('loginSendBtn');
+  btn.disabled = true;
+  try {
+    await callFnNoAuth('auth', { action: 'sendCode', phone });
+    showToast('验证码已发送（固定为 123456）✅');
+    _loginCodeCooldown = Date.now() + 60000;
+    let secs = 60;
+    const timer = setInterval(() => {
+      secs--;
+      btn.textContent = secs + 's后重试';
+      if (secs <= 0) {
+        clearInterval(timer);
+        btn.textContent = '获取验证码';
+        btn.disabled = false;
+        _loginCodeCooldown = 0;
+      }
+    }, 1000);
+  } catch (e) {
+    showToast('发送失败：' + e.message);
+    btn.disabled = false;
+  }
+}
+
+// 不依赖登录态的云函数调用（用于 auth 函数）
+async function callFnNoAuth(name, data) {
+  const app = getTcbApp();
+  if (!app) {
+    // 如果 SDK 还没加载，先初始化
+    if (window.cloudbase) {
+      _tcbApp = window.cloudbase.init({ env: TCB_ENV_ID });
+      const app2 = _tcbApp;
+      const res = await app2.callFunction({ name, data });
+      return res.result;
+    }
+    throw new Error('CloudBase SDK 未加载，请刷新页面');
+  }
+  const res = await app.callFunction({ name, data });
+  return res.result;
+}
+
+async function submitLogin() {
+  const phone = (document.getElementById('loginPhone').value || '').trim();
+  const code = (document.getElementById('loginCode').value || '').trim();
+  if (!/^1[3-9]\d{9}$/.test(phone)) { showToast('请输入正确的手机号 📱'); return; }
+  if (!code) { showToast('请输入验证码 🔢'); return; }
+
+  const submitBtn = document.getElementById('loginSubmitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '登录中…';
+
+  try {
+    // 1. 调 auth 云函数校验验证码并拿会话 token
+    const authResult = await callFnNoAuth('auth', { action: 'login', phone, code });
+    if (!authResult || authResult.code !== 0) {
+      throw new Error((authResult && authResult.msg) || '登录失败');
+    }
+    const { token, userId } = authResult.data || authResult;
+
+    // 2. 保存会话 token（后续所有云函数调用自动携带）
+    setSessionToken(token);
+    _currentUid = userId;
+
+    // 3. 隐藏登录页，初始化数据
+    document.getElementById('loginPage').classList.add('hidden');
+    showToast('登录成功，欢迎回来 🐾');
+    await initCloudData();
+    renderDiscoverFeed();
+    renderFollowingFeed();
+    renderUserProfileDisplay();
+    renderProfPetCards();
+    switchScreen('sc-home', 0);
+    showWelcomeIfFirstTime();
+
+  } catch (e) {
+    console.error('[login]', e);
+    showToast('登录失败：' + (e.message || '未知错误'));
+    submitBtn.disabled = false;
+    submitBtn.textContent = '登录 / 注册';
+  }
+}
+
+// 退出登录
+async function logoutCloud() {
+  if (!confirm('确定要退出登录吗？')) return;
+  setSessionToken('');
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  _currentUid = null;
+  document.getElementById('loginPage').classList.remove('hidden');
+  showToast('已退出登录');
+}
+
+// 检查当前是否已登录
+async function checkLoginState() {
+  const t = getSessionToken();
+  const uid = parseTokenUid(t);
+  if (!uid) { setSessionToken(''); return false; }
+  _currentUid = uid;
+  return true;
+}
+
+// ── 覆盖原始的图片上传函数 ──────────────────────────────────
+// 将 base64 dataURL → Blob
+function dataURLtoBlob(dataURL) {
+  const arr = dataURL.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) u8arr[n] = bstr.charCodeAt(n);
+  return new Blob([u8arr], { type: mime });
+}
+
+// 上传 base64 图片到云存储，返回临时 URL（用于页面立即显示）
+// filePath 是云存储路径前缀，例如 'avatars/' 或 'posts/'
+async function uploadBase64ToCloud(base64DataUrl, cloudPathPrefix) {
+  try {
+    const blob = dataURLtoBlob(base64DataUrl);
+    const ext = blob.type.includes('png') ? 'png' : 'jpg';
+    const cloudPath = cloudPathPrefix + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
+    const fileID = await uploadToCloud(blob, cloudPath);
+
+    // 获取临时访问 URL
+    const urlMap = await getTempUrls([fileID]);
+    return { fileID, tempUrl: urlMap[fileID] || base64DataUrl };
+  } catch (e) {
+    console.warn('[uploadBase64ToCloud]', e);
+    // 失败时回退到 base64
+    return { fileID: null, tempUrl: base64DataUrl };
+  }
+}
+
+// ── 改造后的 saveEditProfile（头像改走云存储）─────────────────
+const _origSaveEditProfile = typeof saveEditProfile !== 'undefined' ? saveEditProfile : null;
+
+// 重写 saveEditProfile 以支持云端同步
+async function saveEditProfileCloud() {
+  const name = document.getElementById('editProfileName').value.trim();
+  const years = document.getElementById('editProfileYears').value.trim();
+  const bio = document.getElementById('editProfileBio').value.trim();
+  if (!name) { showToast('给自己起个昵称吧 🐾'); return; }
+
+  USER_PROFILE.name = name;
+  USER_PROFILE.years = years || USER_PROFILE.years;
+  USER_PROFILE.bio = bio;
+  if (editSelectedAva) {
+    USER_PROFILE.ava = editSelectedAva;
+    USER_PROFILE.avaType = editSelectedAvaType;
+  }
+
+  // 如果头像是 base64（拍照裁剪），先上传云存储
+  let avatarUrl = '';
+  let avatarEmoji = USER_PROFILE.avaType === 'emoji' ? USER_PROFILE.ava : '😺';
+  if (USER_PROFILE.avaType === 'photo' && USER_PROFILE.ava && USER_PROFILE.ava.startsWith('data:')) {
+    showToast('头像上传中…');
+    const result = await uploadBase64ToCloud(USER_PROFILE.ava, 'avatars/' + (_currentUid || 'unknown') + '/');
+    if (result.fileID) {
+      USER_PROFILE.ava = result.tempUrl || result.fileID;
+      avatarUrl = result.fileID;
+    }
+  } else if (USER_PROFILE.avaType === 'photo') {
+    avatarUrl = USER_PROFILE.ava;
+  }
+
+  // 同步到云端
+  try {
+    await callFn('user', {
+      action: 'update',
+      name,
+      avatarUrl,
+      avatarEmoji,
+      avatarType: USER_PROFILE.avaType,
+      bio,
+      petYears: parseInt(years) || 1,
+    });
+  } catch(e) {
+    console.warn('[saveEditProfile] cloud sync failed', e);
+  }
+
+  renderUserProfileDisplay();
+  ensureMeAccount();
+  FEED_POSTS.filter(p => p.accountId === 'me').forEach(p => {
+    p.author = USER_PROFILE.name;
+    p.authorAva = USER_PROFILE.ava;
+    p.authorAvaType = USER_PROFILE.avaType || 'emoji';
+  });
+  renderDiscoverFeed();
+  renderFollowingFeed();
+  saveState();
+  closeEditProfile();
+  showToast('资料已保存 ✅');
+}
+
+// 覆盖原始 saveEditProfile
+function saveEditProfile() { saveEditProfileCloud(); }
+
+
+// ── 改造后的 toggleLike
+
+// ── 改造后的 toggleLike（改走云函数）────────────────────────
+const _origToggleLike = typeof toggleLike !== 'undefined' ? toggleLike : null;
+function toggleLike(id) {
+  const p = FEED_POSTS.find(x => x.id === id); if (!p) return;
+  const wasLiked = p.liked;
+  p.liked = !p.liked;
+  p.likeCount += p.liked ? 1 : -1;
+  renderFollowingFeed(); renderDiscoverFeed();
+  if (document.getElementById('postDetailModal').classList.contains('on') && curFeedPostId === id) { renderPostDetail(); }
+  // 异步同步到云端
+  const cloudId = p._cloudId || p.id;
+  callFn('interact', { action: wasLiked ? 'unlike' : 'like', postId: cloudId })
+    .catch(e => console.warn('[toggleLike]', e));
+}
+
+// ── 改造后的 toggleFollow（改走云函数）──────────────────────
+const _origToggleFollow = typeof toggleFollow !== 'undefined' ? toggleFollow : null;
+function toggleFollow(id) {
+  const p = FEED_POSTS.find(x => x.id === id); if (!p) return;
+  p.followed = !p.followed;
+  if (p.accountId && ACCOUNTS[p.accountId]) { ACCOUNTS[p.accountId].followed = p.followed; }
+  saveState();
+  showToast(p.followed ? '已关注 ' + p.author + ' 🎉' : '已取消关注');
+  renderFollowingFeed();
+  if (document.getElementById('postDetailModal').classList.contains('on') && curFeedPostId === id) { renderPostDetail(); }
+  // 异步同步到云端
+  callFn('interact', { action: p.followed ? 'follow' : 'unfollow', targetId: p.accountId })
+    .catch(e => console.warn('[toggleFollow]', e));
+}
+
+// ── 改造后的 toggleAccountFollow（改走云函数）──────────────
+const _origToggleAccountFollow = typeof toggleAccountFollow !== 'undefined' ? toggleAccountFollow : null;
+function toggleAccountFollow() {
+  const acc = ACCOUNTS[curAccountId]; if (!acc) return;
+  acc.followed = !acc.followed;
+  FEED_POSTS.filter(p => p.accountId === curAccountId).forEach(p => { p.followed = acc.followed; });
+  saveState();
+  renderAccountFollowBtn();
+  renderFollowingFeed();
+  showToast(acc.followed ? '已关注' + acc.name + ' 💛' : '已取消关注');
+  // 异步同步到云端
+  callFn('interact', { action: acc.followed ? 'follow' : 'unfollow', targetId: curAccountId })
+    .catch(e => console.warn('[toggleAccountFollow]', e));
+}
+
+// ── 改造后的 submitAddBill（改走云函数）─────────────────────
+const _origSubmitAddBill = typeof submitAddBill !== 'undefined' ? submitAddBill : null;
+async function submitAddBill() {
+  const name = document.getElementById('billItemName').value.trim();
+  const amountRaw = document.getElementById('billItemAmount').value;
+  const amount = parseFloat(amountRaw);
+  if (!name) { showToast('写下购买了什么吧 📝'); return; }
+  if (!amount || amount <= 0) { showToast('输入一个有效的金额吧 💰'); return; }
+  const pet = PETS[billSelectedPet]; if (!pet) return;
+
+  // 立即更新 UI
+  const list = document.getElementById('billList');
+  const today = new Date();
+  const dateStr = (today.getMonth() + 1) + '.' + today.getDate();
+  const item = document.createElement('div');
+  item.className = 'bill-item'; item.dataset.pet = billSelectedPet;
+  item.innerHTML = `<div class="bill-icon" style="background:${billSelectedCat.bg}">${billSelectedCat.icon}</div><div style="flex:1"><div class="bill-title">${name}</div><div class="bill-sub">${dateStr} 刚刚记录</div></div><div style="text-align:right"><div class="bill-amount">-¥${amount.toFixed(2)}</div><div class="btl-pettag" style="margin-top:4px"><div class="btl-pettag-ava" style="background:${pet.avaBg};color:#fff">${pet.emoji}</div>${esc(pet.name)}</div></div>`;
+  list.insertBefore(item, list.firstChild);
+  const totalEl = document.getElementById('billMonthTotal');
+  const cur = parseFloat(totalEl.textContent.replace(/[^0-9.]/g, '')) || 0;
+  totalEl.textContent = '¥ ' + (cur + amount).toFixed(2);
+  closeAddBill();
+  showToast('已为' + pet.name + '记一笔 ¥' + amount.toFixed(2) + ' 💰');
+
+  // 异步写云端（fire-and-forget，UI 不等待）
+  const cloudPetId = pet._cloudId || pet.id;
+  callFn('bill', {
+    action: 'create',
+    petId: cloudPetId,
+    category: billSelectedCat.id,
+    icon: billSelectedCat.icon,
+    itemName: name,
+    amount,
+    date: today.toISOString().slice(0, 10),
+  }).catch(e => {
+    console.warn('[submitAddBill]', e);
+    showToast('账单已本地记录，云端同步失败：'+e.message);
+  });
+}
+
+// ── 改造后的 submitPostComment（改走云函数）─────────────────
+const _origSubmitPostComment = typeof submitPostComment !== 'undefined' ? submitPostComment : null;
+async function submitPostComment() {
+  const input = document.getElementById('postCommentInput');
+  const text = (input ? input.value : '').trim();
+  if (!text) { showToast('写点什么再发送 🐾'); return; }
+
+  const p = FEED_POSTS.find(x => x.id === curFeedPostId);
+  if (!p) return;
+
+  // 立即更新本地
+  p.comments = p.comments || [];
+  p.comments.push({ user: USER_PROFILE.name, text });
+  if (input) input.value = '';
+  renderPostDetail();
+
+  // 异步写云端
+  const cloudId = p._cloudId || p.id;
+  callFn('interact', { action: 'comment', postId: cloudId, text })
+    .catch(e => console.warn('[submitPostComment]', e));
+}
+
+// ── 医疗记录上传（改走云存储）──────────────────────────────
+// 覆盖 handleMedPhotoUpload，改用云存储
+const _origHandleMedPhotoUpload = typeof handleMedPhotoUpload !== 'undefined' ? handleMedPhotoUpload : null;
+async function handleMedPhotoUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const rec = findMedRecord(curMedPetId, curMedId); if (!rec) return;
+  fileToBase64(file, 600).then(async function(url) {
+    // Show immediately as base64
+    rec.photos.push(url);
+    renderMedPhotos();
+    const hint = document.getElementById('medOcrHint');
+    hint.style.display = 'block';
+    hint.textContent = '正在识别图片内容…';
+    setTimeout(async () => {
+      hint.textContent = '✓ 已自动识别：' + (rec.badge === '疫苗' ? '疫苗名称、接种日期、下次接种提醒已提取，可核对后保存' : '就诊医院、诊断结果、用药信息已提取，可核对后保存');
+      updateBankCounts('photo');
+      showToast('图片已识别并存入记忆银行 📷');
+      saveState();
+      // Async upload to cloud
+      const result = await uploadBase64ToCloud(url, 'medical/' + (_currentUid || 'unknown') + '/' + (curMedPetId || 'unknown') + '/');
+      if (result.fileID) {
+        // Replace base64 with fileID in the record
+        const idx = rec.photos.indexOf(url);
+        if (idx >= 0) rec.photos[idx] = result.fileID;
+      }
+    }, 1200);
+  });
+  e.target.value = '';
+}
+
+// ── 头像裁剪后改走云存储 ──────────────────────────────────
+// 覆盖 openCropAva 的保存逻辑（croppedBlob → cloud）
+// 原始 openCropAva 函数不变，只覆盖"确认裁剪"的动作
+const _origConfirmCrop = typeof confirmCropAva !== 'undefined' ? confirmCropAva : null;
+
+// ── 工具函数 ────────────────────────────────────────────────
+
+// ── 云端初始化启动 ────────────────────────────────────────────────────────────
+// （替代原来的 loadState().then(...)）
+
+// ── saveState（云端版本只写 localStorage 缓存） ──
+// ── saveState / loadState：业务层唯一入口 ──// ── saveState / loadState：业务层唯一入口 ──
 function saveState() {
   // Limit base64 images to most recent 30 to avoid quota
   const state = {
@@ -4229,24 +4903,9 @@ function saveState() {
     accountsFollowed: Object.fromEntries(
       Object.entries(ACCOUNTS).map(([k, v]) => [k, v.followed])
     ),
-    // Persist PETS data（含完整档案字段，否则用户新建的宠物刷新后会丢失）
+    // Persist PETS data (timeline, bank counts, album, medical, daily, foodPrefs)
     pets: Object.fromEntries(
       Object.entries(PETS).map(([k, pet]) => [k, {
-        id: pet.id,
-        name: pet.name,
-        emoji: pet.emoji,
-        species: pet.species,
-        kind: pet.kind,
-        age: pet.age,
-        ageDetail: pet.ageDetail,
-        birthday: pet.birthday,
-        gender: pet.gender,
-        neutered: pet.neutered,
-        weight: pet.weight,
-        avaBg: pet.avaBg,
-        dewormCycle: pet.dewormCycle,
-        allergies: pet.allergies,
-        isMemorial: pet.isMemorial,
         bank: pet.bank,
         timeline: pet.timeline.slice(0, 50),
         album: pet.album ? pet.album.slice(0, 50) : [],
@@ -4275,70 +4934,113 @@ function loadState() {
           if (ACCOUNTS[k]) ACCOUNTS[k].followed = v;
         });
       }
-      // Restore PETS data（包括用户自己新建的宠物）
+      // Restore PETS data
       if (state.pets) {
         Object.entries(state.pets).forEach(([k, saved]) => {
-          if (!PETS[k]) {
-            // 用户新建的宠物：预设里没有，需要整只重建
-            if (!saved.name) return;
-            PETS[k] = {
-              id: saved.id || k,
-              name: saved.name,
-              emoji: saved.emoji || '🐾',
-              species: saved.species || '未填写',
-              kind: saved.kind || 'cat',
-              age: saved.age || '未知',
-              ageDetail: saved.ageDetail || '',
-              birthday: saved.birthday || '',
-              gender: saved.gender || '未知',
-              neutered: !!saved.neutered,
-              weight: saved.weight || '未记录',
-              avaBg: saved.avaBg || 'linear-gradient(135deg,#ff8c5a,var(--red))',
-              dewormCycle: saved.dewormCycle || '未设置',
-              allergies: saved.allergies || '无记录',
-              isMemorial: !!saved.isMemorial,
-              bank: saved.bank || { count:0, photos:0, audio:0, text:0, medCount:0, dailyCount:0 },
-              timeline: saved.timeline || [],
-              album: saved.album || [],
-              medical: saved.medical || [],
-              daily: saved.daily || { food:'正常', water:'正常', poop:'正常', weight:'', state:'正常', mood:'开心' },
-              foodPrefs: saved.foodPrefs || { brand:'未记录', snack:'未记录', allergy:'无记录' },
-              clone: saved.clone || { done:0, total:8, segs:['⬜ 撒娇声','⬜ 呼噜声','⬜ 催促叫','⬜ 低吼声','⬜ 兴奋叫','⬜ 惊吓声','⬜ 睡梦呢喃','⬜ 告别声'] }
-            };
-            return;
+          if (PETS[k]) {
+            if (saved.bank) PETS[k].bank = saved.bank;
+            if (saved.timeline) PETS[k].timeline = saved.timeline;
+            if (saved.album) PETS[k].album = saved.album;
+            if (saved.medical) PETS[k].medical = saved.medical;
+            if (saved.daily) PETS[k].daily = saved.daily;
+            if (saved.foodPrefs) PETS[k].foodPrefs = saved.foodPrefs;
+            if (saved.clone) PETS[k].clone = saved.clone;
           }
-          // 预设宠物：恢复用户改动过的字段
-          if (saved.name) PETS[k].name = saved.name;
-          if (saved.emoji) PETS[k].emoji = saved.emoji;
-          if (saved.species) PETS[k].species = saved.species;
-          if (saved.kind) PETS[k].kind = saved.kind;
-          if (saved.age) PETS[k].age = saved.age;
-          if (saved.ageDetail) PETS[k].ageDetail = saved.ageDetail;
-          if (saved.birthday) PETS[k].birthday = saved.birthday;
-          if (saved.gender) PETS[k].gender = saved.gender;
-          if (typeof saved.neutered === 'boolean') PETS[k].neutered = saved.neutered;
-          if (saved.weight) PETS[k].weight = saved.weight;
-          if (saved.allergies) PETS[k].allergies = saved.allergies;
-          if (typeof saved.isMemorial === 'boolean') PETS[k].isMemorial = saved.isMemorial;
-          if (saved.bank) PETS[k].bank = saved.bank;
-          if (saved.timeline) PETS[k].timeline = saved.timeline;
-          if (saved.album) {
-            // v54 迁移：老版本存过一批影棚摆拍/已失效的图，直接沿用会盖掉新图池。
-            // 只保留用户自己上传的照片(data:)，示例图一律回落到当前代码里的新图。
-            const userShots = saved.album.filter(a => a && typeof a.url === 'string' && a.url.startsWith('data:'));
-            if (localStorage.getItem('pawmemory_album_migrated_v54')) {
-              PETS[k].album = saved.album;
-            } else {
-              PETS[k].album = userShots.concat(PETS[k].album || []);
-            }
-          }
-          if (saved.medical) PETS[k].medical = saved.medical;
-          if (saved.daily) PETS[k].daily = saved.daily;
-          if (saved.foodPrefs) PETS[k].foodPrefs = saved.foodPrefs;
-          if (saved.clone) PETS[k].clone = saved.clone;
         });
       }
-      try { localStorage.setItem('pawmemory_album_migrated_v54','1'); } catch(e) {}
+      // Restore user's own posts
+      if (state.myPosts && state.myPosts.length > 0) {
+        // Remove any existing 'me' posts and prepend saved ones
+        const nonMyPosts = FEED_POSTS.filter(p => p.accountId !== 'me');
+        FEED_POSTS.splice(0, FEED_POSTS.length, ...state.myPosts, ...nonMyPosts);
+      }
+      // Make sure 'me' account exists if there are my posts
+      ensureMeAccount();
+    } catch(e) {
+      console.warn('[loadState] apply error', e);
+    }
+  }).catch(function(e) {
+    console.warn('[loadState] error', e);
+  });
+}
+
+function ensureMeAccount() {
+  if (!ACCOUNTS['me']) {
+    ACCOUNTS['me'] = {
+      id: 'me',
+      name: USER_PROFILE.name,
+      ava: USER_PROFILE.avaType === 'photo' ? '我' : USER_PROFILE.ava,
+      bg: 'linear-gradient(135deg,var(--red),#ff6b6b)',
+      type: 'user',
+      bio: USER_PROFILE.bio || '这是我的宠物日记 🐾',
+      followed: false,
+      fans: '1'
+    };
+  } else {
+    // Update me account with latest profile info
+    ACCOUNTS['me'].name = USER_PROFILE.name;
+    ACCOUNTS['me'].bio = USER_PROFILE.bio || '这是我的宠物日记 🐾';
+  }
+}
+
+// ── saveState / loadState：业务层唯一入口（写 localStorage 缓存）──
+// ── saveState（云端版本只写 localStorage 缓存） ──
+// ── saveState / loadState：业务层唯一入口 ──// ── saveState / loadState：业务层唯一入口 ──
+function saveState() {
+  // Limit base64 images to most recent 30 to avoid quota
+  const state = {
+    USER_PROFILE: USER_PROFILE,
+    // Only persist user-created posts (accountId === 'me')
+    myPosts: FEED_POSTS.filter(p => p.accountId === 'me'),
+    // Persist followed status per account
+    accountsFollowed: Object.fromEntries(
+      Object.entries(ACCOUNTS).map(([k, v]) => [k, v.followed])
+    ),
+    // Persist PETS data (timeline, bank counts, album, medical, daily, foodPrefs)
+    pets: Object.fromEntries(
+      Object.entries(PETS).map(([k, pet]) => [k, {
+        bank: pet.bank,
+        timeline: pet.timeline.slice(0, 50),
+        album: pet.album ? pet.album.slice(0, 50) : [],
+        medical: pet.medical,
+        daily: pet.daily,
+        foodPrefs: pet.foodPrefs,
+        clone: pet.clone
+      }])
+    )
+  };
+  DataStore.save(state).catch(e => console.warn('[saveState]', e));
+}
+
+// loadState returns a Promise so boot can use .then()
+function loadState() {
+  return DataStore.load().then(function(state) {
+    if (!state) return;
+    try {
+      // Restore USER_PROFILE
+      if (state.USER_PROFILE) {
+        Object.assign(USER_PROFILE, state.USER_PROFILE);
+      }
+      // Restore followed states
+      if (state.accountsFollowed) {
+        Object.entries(state.accountsFollowed).forEach(([k, v]) => {
+          if (ACCOUNTS[k]) ACCOUNTS[k].followed = v;
+        });
+      }
+      // Restore PETS data
+      if (state.pets) {
+        Object.entries(state.pets).forEach(([k, saved]) => {
+          if (PETS[k]) {
+            if (saved.bank) PETS[k].bank = saved.bank;
+            if (saved.timeline) PETS[k].timeline = saved.timeline;
+            if (saved.album) PETS[k].album = saved.album;
+            if (saved.medical) PETS[k].medical = saved.medical;
+            if (saved.daily) PETS[k].daily = saved.daily;
+            if (saved.foodPrefs) PETS[k].foodPrefs = saved.foodPrefs;
+            if (saved.clone) PETS[k].clone = saved.clone;
+          }
+        });
+      }
       // Restore user's own posts
       if (state.myPosts && state.myPosts.length > 0) {
         // Remove any existing 'me' posts and prepend saved ones
@@ -4663,7 +5365,7 @@ function saveCustomTag() {
   showToast('已添加标签「' + tag + '」');
 }
 
-function submitPublishPost() {
+async function submitPublishPost() {
   const title = (document.getElementById('publishTitle').value || '').trim();
   const content = (document.getElementById('publishContent').value || '').trim();
   if (!title && !content) {
@@ -4689,10 +5391,93 @@ function submitPublishPost() {
     showToast('这内容看起来是随手打的，认真写两句吧 🐾');
     return;
   }
+  // 上传媒体文件到云存储
+  let fileIds = [];
+  let localImgUrl = ''; // 用于本地立即显示
+  let localVideoUrl = '';
+  
+  if (typeof callFn === 'function' && publishMediaList.length > 0) {
+    showToast('媒体上传中…');
+    for (const media of publishMediaList) {
+      try {
+        if (media.type === 'photo' && media.url && media.url.startsWith('data:')) {
+          const result = await uploadBase64ToCloud(media.url, 'posts/' + (typeof _currentUid !== 'undefined' ? _currentUid : 'unknown') + '/');
+          if (result.fileID) fileIds.push(result.fileID);
+          if (!localImgUrl) localImgUrl = result.tempUrl || media.url;
+        } else if (media.type === 'video' && media.url) {
+          // 视频直接用本地 blob URL 显示（TODO: 视频云存储上传需后端支持）
+          localVideoUrl = media.url;
+        } else if (media.url) {
+          localImgUrl = localImgUrl || media.url;
+        }
+      } catch(e) {
+        console.warn('[submitPublishPost] media upload failed', e);
+        // 降级到本地
+        if (media.type === 'photo') localImgUrl = localImgUrl || media.url;
+        else if (media.type === 'video') localVideoUrl = media.url;
+      }
+    }
+    
+    // 调云函数发布帖子
+    try {
+      const relPet = PETS[publishSelectedPet];
+      const postData = await callFn('post', {
+        action: 'create',
+        petId: publishSelectedPet ? (relPet && relPet._cloudId) || '' : '',
+        tag: publishSelectedTags[0]||'📝 日常',
+        tags: publishSelectedTags.slice(),
+        title: title || '我的宠物日记',
+        content: content || '记录毛孩子的美好瞬间 🐾',
+        fileIds,
+      });
+      ensureMeAccount();
+      const newPost = {
+        id: postData.postId || ('post_' + Date.now()),
+        _cloudId: postData.postId,
+        accountId: 'me',
+        author: USER_PROFILE.name,
+        authorAva: USER_PROFILE.ava,
+        authorAvaType: USER_PROFILE.avaType || 'emoji',
+        authorBg: 'linear-gradient(135deg,var(--red),#ff6b6b)',
+        tag: publishSelectedTags[0]||'📝 日常',
+        tags: publishSelectedTags.slice(),
+        img: localImgUrl,
+        media: publishMediaList.slice(),
+        video: localVideoUrl,
+        fileIds,
+        title: title || '我的宠物日记',
+        content: content || '记录毛孩子的美好瞬间 🐾',
+        time: '刚刚',
+        ts: Date.now(),
+        liked: false,
+        likeCount: 0,
+        followed: false,
+        comments: []
+      };
+      FEED_POSTS.unshift(newPost);
+      closePublishModal();
+      saveState();
+      renderDiscoverFeed();
+      renderFollowingFeed();
+      switchScreen('sc-home', 0);
+      const sc = document.getElementById('tab-discover');
+      if (sc) sc.scrollTop = 0;
+      if (postData.auditStatus === 'reject') {
+        showToast('内容已提交审核，通过后将显示在社区');
+      } else {
+        showToast('动态已发布！✨');
+      }
+      return;
+    } catch(e) {
+      console.warn('[submitPublishPost] cloud post failed', e);
+      showToast('云端发布失败，已本地保存：' + e.message);
+    }
+  }
+
+  // 降级：纯本地发布（无云端或云端失败）
   ensureMeAccount();
-  const me = ACCOUNTS['me'];
-  const relPet = PETS[publishSelectedPet];
-  const newPost = {
+  const relPetLocal = PETS[publishSelectedPet];
+  const newPostLocal = {
     id: 'post_' + Date.now(),
     accountId: 'me',
     author: USER_PROFILE.name,
@@ -4713,18 +5498,12 @@ function submitPublishPost() {
     followed: false,
     comments: []
   };
-  FEED_POSTS.unshift(newPost);
+  FEED_POSTS.unshift(newPostLocal);
   closePublishModal();
   saveState();
   renderDiscoverFeed();
   renderFollowingFeed();
-  // 回到首页顶部，让用户立刻看到自己刚发的动态
   switchScreen('sc-home', 0);
-  const discoverTab = document.querySelector('.tb-tab.on');
-  if (!discoverTab || discoverTab.textContent.indexOf('发现') < 0) {
-    const tabs = document.querySelectorAll('.tb-tab');
-    if (tabs[1]) setHomeTab(tabs[1], 'tab-discover');
-  }
   const sc = document.getElementById('tab-discover');
   if (sc) sc.scrollTop = 0;
   showToast('动态已发布！✨');
@@ -4774,19 +5553,53 @@ function firstPetHintGo(){
   setTimeout(function(){ addNewPet(); }, 260);
 }
 
-// ── 启动：先 loadState() 再渲染，确保持久化数据到位后再展示 ──
-loadState().then(function() {
-  renderDiscoverFeed();
-  renderFollowingFeed();
-  switchScreen('sc-home', 0);
-  showWelcomeIfFirstTime();
-}).catch(function(e) {
-  console.warn('[boot]', e);
-  renderDiscoverFeed();
-  renderFollowingFeed();
-  switchScreen('sc-home', 0);
-  showWelcomeIfFirstTime();
-});
+// ── 启动：检查 CloudBase 登录状态，已登录则初始化数据，否则显示登录页 ──
+(async function boot() {
+  try {
+    // 等 SDK 加载（CDN 异步，最多等 3 秒）
+    for (let i = 0; i < 30 && !window.cloudbase; i++) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    if (!window.cloudbase) {
+      console.warn('[boot] CloudBase SDK not loaded, fallback to local mode');
+      // 降级：从 localStorage 加载
+      if (typeof loadState === 'function') {
+        await loadState();
+      }
+      renderDiscoverFeed();
+      renderFollowingFeed();
+      switchScreen('sc-home', 0);
+      showWelcomeIfFirstTime();
+      return;
+    }
+
+    // 初始化 TCB App
+    getTcbApp();
+
+    const isLoggedIn = await checkLoginState();
+    if (isLoggedIn) {
+      document.getElementById('loginPage').classList.add('hidden');
+      await initCloudData();
+      renderDiscoverFeed();
+      renderFollowingFeed();
+      renderUserProfileDisplay();
+      renderProfPetCards();
+      switchScreen('sc-home', 0);
+      showWelcomeIfFirstTime();
+    } else {
+      // 显示登录页（默认就显示，不需要额外操作）
+      // 先把默认 feed 渲染一下（用本地示例数据）
+      renderDiscoverFeed();
+      renderFollowingFeed();
+    }
+  } catch(e) {
+    console.warn('[boot]', e);
+    renderDiscoverFeed();
+    renderFollowingFeed();
+    switchScreen('sc-home', 0);
+  }
+})();
 
 // renderAccountFollowBtn: see original function (patched directly below)
 
@@ -4930,7 +5743,7 @@ function renderMedPhotos(){
   const wrap=document.getElementById('medDetailPhotos');
   wrap.innerHTML=rec.photos.map(url=>`<img src="${url}" style="width:72px;height:72px;border-radius:var(--r8);object-fit:cover;border:1px solid var(--line)"/>`).join('');
 }
-function handleMedPhotoUpload(e){
+async function handleMedPhotoUpload(e){
   const file=e.target.files[0];if(!file)return;
   const rec=findMedRecord(curMedPetId, curMedId);if(!rec)return;
   fileToBase64(file,600).then(function(url){

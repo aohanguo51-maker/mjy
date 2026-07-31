@@ -1,0 +1,9 @@
+{
+  "name": "seed",
+  "version": "1.0.0",
+  "description": "PawMemory 官方示例内容初始化（一次性）",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.7.0"
+  }
+}

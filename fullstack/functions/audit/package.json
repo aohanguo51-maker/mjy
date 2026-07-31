@@ -1,0 +1,10 @@
+{
+  "name": "audit",
+  "version": "1.0.0",
+  "description": "PawMemory 内容安全审核云函数",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.7.0",
+    "tencentcloud-sdk-nodejs": "^4.0.0"
+  }
+}

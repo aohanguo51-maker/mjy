@@ -1,0 +1,9 @@
+{
+  "name": "interact",
+  "version": "1.0.0",
+  "description": "PawMemory 互动云函数",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.7.0"
+  }
+}
