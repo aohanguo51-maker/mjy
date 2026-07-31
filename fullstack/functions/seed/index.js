@@ -172,6 +172,10 @@ exports.main = async () => {
         delete doc.id; delete doc._id;
         doc.isOfficial = true;
         doc.auditStatus = 'pass';
+        // 展示用的基数赞数：真实点赞在此基础上累加
+        // 不这么做的话，用户点一下赞，likeCount 会被真实记录数覆盖成 1
+        doc.baseLikeCount = typeof p.likeCount === 'number' ? p.likeCount : 0;
+        doc.likeCount = doc.baseLikeCount;
         doc.createdAt = doc.createdAt ? new Date(doc.createdAt) : new Date();
         const r = await db.collection('posts').add(doc);
         if (originalId) idMap[originalId] = r.id;

@@ -95,7 +95,10 @@ exports.main = async (event, context) => {
       const totalRes = await likesCol.where({ postId }).count();
       const realCount = (totalRes && typeof totalRes.total === 'number') ? totalRes.total : null;
       if (realCount !== null) {
-        await postsCol.doc(postId).update({ likeCount: realCount });
+        // 叠加展示基数，否则官方帖的 8600 赞会被拍成 1
+        const pRes = await postsCol.doc(postId).get();
+        const base = (pRes.data && Number(pRes.data.baseLikeCount)) || 0;
+        await postsCol.doc(postId).update({ likeCount: base + realCount });
       } else {
         await postsCol.doc(postId).update({ likeCount: _.inc(1) });
       }
@@ -122,7 +125,9 @@ exports.main = async (event, context) => {
       const totalRes = await likesCol.where({ postId }).count();
       const realCount = (totalRes && typeof totalRes.total === 'number') ? totalRes.total : null;
       if (realCount !== null) {
-        await postsCol.doc(postId).update({ likeCount: realCount });
+        const pRes = await postsCol.doc(postId).get();
+        const base = (pRes.data && Number(pRes.data.baseLikeCount)) || 0;
+        await postsCol.doc(postId).update({ likeCount: base + realCount });
       } else {
         await postsCol.doc(postId).update({ likeCount: _.inc(-1) });
       }

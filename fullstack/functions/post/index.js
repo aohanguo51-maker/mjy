@@ -135,6 +135,7 @@ exports.main = async (event, context) => {
         fileIds: Array.isArray(fileIds) ? fileIds.slice(0, 9) : [],
         imgUrl: '',
         likeCount: 0,
+        baseLikeCount: 0,
         commentCount: 0,
         auditStatus,
         createdAt: now,
