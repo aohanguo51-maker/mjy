@@ -35,6 +35,7 @@ const VISION_MODEL = process.env.SF_VISION_MODEL || 'Qwen/Qwen3-VL-32B-Instruct'
 const IMAGE_MODEL = process.env.SF_IMAGE_MODEL || 'Kwai-Kolors/Kolors';
 const TTS_MODEL = process.env.SF_TTS_MODEL || 'FunAudioLLM/CosyVoice2-0.5B';
 const ASR_MODEL = process.env.SF_ASR_MODEL || 'FunAudioLLM/SenseVoiceSmall';
+const ASR_FALLBACK = process.env.SF_ASR_FALLBACK || 'Qwen/Qwen3-ASR-1.7B';
 const I2V_MODEL = process.env.SF_I2V_MODEL || 'Wan-AI/Wan2.2-I2V-A14B';
 const API_BASE = 'https://api.siliconflow.cn/v1';
 const ENDPOINT = 'https://api.siliconflow.cn/v1/chat/completions';
@@ -365,28 +366,44 @@ exports.main = async (event, context) => {
                 : mimeType.includes('wav') ? 'wav'
                 : mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a' : 'webm';
       // 手工拼 multipart：Node 自带的 FormData 会走 chunked 传输，硅基流动会回 503
-      const boundary = '----pawmemory' + Date.now().toString(16) + Math.random().toString(16).slice(2);
-      const head = Buffer.from(
-        '--' + boundary + '\r\n' +
-        'Content-Disposition: form-data; name="model"\r\n\r\n' + ASR_MODEL + '\r\n' +
-        '--' + boundary + '\r\n' +
-        'Content-Disposition: form-data; name="file"; filename="audio.' + ext + '"\r\n' +
-        'Content-Type: ' + mimeType + '\r\n\r\n'
-      );
-      const tail = Buffer.from('\r\n--' + boundary + '--\r\n');
-      const payload = Buffer.concat([head, buf, tail]);
-      const res = await fetch(API_BASE + '/audio/transcriptions', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + API_KEY,
-          'Content-Type': 'multipart/form-data; boundary=' + boundary,
-          'Content-Length': String(payload.length),
-        },
-        body: payload,
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + (await res.text()).slice(0, 200));
+      // ASR 服务偶发 503（模型排队）：先重试主模型，仍失败则换备用模型
+      const buildPayload = (model) => {
+        const bd = '----pawmemory' + Date.now().toString(16) + Math.random().toString(16).slice(2);
+        const h = Buffer.from(
+          '--' + bd + '\r\n' +
+          'Content-Disposition: form-data; name="model"\r\n\r\n' + model + '\r\n' +
+          '--' + bd + '\r\n' +
+          'Content-Disposition: form-data; name="file"; filename="audio.' + ext + '"\r\n' +
+          'Content-Type: ' + mimeType + '\r\n\r\n'
+        );
+        const t = Buffer.from('\r\n--' + bd + '--\r\n');
+        return { body: Buffer.concat([h, buf, t]), boundary: bd };
+      };
+
+      let res, lastErr, usedModel = ASR_MODEL;
+      const plan = [ASR_MODEL, ASR_MODEL, ASR_FALLBACK];
+      for (let i = 0; i < plan.length; i++) {
+        if (i) await new Promise(r => setTimeout(r, 1000 * i));
+        const model = plan[i];
+        const { body, boundary: bd } = buildPayload(model);
+        try {
+          const r = await fetch(API_BASE + '/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + API_KEY,
+              'Content-Type': 'multipart/form-data; boundary=' + bd,
+              'Content-Length': String(body.length),
+            },
+            body,
+          });
+          if (r.ok) { res = r; usedModel = model; break; }
+          lastErr = new Error('HTTP ' + r.status);
+          if (r.status !== 503 && r.status !== 429 && r.status !== 500) break;
+        } catch (e) { lastErr = e; }
+      }
+      if (!res) throw (lastErr || new Error('ASR 请求失败'));
       const d = await res.json();
-      return { code: 0, data: { degraded: false, model: ASR_MODEL, text: (d && d.text) || '' } };
+      return { code: 0, data: { degraded: false, model: usedModel, text: (d && d.text) || '' } };
     } catch (err) {
       console.error('[ai/asr]', err);
       return { code: 0, data: { degraded: true, text: '', msg: '语音识别失败，请重试' } };
