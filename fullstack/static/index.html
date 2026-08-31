@@ -646,7 +646,6 @@ body::before{display:none}
         <div class="tb-logo">PawMemory</div>
         <div class="tb-search" onclick="openSearchModal()"><span>🔍</span><span style="color:var(--muted);font-size:12px">搜索宠物记忆、宠友…</span></div>
         <div class="tb-icon" onclick="openMsgCenter()">💬</div>
-        <div class="ai-cat-dance" onclick="openAiVideoModal()" title="生成宠物影集"><img src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=120&h=120&fit=crop&crop=faces&q=80" alt="生成宠物影集"/></div>
       </div>
       <div class="tb-tabs">
         <div class="tb-tab" onclick="setHomeTab(this,'tab-following')">关注</div>
@@ -1265,7 +1264,7 @@ body::before{display:none}
       </div>
       <div class="clone-card">
         <div class="clone-head">
-          <div class="clone-title">🎙️ 声音留存进度</div>
+          <div class="clone-title" onclick="openAudioVaultModal()" style="cursor:pointer">🎙️ 声音留存进度 <span style="font-size:11px;color:var(--muted2);font-weight:500">› 看全部</span></div>
           <div class="clone-badge" id="cloneBadge">2 / 8 段</div>
         </div>
         <div class="clone-bar-wrap"><div class="clone-bar-fill" id="cloneBarFill" style="width:25%"></div></div>
@@ -1486,6 +1485,16 @@ body::before{display:none}
     <div class="modal-handle"></div>
     <div class="modal-title">发布宠物动态</div>
     <div style="padding:0 16px 16px">
+      <!-- 影集入口：创作类能力统一收在「发布」里，不再在顶栏另开浮标 -->
+      <div onclick="closePublishModal();setTimeout(openAiVideoModal,180)" style="display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:12px;border-radius:var(--r12);background:linear-gradient(135deg,#fff5f7,#fff0f5);border:1px solid rgba(255,36,66,.16);cursor:pointer">
+        <div style="font-size:20px">🎬</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--ink)">把照片做成影集</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">多张照片合成一段带运镜的小短片</div>
+        </div>
+        <div style="color:var(--muted2)">›</div>
+      </div>
+
       <!-- 选照片/视频（可多选） -->
       <div style="margin-bottom:12px">
         <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">配图 / 视频（可选，最多9个）</div>
@@ -4297,27 +4306,79 @@ function closeInviteModal(){document.getElementById('inviteModal').classList.rem
 function closeHeroBgPickModal(){document.getElementById('heroBgPickModal').classList.remove('on');}
 
 // 声音库弹窗
-function openAudioVaultModal(){
-  const pet=PETS[currentBankPetId];if(!pet)return;
-  const audioItems=(pet.timeline||[]).filter(t=>t.type==='audio'||t.audioUrl||t.icon==='🎙️'||t.icon==='🎤'||t.icon==='🎵');
-  const box=document.getElementById('audioVaultList');
-  document.getElementById('audioVaultTitle').textContent=pet.name+'的声音库';
-  if(audioItems.length===0){
-    box.innerHTML='<div style="text-align:center;padding:24px 0;color:var(--muted2);font-size:12px">还没有声音记录，在记忆时间线存入声音即可出现在这里</div>';
-  } else {
-    window._audioVaultCache = audioItems;
-    box.innerHTML=audioItems.map((t,i)=>`<div style="padding:10px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">
-      <div style="font-size:20px">${t.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--ink)">${t.title}</div>
-        <div style="font-size:11px;color:var(--muted)">${t.date}</div>
-      </div>
-      <button onclick="playAudioVaultItem(this,${i})" style="padding:4px 10px;border-radius:var(--rf);border:1px solid var(--red);background:var(--red-l);color:var(--red);font-size:12px;cursor:pointer">▶️ 播放</button>
-    </div>`).join('');
-  }
+// 声音库二级页：列出每一段已存声音，可逐条播放 / 下载 / 删除
+// filterLabel：从「声音留存进度」的标签点进来时，默认定位到那一类
+function openAudioVaultModal(filterLabel){
+  const pet=PETS[currentBankPetId]||PETS[currentPetId];if(!pet)return;
+  window._audioVaultFilter = (typeof filterLabel==='string' && filterLabel) ? filterLabel : '';
+  renderAudioVault();
   document.getElementById('audioVaultModal').classList.add('on');
 }
-function closeAudioVaultModal(){document.getElementById('audioVaultModal').classList.remove('on');}
+
+function renderAudioVault(){
+  const pet=PETS[currentBankPetId]||PETS[currentPetId];if(!pet)return;
+  const all=(pet.timeline||[]).filter(t=>t.type==='audio'||t.audioUrl||t.icon==='🎙️'||t.icon==='🎤'||t.icon==='🎵');
+  const box=document.getElementById('audioVaultList');
+  const filter=window._audioVaultFilter||'';
+  document.getElementById('audioVaultTitle').textContent=pet.name+'的声音库';
+
+  // 按声音类型分组的筛选条（来自进度标签的 8 类）
+  const cats=(pet.clone&&pet.clone.segs?pet.clone.segs:[]).map(s=>s.replace(/^[✓⬜]\s*/,''));
+  const chips=['<div class="mchip'+(filter?'':' on')+'" onclick="setAudioVaultFilter(\'\')">全部 '+all.length+'</div>']
+    .concat(cats.map(c=>{
+      const n=all.filter(t=>((t.title||'')+(t.desc||'')).indexOf(c)>=0).length;
+      return '<div class="mchip'+(filter===c?' on':'')+'" onclick="setAudioVaultFilter(\''+c.replace(/'/g,"\\'")+'\')">'+c+(n?' '+n:'')+'</div>';
+    })).join('');
+
+  const items = filter ? all.filter(t=>((t.title||'')+(t.desc||'')).indexOf(filter)>=0) : all;
+  window._audioVaultCache = items;
+
+  let listHtml;
+  if(items.length===0){
+    listHtml='<div style="text-align:center;padding:28px 0;color:var(--muted2);font-size:12px">'+
+      (filter?('还没有「'+filter+'」这类声音'):'还没有存入任何声音')+
+      '<div style="margin-top:12px"><button onclick="closeAudioVaultModal();goRecordPetVoice()" style="height:34px;padding:0 16px;border-radius:99px;border:none;background:var(--red);color:#fff;font-size:12px;font-weight:700;cursor:pointer">🎙️ 去录一段</button></div></div>';
+  }else{
+    listHtml=items.map((t,i)=>{
+      const playable=!!t.audioUrl;
+      return '<div style="padding:12px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">'+
+        '<div style="width:36px;height:36px;border-radius:50%;background:var(--red-l);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">'+(t.icon||'🎙️')+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+_escapeHtml(t.title||'未命名录音')+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+_escapeHtml(t.date||'')+(t.duration?(' · '+_escapeHtml(t.duration)):'')+(playable?'':' · 无音频文件')+'</div>'+
+        '</div>'+
+        (playable
+          ? '<button onclick="playAudioVaultItem(this,'+i+')" style="padding:6px 12px;border-radius:var(--rf);border:1px solid var(--red);background:var(--red-l);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0">▶️ 播放</button>'+
+            '<button onclick="downloadAudioVaultItem('+i+')" title="下载" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--line2);background:#fff;cursor:pointer;flex-shrink:0">⬇️</button>'
+          : '<span style="font-size:11px;color:var(--muted2);flex-shrink:0">仅记录</span>')+
+      '</div>';
+    }).join('');
+  }
+
+  box.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 12px;position:sticky;top:0;background:#fff;z-index:2">'+chips+'</div>'+listHtml;
+}
+
+function setAudioVaultFilter(label){
+  window._audioVaultFilter=label||'';
+  renderAudioVault();
+}
+
+function downloadAudioVaultItem(idx){
+  const list=window._audioVaultCache||[];
+  const item=list[idx];
+  if(!item||!item.audioUrl){ showToast('没有可下载的音频'); return; }
+  const a=document.createElement('a');
+  a.href=item.audioUrl;
+  a.download=(item.title||'录音')+'.mp3';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>a.remove(),1200);
+  showToast('已开始下载 💾');
+}
+
+function closeAudioVaultModal(){
+  if(window._vaultAudio){ try{window._vaultAudio.pause();}catch(e){} window._vaultAudio=null; }
+  document.getElementById('audioVaultModal').classList.remove('on');
+}
 function playAudioVaultItem(btn, idx){
   const list = window._audioVaultCache || [];
   const item = (typeof idx === 'number') ? list[idx] : idx;
@@ -6029,7 +6090,12 @@ function renderBankStats(){
   document.getElementById('bankDailyCount').textContent=pet.bank.dailyCount;
   document.getElementById('cloneBadge').textContent=pet.clone.done+' / '+pet.clone.total+' 段';
   document.getElementById('cloneBarFill').style.width=Math.round(pet.clone.done/pet.clone.total*100)+'%';
-  document.getElementById('cloneSegs').innerHTML=pet.clone.segs.map(s=>`<div class="clone-seg ${s.startsWith('✓')?'done':'todo'}">${s}</div>`).join('');
+  document.getElementById('cloneSegs').innerHTML=pet.clone.segs.map((s,i)=>{
+    const done=s.startsWith('✓');
+    const label=s.replace(/^[✓⬜]\s*/,'');
+    return '<div class="clone-seg '+(done?'done':'todo')+'" style="cursor:pointer" '+
+      'onclick="openAudioVaultModal(\''+label.replace(/'/g,"\\'")+'\')">'+s+'</div>';
+  }).join('');
   const remain=pet.clone.total-pet.clone.done;
   const pet2=PETS[currentBankPetId];
   const cvBtn=pet2&&pet2.customVoice?
