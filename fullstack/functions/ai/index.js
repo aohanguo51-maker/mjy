@@ -5,11 +5,18 @@
  * actions:
  *   vet     { pet, symptom, desc }        → 养宠问答建议（文本模型）
  *   vision  { imageBase64, kind }         → 病历/照片识别（视觉模型）
+ *   image   { prompt, size }              → 文生图（纪念插画）
+ *   tts     { text, voice }               → 语音合成（念给它听）
+ *   v2v_submit { imageBase64, prompt }    → 提交图生视频任务，返回 requestId
+ *   v2v_status { requestId }              → 查图生视频进度/结果
  *
  * 环境变量（CloudBase 控制台 → 云函数 → ai → 环境变量）：
  *   SILICONFLOW_API_KEY   必填，硅基流动 cloud.siliconflow.cn 申请
  *   SF_TEXT_MODEL         选填，默认 deepseek-ai/DeepSeek-V3
- *   SF_VISION_MODEL       选填，默认 Qwen/Qwen2.5-VL-72B-Instruct
+ *   SF_VISION_MODEL       选填，默认 Qwen/Qwen3-VL-32B-Instruct
+ *   SF_IMAGE_MODEL        选填，默认 Kwai-Kolors/Kolors
+ *   SF_TTS_MODEL          选填，默认 FunAudioLLM/CosyVoice2-0.5B
+ *   SF_I2V_MODEL          选填，默认 Wan-AI/Wan2.2-I2V-A14B
  *
  * 安全设计：
  *   1. key 只存在云端环境变量，绝不下发前端
@@ -23,6 +30,10 @@ const crypto = require('crypto');
 const API_KEY = process.env.SILICONFLOW_API_KEY || process.env.DEEPSEEK_API_KEY || '';
 const TEXT_MODEL = process.env.SF_TEXT_MODEL || 'deepseek-ai/DeepSeek-V3';
 const VISION_MODEL = process.env.SF_VISION_MODEL || 'Qwen/Qwen3-VL-32B-Instruct';
+const IMAGE_MODEL = process.env.SF_IMAGE_MODEL || 'Kwai-Kolors/Kolors';
+const TTS_MODEL = process.env.SF_TTS_MODEL || 'FunAudioLLM/CosyVoice2-0.5B';
+const I2V_MODEL = process.env.SF_I2V_MODEL || 'Wan-AI/Wan2.2-I2V-A14B';
+const API_BASE = 'https://api.siliconflow.cn/v1';
 const ENDPOINT = 'https://api.siliconflow.cn/v1/chat/completions';
 
 // ── 会话校验（与其它函数一致的 HMAC 方案）──
@@ -232,6 +243,106 @@ exports.main = async (event, context) => {
     } catch (err) {
       console.error('[ai/vision] 识别失败', err);
       return { code: 0, data: { degraded: true, text: '', msg: '识别失败，请手动填写' } };
+    }
+  }
+
+  // ── image：文生图（纪念插画 / 头像）──
+  if (action === 'image') {
+    if (!API_KEY) return { code: 0, data: { degraded: true, msg: '图像服务未配置' } };
+    const prompt = String(event.prompt || '').slice(0, 800);
+    if (!prompt) return { code: 400, msg: '缺少描述' };
+    const size = /^(512|768|1024)x(512|768|1024)$/.test(event.size || '') ? event.size : '1024x1024';
+    try {
+      const res = await fetch(API_BASE + '/images/generations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
+        body: JSON.stringify({ model: IMAGE_MODEL, prompt, image_size: size }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + (await res.text()).slice(0, 200));
+      const d = await res.json();
+      const url = d && d.images && d.images[0] && d.images[0].url;
+      if (!url) throw new Error('未返回图片');
+      return { code: 0, data: { degraded: false, model: IMAGE_MODEL, url,
+        notice: '图片链接有效期约1小时，请及时保存' } };
+    } catch (err) {
+      console.error('[ai/image]', err);
+      return { code: 0, data: { degraded: true, msg: '图像生成失败，请稍后再试' } };
+    }
+  }
+
+  // ── tts：语音合成（把想说的话念出来）──
+  if (action === 'tts') {
+    if (!API_KEY) return { code: 0, data: { degraded: true, msg: '语音服务未配置' } };
+    const text = String(event.text || '').slice(0, 500);
+    if (!text) return { code: 400, msg: '缺少文本' };
+    const voice = String(event.voice || 'anna').replace(/[^a-zA-Z0-9_-]/g, '') || 'anna';
+    try {
+      const res = await fetch(API_BASE + '/audio/speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
+        body: JSON.stringify({
+          model: TTS_MODEL,
+          input: text,
+          voice: TTS_MODEL + ':' + voice,
+          response_format: 'mp3',
+        }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + (await res.text()).slice(0, 200));
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (!buf.length) throw new Error('音频为空');
+      return { code: 0, data: { degraded: false, model: TTS_MODEL,
+        audioBase64: 'data:audio/mp3;base64,' + buf.toString('base64') } };
+    } catch (err) {
+      console.error('[ai/tts]', err);
+      return { code: 0, data: { degraded: true, msg: '语音合成失败，请稍后再试' } };
+    }
+  }
+
+  // ── v2v_submit：图生视频，提交任务（耗时约2-3分钟，异步）──
+  if (action === 'v2v_submit') {
+    if (!API_KEY) return { code: 0, data: { degraded: true, msg: '视频服务未配置' } };
+    const img = String(event.imageBase64 || '');
+    if (!img) return { code: 400, msg: '缺少图片' };
+    if (img.length > 8 * 1024 * 1024) return { code: 400, msg: '图片太大，请压缩后再试' };
+    const dataUrl = img.startsWith('data:') ? img : ('data:image/jpeg;base64,' + img);
+    const prompt = String(event.prompt || '').slice(0, 500)
+      || 'the pet gently breathes and blinks, camera slowly pushes in, warm nostalgic atmosphere, soft light';
+    try {
+      const res = await fetch(API_BASE + '/video/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
+        body: JSON.stringify({ model: I2V_MODEL, prompt, image: dataUrl }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + (await res.text()).slice(0, 200));
+      const d = await res.json();
+      if (!d || !d.requestId) throw new Error('未返回任务号');
+      return { code: 0, data: { degraded: false, requestId: d.requestId, model: I2V_MODEL } };
+    } catch (err) {
+      console.error('[ai/v2v_submit]', err);
+      return { code: 0, data: { degraded: true, msg: '视频任务提交失败，请稍后再试' } };
+    }
+  }
+
+  // ── v2v_status：轮询图生视频结果 ──
+  if (action === 'v2v_status') {
+    if (!API_KEY) return { code: 0, data: { degraded: true, msg: '视频服务未配置' } };
+    const requestId = String(event.requestId || '');
+    if (!requestId) return { code: 400, msg: '缺少任务号' };
+    try {
+      const res = await fetch(API_BASE + '/video/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
+        body: JSON.stringify({ requestId }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const d = await res.json();
+      const status = d && d.status;
+      const url = d && d.results && d.results.videos && d.results.videos[0] && d.results.videos[0].url;
+      return { code: 0, data: { degraded: false, status, url: url || null,
+        reason: (d && d.reason) || '' } };
+    } catch (err) {
+      console.error('[ai/v2v_status]', err);
+      return { code: 0, data: { degraded: true, status: 'Unknown', msg: '查询失败' } };
     }
   }
 

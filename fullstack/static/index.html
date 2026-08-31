@@ -914,8 +914,8 @@ body::before{display:none}
   <!-- ══ HEALTH ══ -->
   <div class="screen" id="sc-health">
     <div class="health-top">
-      <h2>🏥 健康档案</h2>
-      <p id="healthTopSub">小橘的身体记录，每一笔都很重要</p>
+      <h2>🤖 问 AI</h2>
+      <p id="healthTopSub">宠物养护、症状、病历，都可以问</p>
     </div>
     <!-- 宠物切换器：养宠人可能不止一个宠物，健康档案/记忆银行都需要可切换 -->
     <div class="pet-switch-bar" id="healthPetSwitch"></div>
@@ -939,8 +939,18 @@ body::before{display:none}
           <div class="mchip" onclick="setAiSymptom(this,'咳嗽')">咳嗽</div>
           <div class="mchip" onclick="setAiSymptom(this,'精神萎靡')">精神萎靡</div>
           <div class="mchip" onclick="setAiSymptom(this,'瘙痒抓挠')">瘙痒抓挠</div>
+          <div class="mchip" onclick="setAiSymptom(this,'其它问题')">其它问题</div>
         </div>
-        <textarea id="aiAskDesc" class="ai-ask-ta" placeholder="补充描述一下具体情况（选填）…"></textarea>
+        <textarea id="aiAskDesc" class="ai-ask-ta" placeholder="具体情况，或任何养宠问题都可以问（比如：猫可以吃鸡蛋吗？）…"></textarea>
+
+        <!-- 拍病历/照片问 AI（视觉模型）-->
+        <div id="aiAskPhotoWrap" style="display:none;margin-bottom:8px;position:relative">
+          <img id="aiAskPhotoPrev" style="width:100%;max-height:180px;object-fit:contain;border-radius:var(--r12);background:var(--bg3);display:block" alt=""/>
+          <div onclick="clearAiAskPhoto()" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer">×</div>
+        </div>
+        <label for="aiAskPhotoInput" style="position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:38px;border-radius:var(--rf);border:1.5px dashed var(--line2);background:#fff;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;margin-bottom:10px">📷 传张病历 / 化验单 / 症状照片
+          <input type="file" id="aiAskPhotoInput" accept="image/*" onchange="handleAiAskPhoto(event)" style="position:absolute;inset:0;opacity:0;cursor:pointer"/>
+        </label>
         <button class="ai-ask-btn" id="aiAskBtn" onclick="askAiVet()">🩺 获取建议</button>
         <div id="aiAskResult" class="ai-ask-result" style="display:none"></div>
         <div class="ai-ask-disclaimer">仅供参考，不能替代执业兽医诊断，情况严重请及时就医</div>
@@ -1433,7 +1443,7 @@ body::before{display:none}
     <button class="bn-item on" onclick="switchScreen('sc-home',0)"><div class="bn-icon">🏠</div><div class="bn-lbl">首页</div></button>
     <button class="bn-item" onclick="switchScreen('sc-bank',1)"><div class="bn-icon">🏦</div><div class="bn-lbl">记忆银行</div></button>
     <button class="bn-item" onclick="openPublishModal()"><div class="bn-post">＋</div><div class="bn-lbl">发布</div></button>
-    <button class="bn-item" onclick="switchScreen('sc-health',3)"><div class="bn-icon">🏥</div><div class="bn-lbl">健康</div></button>
+    <button class="bn-item" onclick="switchScreen('sc-health',3)"><div class="bn-icon">🤖</div><div class="bn-lbl">问AI</div></button>
     <button class="bn-item" onclick="switchScreen('sc-profile',4)"><div class="bn-icon">😺</div><div class="bn-lbl">我的</div></button>
   </nav>
 </div>
@@ -1755,8 +1765,9 @@ body::before{display:none}
       <textarea id="farewellEulogy" class="ai-ask-ta" style="margin-bottom:14px" placeholder="比如：谢谢你陪了我们三年，那些晒太阳的午后我都记得…"></textarea>
 
       <div id="farewellGenSection">
-        <button class="modal-cta" style="background:#8b5cf6;box-shadow:0 6px 20px rgba(139,92,246,.35);position:static;margin:0 0 8px" onclick="generateFarewellVideo()">✨ 生成纪念影集</button>
-        <div style="font-size:10px;color:var(--muted2);text-align:center;margin-bottom:10px">用它的真实照片在你手机上合成，不上传、不经过任何第三方</div>
+        <button class="modal-cta" style="background:#8b5cf6;box-shadow:0 6px 20px rgba(139,92,246,.35);position:static;margin:0 0 8px" onclick="generateFarewellVideo()">✨ 生成纪念影集（快，约15秒）</button>
+        <button class="modal-cta" style="background:#0ea5e9;box-shadow:0 6px 20px rgba(14,165,233,.3);position:static;margin:0 0 8px" onclick="generateFarewellAiVideo()">🎥 让照片动起来（AI，约 2-3 分钟）</button>
+        <div style="font-size:10px;color:var(--muted2);text-align:center;margin-bottom:10px">影集：用它的真实照片在本机合成 · 让照片动起来：AI 把第一张照片生成一段真视频</div>
       </div>
       <div id="farewellGenProgress" style="display:none;text-align:center;padding:20px 0">
         <div style="font-size:32px;margin-bottom:10px">🕊️</div>
@@ -6053,8 +6064,14 @@ function renderAlbumPage(){
   renderPetSwitchBar('albumPetSwitch', currentAlbumPetId, 'switchAlbumPet');
   const grid=document.getElementById('albumGrid');
   const items=pet.album||[];
+  // “＋”卡片：可同时添加照片和视频
+  const addCard='<label for="albumAddInput" style="position:relative;overflow:hidden;aspect-ratio:1;border-radius:var(--r8);cursor:pointer;border:1.5px dashed var(--line2);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted2)">'+
+    '<div style="font-size:26px;line-height:1">＋</div>'+
+    '<div style="font-size:10px;font-weight:600">照片/视频</div>'+
+    '<input type="file" id="albumAddInput" accept="image/*,video/*" multiple onchange="handleAlbumAdd(event)" style="position:absolute;inset:0;opacity:0;cursor:pointer"/>'+
+    '</label>';
   if(items.length===0){
-    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted2);font-size:12px">还没有存入任何照片或视频</div>';
+    grid.innerHTML=addCard+'<div style="grid-column:2/-1;display:flex;align-items:center;color:var(--muted2);font-size:12px">还没有存入照片或视频</div>';
     return;
   }
   grid.innerHTML=items.map((item,i)=>{
@@ -6063,7 +6080,61 @@ function renderAlbumPage(){
       <img src="${thumbUrl}" style="width:100%;height:100%;object-fit:cover" alt=""/>
       ${item.type==='video'?'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.15)"><div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;font-size:12px">▶️</div></div>':''}
     </div>`;
-  }).join('');
+  }).join('')+addCard;
+}
+
+// 相册添加：照片直接存，视频自动抽封面帧作缩略图
+async function handleAlbumAdd(ev){
+  const pet=PETS[currentAlbumPetId]||PETS[currentPetId];
+  if(!pet){ showToast('请先添加一只宠物'); return; }
+  const files=[...(ev.target.files||[])].slice(0,20);
+  ev.target.value='';
+  if(!files.length) return;
+  if(!pet.album) pet.album=[];
+  showToast('正在处理 '+files.length+' 个文件…');
+  let okN=0;
+  for(const f of files){
+    try{
+      const dataUrl=await new Promise((res,rej)=>{
+        const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(f);
+      });
+      if(f.type.startsWith('video/')){
+        const poster=await _grabVideoPoster(dataUrl).catch(()=>'');
+        pet.album.unshift({type:'video',url:dataUrl,poster:poster||'',date:'刚刚添加'});
+      }else{
+        pet.album.unshift({type:'photo',url:dataUrl,date:'刚刚添加'});
+      }
+      okN++;
+    }catch(e){ console.warn('[album] 读取失败',f&&f.name,e); }
+  }
+  if(!okN){ showToast('这些文件读不了，换几个试试'); return; }
+  if(pet.bank){
+    pet.bank.photos=(pet.bank.photos||0)+okN;
+    pet.bank.count=(pet.bank.count||0)+okN;
+  }
+  if(typeof syncMemCountEverywhere==='function') syncMemCountEverywhere();
+  renderAlbumPage();
+  if(typeof saveState==='function') saveState();
+  showToast('已存入 '+okN+' 个文件 🎉');
+}
+
+// 从视频抽一帧做封面
+function _grabVideoPoster(src){
+  return new Promise((resolve,reject)=>{
+    const v=document.createElement('video');
+    v.preload='metadata'; v.muted=true; v.playsInline=true; v.src=src;
+    const bail=setTimeout(()=>reject(new Error('timeout')),8000);
+    v.onloadeddata=()=>{ try{ v.currentTime=Math.min(0.5, (v.duration||1)/3); }catch(e){ clearTimeout(bail); reject(e); } };
+    v.onseeked=()=>{
+      try{
+        const c=document.createElement('canvas');
+        c.width=v.videoWidth||320; c.height=v.videoHeight||320;
+        c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+        clearTimeout(bail); resolve(c.toDataURL('image/jpeg',0.7));
+      }catch(e){ clearTimeout(bail); reject(e); }
+    };
+    v.onerror=()=>{ clearTimeout(bail); reject(new Error('video load error')); };
+  });
 }
 function openAlbumViewer(petId,idx){
   const pet=PETS[petId];if(!pet)return;
@@ -6100,7 +6171,7 @@ function switchHealthPet(petId){
 function renderHealthPage(){
   const pet=PETS[currentHealthPetId];if(!pet)return;
   renderPetSwitchBar('healthPetSwitch', currentHealthPetId, 'switchHealthPet');
-  document.getElementById('healthTopSub').textContent=pet.name+'的身体记录，每一笔都很重要';
+  document.getElementById('healthTopSub').textContent=pet.name+'的养护、症状、病历，都可以问';
   document.getElementById('healthPetInfoCard').innerHTML=`
     <div class="pic-ava" style="background:${pet.avaBg}">${pet.emoji}</div>
     <div class="pic-info">
@@ -6165,18 +6236,38 @@ const SYMPTOM_ADVICE={
   '精神萎靡':{reason:'体力消耗过大、轻微不适早期信号、环境变化应激、潜在疾病前兆',advice:'检查体温和进食饮水情况、提供安静休息环境、密切观察24小时、若持续萎靡建议尽快就医'},
   '瘙痒抓挠':{reason:'跳蚤虱子等体外寄生虫、食物或环境过敏、真菌感染、皮肤干燥',advice:'检查皮毛是否有寄生虫、避免频繁洗澡破坏皮肤屏障、更换低敏粮食试试、持续加重需皮肤镜检查'}
 };
+// 拍照问 AI：选图 / 清除
+let _aiAskPhoto=null;
+function handleAiAskPhoto(ev){
+  const f=ev.target.files&&ev.target.files[0];
+  if(!f) return;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    _aiAskPhoto=fr.result;
+    document.getElementById('aiAskPhotoPrev').src=_aiAskPhoto;
+    document.getElementById('aiAskPhotoWrap').style.display='block';
+  };
+  fr.readAsDataURL(f);
+  ev.target.value='';
+}
+function clearAiAskPhoto(){
+  _aiAskPhoto=null;
+  document.getElementById('aiAskPhotoWrap').style.display='none';
+  document.getElementById('aiAskPhotoPrev').src='';
+}
+
 async function askAiVet(){
   const pet=PETS[currentHealthPetId];
   const desc=(document.getElementById('aiAskDesc').value||'').trim();
   const result=document.getElementById('aiAskResult');
   const btn=document.getElementById('aiAskBtn');
-  if(!curSymptom){ showToast('先选一下它现在的症状'); return; }
+  if(!curSymptom && !desc && !_aiAskPhoto){ showToast('选个症状，或直接打字问我'); return; }
   result.style.display='block';
-  result.innerHTML='<div style="color:var(--muted);font-size:13px">正在分析 '+pet.name+' 的情况…</div>';
+  result.innerHTML='<div style="color:var(--muted);font-size:13px">正在分析 '+_escapeHtml(pet.name)+' 的情况…</div>';
   if(btn){ btn.disabled=true; }
 
-  // 先在前端做一道急症兵底：即使后端没部署，急症也必须能抦住
-  const emergency=_frontEmergencyCheck(curSymptom+' '+desc);
+  // 前端急症兵底：即使后端没部署，急症也必须能抦住
+  const emergency=_frontEmergencyCheck((curSymptom||'')+' '+desc);
   if(emergency){
     _renderVetUrgent(result, emergency);
     if(btn) btn.disabled=false;
@@ -6184,10 +6275,22 @@ async function askAiVet(){
   }
 
   try{
+    // 有图先走视觉模型把图转成文字，再交给文本模型一起分析
+    let imgText='';
+    if(_aiAskPhoto){
+      result.innerHTML='<div style="color:var(--muted);font-size:13px">正在识别你传的照片…</div>';
+      try{
+        const vd=await callFn('ai',{action:'vision',imageBase64:_aiAskPhoto});
+        if(vd && vd.text) imgText=vd.text;
+      }catch(e){ console.warn('[askAiVet] 视觉识别失败',e); }
+      result.innerHTML='<div style="color:var(--muted);font-size:13px">正在分析…</div>';
+    }
+
+    const fullDesc = imgText ? (desc+'\n\n【照片识别内容】\n'+imgText) : desc;
     const data=await callFn('ai',{
       action:'vet',
-      symptom:curSymptom,
-      desc:desc,
+      symptom:curSymptom||'其它问题',
+      desc:fullDesc,
       pet:{ name:pet.name, species:pet.species, age:pet.age, gender:pet.gender,
             weight:pet.weight, neutered:pet.neutered, allergies:pet.allergies }
     });
@@ -6197,8 +6300,10 @@ async function askAiVet(){
     result.innerHTML=
       '<div style="font-weight:700;color:#2563eb;margin-bottom:6px">🩺 基于 '+_escapeHtml(pet.name)+
       '（'+_escapeHtml(pet.species||'')+(pet.age?'·'+_escapeHtml(pet.age):'')+(pet.neutered?'·已绝育':'·未绝育')+'）的分析</div>'+
+      (imgText?'<div style="font-size:11px;color:var(--muted);background:var(--bg2);padding:8px;border-radius:8px;margin-bottom:8px;white-space:pre-wrap">📷 照片识别：\n'+_escapeHtml(imgText)+'</div>':'')+
       (data&&data.degraded?'<div style="font-size:11px;color:#b45309;background:#fef3c7;padding:6px 8px;border-radius:8px;margin-bottom:8px">⚠️ 智能问答暂时不可用，以下为通用建议</div>':'')+
       '<div style="line-height:1.7;color:var(--ink)">'+body+'</div>'+
+      '<div style="margin-top:10px"><button onclick="speakAiAnswer(this)" data-text="'+_escapeHtml((data&&data.content)||'')+'" style="height:32px;padding:0 14px;border-radius:99px;border:1.5px solid var(--line2);background:#fff;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer">🔊 读给我听</button></div>'+
       '<div style="margin-top:10px;font-size:11px;color:var(--muted2)">'+_escapeHtml((data&&data.disclaimer)||'仅供参考，不能替代执业兽医诊断')+'</div>';
   }catch(e){
     console.error('[askAiVet]',e);
@@ -6209,6 +6314,26 @@ async function askAiVet(){
       '<div style="margin-top:10px;font-size:11px;color:var(--muted2)">症状持续或加重，请尽快就医。</div>';
   }finally{
     if(btn) btn.disabled=false;
+  }
+}
+
+// 把 AI 回答读出来（语音合成）
+async function speakAiAnswer(btn){
+  const text=(btn&&btn.getAttribute('data-text'))||'';
+  if(!text){ showToast('没有可朗读的内容'); return; }
+  const old=btn.textContent;
+  btn.disabled=true; btn.textContent='合成中…';
+  try{
+    const d=await callFn('ai',{action:'tts',text:text.slice(0,480)});
+    if(!d||!d.audioBase64) throw new Error((d&&d.msg)||'语音合成失败');
+    const a=new Audio(d.audioBase64);
+    a.play();
+    btn.textContent='▶️ 播放中';
+    a.onended=()=>{ btn.textContent=old; btn.disabled=false; };
+    a.onerror=()=>{ btn.textContent=old; btn.disabled=false; showToast('播放失败'); };
+  }catch(e){
+    showToast(errText(e,'语音合成失败'));
+    btn.textContent=old; btn.disabled=false;
   }
 }
 
@@ -6703,7 +6828,71 @@ async function generateFarewellVideo(){
   showToast('纪念影集已生成 🕊️');
 }
 
+// AI 图生视频：把第一张照片交给 Wan2.2-I2V 生成一段真视频（耗时较长，异步轮询）
+async function generateFarewellAiVideo(){
+  const pet=PETS[farewellPetId];
+  const genSec=document.getElementById('farewellGenSection');
+  const prog=document.getElementById('farewellGenProgress');
+  const bar=document.getElementById('farewellGenBar');
+  const text=document.getElementById('farewellGenText');
+  const srcs=farewellPhotos.filter(Boolean);
+  if(!srcs.length){ showToast('至少选一张照片'); return; }
+
+  genSec.style.display='none'; prog.style.display='block';
+  bar.style.width='5%'; text.textContent='正在准备照片…';
+
+  try{
+    // 压缩到 768 以内，避免请求体过大
+    const b64=await _toDataUrlLimited(srcs[0], 768);
+    text.textContent='已提交给 AI，正在生成…';
+    bar.style.width='12%';
+    const sub=await callFn('ai',{action:'v2v_submit',imageBase64:b64,
+      prompt:'the pet gently breathes and blinks, subtle head movement, camera slowly pushes in, warm nostalgic light, cinematic'});
+    if(!sub||!sub.requestId) throw new Error((sub&&sub.msg)||'任务提交失败');
+
+    let url=null;
+    for(let i=0;i<40;i++){
+      await new Promise(r=>setTimeout(r,8000));
+      const st=await callFn('ai',{action:'v2v_status',requestId:sub.requestId});
+      const s=st&&st.status;
+      bar.style.width=Math.min(92, 12+i*2.2)+'%';
+      text.textContent='AI 生成中…（已等 '+((i+1)*8)+' 秒，通常需 2-3 分钟）';
+      if(s==='Succeed'){ url=st.url; break; }
+      if(s==='Failed'){ throw new Error(st.reason||'AI 生成失败'); }
+    }
+    if(!url) throw new Error('生成超时，请稍后重试');
+
+    bar.style.width='100%';
+    _farewellBlob=null; // AI 视频是远程 URL，不是本地 blob
+    _farewellAiUrl=url;
+    const v=document.getElementById('farewellVideoEl');
+    v.src=url; v.poster=srcs[0]||'';
+    prog.style.display='none';
+    document.getElementById('farewellVideoResult').style.display='block';
+    const info=document.getElementById('farewellVideoInfo');
+    if(info) info.textContent='AI 图生视频 · Wan2.2 · 链接有效期约1小时，请尽快下载保存';
+    showToast('AI 视频已生成 🎥');
+  }catch(e){
+    console.error('[farewellAiVideo]',e);
+    prog.style.display='none'; genSec.style.display='block';
+    showToast(errText(e,'AI 视频生成失败'));
+  }
+}
+let _farewellAiUrl=null;
+
+// 把图缩到指定边长内并转 dataURL
+async function _toDataUrlLimited(src, maxSide){
+  const img=await _loadImg(src);
+  if(!img) throw new Error('照片读取失败');
+  const r=Math.min(1, maxSide/Math.max(img.width,img.height));
+  const w=Math.round(img.width*r), h=Math.round(img.height*r);
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  c.getContext('2d').drawImage(img,0,0,w,h);
+  return c.toDataURL('image/jpeg',0.88);
+}
+
 function downloadFarewellVideo(){
+  if(_farewellAiUrl && !_farewellBlob){ window.open(_farewellAiUrl,'_blank'); showToast('已在新窗口打开，长按可保存 💾'); return; }
   if(!_farewellBlob){ showToast('请先生成影集'); return; }
   const pet=PETS[farewellPetId];
   const ext=(_farewellBlob.type||'').includes('mp4')?'mp4':'webm';
@@ -6713,8 +6902,18 @@ function downloadFarewellVideo(){
 
 async function saveFarewellVideo(){
   const pet=PETS[farewellPetId];if(!pet)return;
-  if(!_farewellBlob){ showToast('请先生成影集'); return; }
+  if(!_farewellBlob && !_farewellAiUrl){ showToast('请先生成影集'); return; }
   const btn=event&&event.target; if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
+  if(!_farewellBlob && _farewellAiUrl){
+    pet.timeline.unshift({icon:'🎥',date:'刚刚',title:pet.name+'的 AI 纪念视频',
+      desc:'由 AI 根据它的照片生成', videoUrl:_farewellAiUrl});
+    closeFarewellCreate();
+    if(currentBankPetId===farewellPetId){ renderBankTimeline(); }
+    saveState();
+    showToast('已存入记忆银行（建议再下载一份到本地）🎥');
+    if(btn){ btn.disabled=false; btn.textContent='保存到记忆银行'; }
+    return;
+  }
   let fileID=null;
   // 后端可用则传云端，不可用就只存本地引用，不阻断用户
   try{
