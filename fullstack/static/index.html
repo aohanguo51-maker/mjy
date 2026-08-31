@@ -856,14 +856,13 @@ body::before{display:none}
         </label>
         <button class="upbtn" id="recordBtn" onclick="toggleRecordPanel()" style="background:rgba(255,36,66,.14);color:var(--red);font-weight:700">🎙️ 录TA的声音</button>
         <button class="upbtn" id="translateBtn" onclick="toggleSoundPicker()">🔊 翻译一下</button>
-        <button class="upbtn">📎 文件</button>
       </div>
       <!-- 真实录音/上传面板（默认收起）—— 这才是真正驱动声音留存进度的入口 -->
       <div id="recordPanel" style="display:none;flex-shrink:0;background:linear-gradient(135deg,#fff5f0,#fff8f4);border-bottom:1px solid rgba(255,36,66,.15);padding:14px">
-        <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:5px">🎙️ 存下它真实的声音，以后都能再听到</div>
+        <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:5px">🎙️ 选一种方式，存下它真实的声音</div>
         <div style="display:flex;gap:8px">
-          <button id="recBtnMain" onclick="toggleRealRecording()" style="flex:1;height:44px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span id="recIcon">⏺️</span><span id="recLabel">开始录音</span></button>
-          <label for="audioFileInput" style="position:relative;overflow:hidden;flex:1;height:44px;border-radius:var(--rf);background:#fff;border:1.5px solid var(--line2);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">📁 上传音频文件
+          <button id="recBtnMain" onclick="toggleRealRecording()" style="flex:1;height:44px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span id="recIcon">⏺️</span><span id="recLabel">现在录一段</span></button>
+          <label for="audioFileInput" style="position:relative;overflow:hidden;flex:1;height:44px;border-radius:var(--rf);background:#fff;border:1.5px solid var(--line2);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">📁 传已有音频
             <input type="file" id="audioFileInput" accept="audio/*" onchange="handleAudioUpload(event)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer"/>
           </label>
         </div>
@@ -1554,7 +1553,7 @@ body::before{display:none}
       </div>
     </div>
     <div style="padding:12px 16px">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-align:center">缩放</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-align:center">缩放（左缩小 · 右放大）</div>
       <input type="range" id="cropScaleSlider" min="50" max="300" value="100" style="width:100%;accent-color:var(--red)" oninput="onCropScale(this.value)"/>
     </div>
     <div style="display:flex;gap:10px;padding:0 16px 20px">
@@ -4017,17 +4016,88 @@ function sendChat(){
   },1400);
 }
 
-// ── MIC ──
-let recog=null,micOn=false;
-function toggleMic(){
+// ── MIC：按一下开始录音，再按停止并转文字（真实 ASR，不再依赖浏览器语音识别）──
+let micOn=false, _micRec=null, _micChunks=[], _micStream=null;
+
+function _micReset(btn){
+  micOn=false;
+  if(btn){ btn.textContent='🎤'; btn.style.background=''; btn.disabled=false; }
+  try{ if(_micStream) _micStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+  _micStream=null; _micRec=null; _micChunks=[];
+}
+
+async function toggleMic(){
   const btn=document.getElementById('micBtn');
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){showToast('当前浏览器不支持语音识别');return;}
-  if(micOn){recog&&recog.stop();micOn=false;btn.textContent='🎤';btn.style.background='';return;}
-  recog=new SR();recog.lang='zh-CN';recog.continuous=false;recog.interimResults=false;
-  recog.onresult=e=>{document.getElementById('chatInput').value=e.results[0][0].transcript;micOn=false;btn.textContent='🎤';btn.style.background='';}
-  recog.onerror=()=>{micOn=false;btn.textContent='🎤';btn.style.background='';}
-  recog.start();micOn=true;btn.textContent='🔴';btn.style.background='#fee2e2';
+
+  // 停止录音 → 转文字
+  if(micOn){
+    if(_micRec && _micRec.state!=='inactive'){
+      btn.textContent='⏳'; btn.disabled=true;
+      _micRec.stop();
+    } else { _micReset(btn); }
+    return;
+  }
+
+  // 录音需要安全环境（https 或 localhost），否则浏览器直接禁掉麦克风
+  if(!window.isSecureContext){
+    showToast('当前是 http 访问，浏览器禁止使用麦克风（需 https）🎙️');
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showToast('当前浏览器不支持录音');
+    return;
+  }
+
+  try{
+    _micStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){
+    console.warn('[mic]',e);
+    showToast(e && e.name==='NotAllowedError' ? '麦克风权限被拒绝，请在浏览器设置里允许' : '拿不到麦克风：'+(e.message||''));
+    return;
+  }
+
+  let mime='';
+  ['audio/webm;codecs=opus','audio/webm','audio/mp4'].forEach(m=>{
+    if(!mime && window.MediaRecorder && MediaRecorder.isTypeSupported(m)) mime=m;
+  });
+  try{
+    _micRec = mime ? new MediaRecorder(_micStream,{mimeType:mime}) : new MediaRecorder(_micStream);
+  }catch(e){ showToast('录音初始化失败'); _micReset(btn); return; }
+
+  _micChunks=[];
+  _micRec.ondataavailable=e=>{ if(e.data&&e.data.size) _micChunks.push(e.data); };
+  _micRec.onstop=async ()=>{
+    const blob=new Blob(_micChunks,{type:_micRec.mimeType||'audio/webm'});
+    try{ if(_micStream) _micStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+    _micStream=null;
+    if(!blob.size){ showToast('没录到声音'); _micReset(btn); return; }
+    try{
+      const dataUrl=await new Promise((res,rej)=>{
+        const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(blob);
+      });
+      const d=await callFn('ai',{action:'asr',audioBase64:dataUrl});
+      if(d && d.text){
+        const inp=document.getElementById('chatInput');
+        inp.value=(inp.value?inp.value+' ':'')+d.text;
+        inp.focus();
+        showToast('已转成文字 ✓');
+      }else{
+        showToast((d&&d.msg)||'没识别出内容，再试一次');
+      }
+    }catch(e){
+      console.error('[mic/asr]',e);
+      showToast(errText(e,'语音识别失败'));
+    }
+    _micReset(btn);
+  };
+
+  _micRec.start();
+  micOn=true;
+  btn.textContent='⏹️';
+  btn.style.background='#fee2e2';
+  showToast('开始录音，再点一下结束 🎙️');
+  // 最长 60 秒自动停
+  setTimeout(()=>{ if(micOn && _micRec && _micRec.state!=='inactive'){ btn.textContent='⏳'; btn.disabled=true; _micRec.stop(); } },60000);
 }
 
 // ── TRANSLATION（合并进聊天时间线）──
@@ -5314,6 +5384,7 @@ function fileToBase64(file, maxWidth) {
 // AVATAR CROP MODAL
 // ════════════════════════════════════════════════════════
 let cropImg = null, cropScale = 1, cropX = 0, cropY = 0;
+let cropBaseScale = 1;   // 「刚好盖满圆圈」的基准缩放，滑块 100 就对应它
 let cropDragging = false, cropDragStartX = 0, cropDragStartY = 0, cropImgStartX = 0, cropImgStartY = 0;
 let cropRawFile = null;
 
@@ -5331,10 +5402,14 @@ function openCropAva(file) {
       canvas.height = size;
       wrap.style.width = size + 'px';
       wrap.style.height = size + 'px';
-      // initial scale to fill the 200x200 circle
+      // 基准缩放：刚好盖满 200 圆圈
+      // 之前直接把绝对缩放写进滑块，大图算出来常常低于 min=50 被钳在最左端，
+      // 导致只能往右拖（只能放大）。改成相对缩放：滑块100=基准，50%~300%
       const minDim = Math.min(cropImg.width, cropImg.height);
-      cropScale = 200 / minDim * (size / 200) * 1.1;
-      document.getElementById('cropScaleSlider').value = Math.round(cropScale * 100);
+      cropBaseScale = 200 / minDim * (size / 200) * 1.1;
+      cropScale = cropBaseScale;
+      const slider = document.getElementById('cropScaleSlider');
+      slider.min = 50; slider.max = 300; slider.value = 100;
       cropX = (size - cropImg.width * cropScale) / 2;
       cropY = (size - cropImg.height * cropScale) / 2;
       drawCropCanvas();
@@ -5354,8 +5429,8 @@ function drawCropCanvas() {
 }
 
 function onCropScale(val) {
-  const newScale = val / 100;
-  // Scale around center of visible area
+  // val 是相对百分比（100 = 刚好盖满），不再是绝对缩放
+  const newScale = cropBaseScale * (val / 100);
   const cx = document.getElementById('cropCanvas').width / 2;
   const cy = document.getElementById('cropCanvas').height / 2;
   const ratio = newScale / cropScale;

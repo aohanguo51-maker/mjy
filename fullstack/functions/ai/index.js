@@ -7,6 +7,7 @@
  *   vision  { imageBase64, kind }         → 病历/照片识别（视觉模型）
  *   image   { prompt, size }              → 文生图（纪念插画）
  *   tts     { text, voice }               → 语音合成（念给它听）
+ *   asr     { audioBase64 }               → 语音识别（说话转文字）
  *   v2v_submit { imageBase64, prompt }    → 提交图生视频任务，返回 requestId
  *   v2v_status { requestId }              → 查图生视频进度/结果
  *
@@ -32,6 +33,7 @@ const TEXT_MODEL = process.env.SF_TEXT_MODEL || 'deepseek-ai/DeepSeek-V3';
 const VISION_MODEL = process.env.SF_VISION_MODEL || 'Qwen/Qwen3-VL-32B-Instruct';
 const IMAGE_MODEL = process.env.SF_IMAGE_MODEL || 'Kwai-Kolors/Kolors';
 const TTS_MODEL = process.env.SF_TTS_MODEL || 'FunAudioLLM/CosyVoice2-0.5B';
+const ASR_MODEL = process.env.SF_ASR_MODEL || 'FunAudioLLM/SenseVoiceSmall';
 const I2V_MODEL = process.env.SF_I2V_MODEL || 'Wan-AI/Wan2.2-I2V-A14B';
 const API_BASE = 'https://api.siliconflow.cn/v1';
 const ENDPOINT = 'https://api.siliconflow.cn/v1/chat/completions';
@@ -295,6 +297,50 @@ exports.main = async (event, context) => {
     } catch (err) {
       console.error('[ai/tts]', err);
       return { code: 0, data: { degraded: true, msg: '语音合成失败，请稍后再试' } };
+    }
+  }
+
+  // ── asr：语音识别（按住说话 → 文字）──
+  if (action === 'asr') {
+    if (!API_KEY) return { code: 0, data: { degraded: true, msg: '语音识别未配置' } };
+    const raw = String(event.audioBase64 || '');
+    if (!raw) return { code: 400, msg: '缺少音频' };
+    if (raw.length > 12 * 1024 * 1024) return { code: 400, msg: '录音太长，请控制在 1 分钟内' };
+    try {
+      const m = raw.match(/^data:(audio\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
+      const mimeType = m ? m[1] : 'audio/webm';
+      const b64 = m ? m[2] : raw;
+      const buf = Buffer.from(b64, 'base64');
+      if (!buf.length) throw new Error('音频为空');
+      const ext = mimeType.includes('mp3') || mimeType.includes('mpeg') ? 'mp3'
+                : mimeType.includes('wav') ? 'wav'
+                : mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a' : 'webm';
+      // 手工拼 multipart：Node 自带的 FormData 会走 chunked 传输，硅基流动会回 503
+      const boundary = '----pawmemory' + Date.now().toString(16) + Math.random().toString(16).slice(2);
+      const head = Buffer.from(
+        '--' + boundary + '\r\n' +
+        'Content-Disposition: form-data; name="model"\r\n\r\n' + ASR_MODEL + '\r\n' +
+        '--' + boundary + '\r\n' +
+        'Content-Disposition: form-data; name="file"; filename="audio.' + ext + '"\r\n' +
+        'Content-Type: ' + mimeType + '\r\n\r\n'
+      );
+      const tail = Buffer.from('\r\n--' + boundary + '--\r\n');
+      const payload = Buffer.concat([head, buf, tail]);
+      const res = await fetch(API_BASE + '/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + API_KEY,
+          'Content-Type': 'multipart/form-data; boundary=' + boundary,
+          'Content-Length': String(payload.length),
+        },
+        body: payload,
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + (await res.text()).slice(0, 200));
+      const d = await res.json();
+      return { code: 0, data: { degraded: false, model: ASR_MODEL, text: (d && d.text) || '' } };
+    } catch (err) {
+      console.error('[ai/asr]', err);
+      return { code: 0, data: { degraded: true, text: '', msg: '语音识别失败，请重试' } };
     }
   }
 
