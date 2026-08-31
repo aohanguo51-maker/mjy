@@ -1,13 +1,15 @@
 'use strict';
 /**
- * 云函数：ai —— 真实大模型能力层（DeepSeek）
+ * 云函数：ai —— 真实大模型能力层（硅基流动 SiliconFlow，OpenAI 兼容协议）
  *
  * actions:
- *   vet  { pet, symptom, desc }  → 养宠问答建议
+ *   vet     { pet, symptom, desc }        → 养宠问答建议（文本模型）
+ *   vision  { imageBase64, kind }         → 病历/照片识别（视觉模型）
  *
  * 环境变量（CloudBase 控制台 → 云函数 → ai → 环境变量）：
- *   DEEPSEEK_API_KEY   必填，DeepSeek 开放平台申请
- *   DEEPSEEK_MODEL     选填，默认 deepseek-chat
+ *   SILICONFLOW_API_KEY   必填，硅基流动 cloud.siliconflow.cn 申请
+ *   SF_TEXT_MODEL         选填，默认 deepseek-ai/DeepSeek-V3
+ *   SF_VISION_MODEL       选填，默认 Qwen/Qwen2.5-VL-72B-Instruct
  *
  * 安全设计：
  *   1. key 只存在云端环境变量，绝不下发前端
@@ -17,9 +19,11 @@
 
 const crypto = require('crypto');
 
-const API_KEY = process.env.DEEPSEEK_API_KEY || '';
-const MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
-const ENDPOINT = 'https://api.deepseek.com/chat/completions';
+// 兼容旧变量名，避免换平台后忘改导致静默失效
+const API_KEY = process.env.SILICONFLOW_API_KEY || process.env.DEEPSEEK_API_KEY || '';
+const TEXT_MODEL = process.env.SF_TEXT_MODEL || 'deepseek-ai/DeepSeek-V3';
+const VISION_MODEL = process.env.SF_VISION_MODEL || 'Qwen/Qwen3-VL-32B-Instruct';
+const ENDPOINT = 'https://api.siliconflow.cn/v1/chat/completions';
 
 // ── 会话校验（与其它函数一致的 HMAC 方案）──
 const TOKEN_SECRET = process.env.TOKEN_SECRET || 'pawmemory-default-secret-change-me';
@@ -82,7 +86,7 @@ function fallbackAdvice(symptom) {
   };
 }
 
-async function callDeepSeek(messages) {
+async function callModel(messages, model, maxTokens) {
   const res = await fetch(ENDPOINT, {
     method: 'POST',
     headers: {
@@ -90,21 +94,21 @@ async function callDeepSeek(messages) {
       'Authorization': 'Bearer ' + API_KEY,
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: model || TEXT_MODEL,
       messages,
       temperature: 0.3,       // 医疗相关，降低随机性
-      max_tokens: 700,
+      max_tokens: maxTokens || 700,
       stream: false,
     }),
   });
   if (!res.ok) {
     const t = await res.text().catch(() => '');
-    throw new Error('DeepSeek HTTP ' + res.status + ' ' + t.slice(0, 200));
+    throw new Error('SiliconFlow HTTP ' + res.status + ' ' + t.slice(0, 200));
   }
   const data = await res.json();
   const content = data && data.choices && data.choices[0] &&
                   data.choices[0].message && data.choices[0].message.content;
-  if (!content) throw new Error('DeepSeek 返回内容为空');
+  if (!content) throw new Error('模型返回内容为空');
   return content;
 }
 
@@ -151,7 +155,7 @@ exports.main = async (event, context) => {
 
     // ② 没配 key 时明确降级，不假装有 AI
     if (!API_KEY) {
-      console.warn('[ai/vet] DEEPSEEK_API_KEY 未配置，返回降级建议');
+      console.warn('[ai/vet] SILICONFLOW_API_KEY 未配置，返回降级建议');
       return { code: 0, data: fallbackAdvice(symptom) };
     }
 
@@ -173,16 +177,16 @@ exports.main = async (event, context) => {
       `请按要求给出判断和建议。`;
 
     try {
-      const content = await callDeepSeek([
+      const content = await callModel([
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userMsg },
-      ]);
+      ], TEXT_MODEL, 700);
       return {
         code: 0,
         data: {
           urgent: false,
           degraded: false,
-          model: MODEL,
+          model: TEXT_MODEL,
           content,
           disclaimer: '以上内容由 AI 生成，仅供参考，不能替代执业兽医的当面诊断。',
         },
@@ -190,6 +194,44 @@ exports.main = async (event, context) => {
     } catch (err) {
       console.error('[ai/vet] 模型调用失败', err);
       return { code: 0, data: fallbackAdvice(symptom) };
+    }
+  }
+
+  // ── vision：病历/化验单识别（视觉模型）──
+  // 只做「转成结构化文字」，不做诊断结论，避免识别错数字导致误判
+  if (action === 'vision') {
+    if (!API_KEY) return { code: 0, data: { degraded: true, text: '', msg: '识别服务未配置，请手动填写' } };
+    const img = String(event.imageBase64 || '');
+    if (!img) return { code: 400, msg: '缺少图片' };
+    if (img.length > 8 * 1024 * 1024) return { code: 400, msg: '图片太大，请压缩后再试' };
+    const dataUrl = img.startsWith('data:') ? img : ('data:image/jpeg;base64,' + img);
+
+    const prompt =
+      '这是一张宠物的病历/化验单/处方照片。请只做「把图片上的文字转成结构化信息」这一件事，不要做任何诊断或治疗建议。\n' +
+      '按以下格式输出，识别不到的项写「未识别」：\n' +
+      '就诊日期：\n医院名称：\n宠物名字：\n诊断结论：\n用药/处置：\n下次复诊：\n其它关键数值：\n\n' +
+      '重要：数字（剂量、体重、化验值）必须逐字照抄，看不清就写「看不清」，绝对不要猜测或推断数字。';
+
+    try {
+      const content = await callModel([{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: dataUrl } },
+          { type: 'text', text: prompt },
+        ],
+      }], VISION_MODEL, 800);
+      return {
+        code: 0,
+        data: {
+          degraded: false,
+          model: VISION_MODEL,
+          text: content,
+          notice: '识别结果可能有误，请核对后再保存，尤其是剂量和化验数值。',
+        },
+      };
+    } catch (err) {
+      console.error('[ai/vision] 识别失败', err);
+      return { code: 0, data: { degraded: true, text: '', msg: '识别失败，请手动填写' } };
     }
   }
 
