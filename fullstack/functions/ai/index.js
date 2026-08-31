@@ -4,6 +4,7 @@
  *
  * actions:
  *   vet     { pet, symptom, desc }        → 养宠问答建议（文本模型）
+ *   chat    { pet, history }              → 宠物人设陪伴聊天
  *   vision  { imageBase64, kind }         → 病历/照片识别（视觉模型）
  *   image   { prompt, size }              → 文生图（纪念插画）
  *   tts     { text, voice }               → 语音合成（念给它听）
@@ -207,6 +208,54 @@ exports.main = async (event, context) => {
     } catch (err) {
       console.error('[ai/vet] 模型调用失败', err);
       return { code: 0, data: fallbackAdvice(symptom) };
+    }
+  }
+
+  // ── chat：宠物人设陪伴聊天 ──
+  if (action === 'chat') {
+    const pet = event.pet || {};
+    const history = Array.isArray(event.history) ? event.history.slice(-12) : [];
+    if (!history.length) return { code: 400, msg: '没有聊天内容' };
+
+    // 聊天里也可能冒出急症（主人随口说“它吐血了”），不能让宠物人设卖萌带过
+    const lastUser = [...history].reverse().find(m => m && m.role === 'user');
+    const emergency = checkEmergency((lastUser && lastUser.content) || '');
+    if (emergency) {
+      return { code: 0, data: { urgent: true, emergencyType: emergency,
+        content: `（先停一下）你说的情况涉及「${emergency}」，这是急症。请立刻带它去最近的宠物医院，` +
+                  `路上保持安静保暖，不要喂食喂水。别等观察，也别先跟我聊了。` } };
+    }
+
+    if (!API_KEY) {
+      return { code: 0, data: { degraded: true, content: '' } };
+    }
+
+    const petName = pet.name || '我';
+    const sys = `你现在扮演一只名叫「${petName}」的宠物，正在跟自己的主人聊天。
+
+你的资料：${[pet.species && ('品种'+pet.species), pet.age && ('年龄'+pet.age),
+  pet.gender && ('性别'+pet.gender), pet.mood && ('今天心情'+pet.mood)].filter(Boolean).join('，') || '一只很粘人的小动物'}
+
+说话要求：
+1. 用第一人称，就是你本人（本猫/本狗）在说话，不要自称 AI，不要说“作为一只猫”这种旁白。
+2. 短！一两句就好，像微信聊天，不要成段论述。最多 50 字。
+3. 带点动物的真实行为细节（踩奶、踭腿、蹲窗台、听到钥匙声就往门口跑）。
+4. 语气粘人、口语化，可以擒娇、可以傲娇，偶尔用一个 emoji，不要堆表情。
+5. 主人难过时先陪着，不说教条。
+6. 如果主人问养宠专业问题（否吃什么、病了怎么办），用宠物口吻提醒他去“问医生”那个标签问，别自己乱给医疗建议。
+7. 不要编造你不可能知道的事（比如主人今天在公司发生了什么）。`;
+
+    const messages = [{ role: 'system', content: sys }].concat(
+      history.filter(m => m && (m.role === 'user' || m.role === 'assistant') && m.content)
+             .map(m => ({ role: m.role, content: String(m.content).slice(0, 500) }))
+    );
+
+    try {
+      const content = await callModel(messages, TEXT_MODEL, 200);
+      return { code: 0, data: { degraded: false, model: TEXT_MODEL, content: content.trim() } };
+    } catch (err) {
+      console.error('[ai/chat]', err);
+      return { code: 0, data: { degraded: true, content: '' } };
     }
   }
 

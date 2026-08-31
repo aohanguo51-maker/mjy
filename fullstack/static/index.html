@@ -288,6 +288,12 @@ body::before{display:none}
 .pic-info p{font-size:11px;color:var(--muted)}
 .pic-badge{margin-top:4px;display:inline-flex;align-items:center;gap:4px;background:var(--red-l);border-radius:var(--rf);padding:2px 8px;font-size:10px;font-weight:700;color:var(--red)}
 
+/* 问AI 页模式切换（问医生 / 陪它聊天） */
+.ai-mode-bar{display:flex;gap:8px;padding:8px 16px 10px;flex-shrink:0;background:var(--bg)}
+.ai-mode-btn{flex:1;height:38px;border-radius:var(--rf);display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:13px;font-weight:700;color:var(--muted);background:var(--bg2);cursor:pointer;transition:all .18s var(--ease-smooth)}
+.ai-mode-btn.on{background:var(--red);color:#fff;box-shadow:0 4px 14px rgba(255,36,66,.28)}
+.ai-mode-btn:active{transform:scale(.97)}
 /* AI养宠问答卡片（前置至顶部，紧凑布局） */
 .ai-ask-card{background:#fff;border-radius:var(--r16);padding:14px;box-shadow:0 2px 12px rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.1)}
 .ai-ask-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -833,23 +839,27 @@ body::before{display:none}
   </div><!-- /sc-home -->
 
   <!-- ══ PET (陪伴 + 记录 合并) ══ -->
-  <div class="screen" id="sc-pet">
-    <div class="pet-topbar">
-      <div class="pet-back" onclick="switchScreen('sc-home',0)">‹</div>
-      <div class="pet-ava-wrap">
-        <div class="pet-ava" id="petTopAva">🐱</div>
-        <div class="pet-online"></div>
-      </div>
-      <div class="pet-info">
-        <div class="pet-name" id="petTopName">小橘</div>
-        <div class="pet-sub">在线陪伴中</div>
-      </div>
-      <div style="display:flex;gap:4px">
-        <button style="width:32px;height:32px;border-radius:var(--rf);border:none;background:var(--cream2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--muted)" onclick="openMoreActionsModal()">⋯</button>
-      </div>
+  <!-- sc-pet 已并入问AI页（chat 模式），不再单独成屏 -->
+
+
+  <!-- ══ HEALTH ══ -->
+  <div class="screen" id="sc-health">
+    <div class="health-top">
+      <h2>🤖 问 AI</h2>
+      <p id="healthTopSub">宠物养护、症状、病历，都可以问</p>
     </div>
-    <!-- 对话（文字聊天 + 声音翻译 合并为同一条时间线，不再分tab） -->
-    <div id="pt-chat" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <!-- 宠物切换器：养宠人可能不止一个宠物，健康档案/记忆银行都需要可切换 -->
+    <div class="pet-switch-bar" id="healthPetSwitch"></div>
+
+    <!-- 模式切换：问医生（专业建议） / 陪它聊天（情感陪伴）—— 两类都是跟 AI 对话，收在一个页面里 -->
+    <div class="ai-mode-bar">
+      <div class="ai-mode-btn on" id="aiModeVetBtn" onclick="setAiMode('vet')">🩺 问医生</div>
+      <div class="ai-mode-btn" id="aiModeChatBtn" onclick="setAiMode('chat')">💬 陪它聊天</div>
+    </div>
+
+    <!-- 模式二：陪它聊天（原独立的陪伴页，已并入这里） -->
+    <div id="aiModeChat" style="display:none;flex:1;overflow:hidden;flex-direction:column">
+<div id="pt-chat" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
       <div class="upload-bar">
         <label class="upbtn" for="photoFileInput" style="position:relative;overflow:hidden;cursor:pointer">📷 照片
           <input type="file" id="photoFileInput" accept="image/*" onchange="handlePhotoUpload(event)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer"/>
@@ -907,18 +917,10 @@ body::before{display:none}
         <input class="chat-inp" id="chatInput" placeholder="给小橘发消息…" onkeydown="if(event.key==='Enter')sendChat()"/>
         <button class="inp-send" onclick="sendChat()">➤</button>
       </div>
-    </div>
-  </div><!-- /sc-pet -->
+        </div>
+    </div><!-- /aiModeChat -->
 
-  <!-- ══ HEALTH ══ -->
-  <div class="screen" id="sc-health">
-    <div class="health-top">
-      <h2>🤖 问 AI</h2>
-      <p id="healthTopSub">宠物养护、症状、病历，都可以问</p>
-    </div>
-    <!-- 宠物切换器：养宠人可能不止一个宠物，健康档案/记忆银行都需要可切换 -->
-    <div class="pet-switch-bar" id="healthPetSwitch"></div>
-    <div class="health-scroll">
+    <div class="health-scroll" id="aiModeVet">
 
       <!-- pet info -->
       <div class="pet-info-card" id="healthPetInfoCard"></div>
@@ -3593,7 +3595,9 @@ function confirmCustomVoice(){
 // 从记忆银行直接跳到陪伴页录音（原来只弹提示不带路，属于死按钮）
 function goRecordPetVoice(){
   currentPetId = currentBankPetId || currentPetId;
-  switchScreen('sc-pet', 2);
+  currentHealthPetId = currentPetId;
+  switchScreen('sc-health', 3);
+  setAiMode('chat');
   setTimeout(function(){
     var panel = document.getElementById('recordPanel');
     if (panel && panel.style.display !== 'block' && typeof toggleRecordPanel === 'function') {
@@ -3661,11 +3665,11 @@ function switchScreen(id,navIdx){
   document.querySelectorAll('.bn-item').forEach((b,i)=>b.classList.toggle('on',i===navIdx));
   curNav=navIdx;
   // hide bnav inside pet screen for immersion, show for health/timeline/profile
-  document.getElementById('mainBnav').style.display=(id==='sc-pet')?'none':'flex';
+  document.getElementById('mainBnav').style.display='flex';
   if(id==='sc-health'){renderHealthPage();}
   if(id==='sc-bank'){renderBankPage();}
   if(id==='sc-timeline'){renderTimelinePage();}
-  if(id==='sc-pet'){renderPetTopBar();}
+  if(id==='sc-health'){renderPetTopBar();}
   if(id==='sc-album'){renderAlbumPage();}
   if(id==='sc-profile'){renderProfPetCards();renderUserProfileDisplay();syncMemCountEverywhere();}
 }
@@ -3999,21 +4003,74 @@ async function fetchNearbyPOI(keyword, listElId, tagElId){
 // ── CHAT ──
 const REPLIES=['喵～我在呢，你今天怎么样？🐾','嗯嗯，我听到你了，你要多吃点饭哦🍚','感觉你今天有点累，要不要先休息一下？😴','我最喜欢你陪我晒太阳了，什么时候再一起？☀️','你知道吗，我每天都在等你回来，听到开门声就跑过去 🏃'];
 let ri=0;
-function sendChat(){
+// ── 问AI 页模式切换：问医生（专业建议）/ 陪它聊天（情感陪伴）──
+let _aiMode='vet';
+function setAiMode(mode){
+  _aiMode = (mode==='chat') ? 'chat' : 'vet';
+  const vetBtn=document.getElementById('aiModeVetBtn');
+  const chatBtn=document.getElementById('aiModeChatBtn');
+  const vetBox=document.getElementById('aiModeVet');
+  const chatBox=document.getElementById('aiModeChat');
+  if(!vetBtn||!chatBtn||!vetBox||!chatBox) return;
+  const isChat=_aiMode==='chat';
+  vetBtn.classList.toggle('on',!isChat);
+  chatBtn.classList.toggle('on',isChat);
+  vetBox.style.display = isChat ? 'none' : '';
+  chatBox.style.display = isChat ? 'flex' : 'none';
+  const sub=document.getElementById('healthTopSub');
+  const pet=PETS[currentHealthPetId];
+  if(sub&&pet) sub.textContent = isChat
+    ? ('跟'+pet.name+'说说话，它会用自己的语气回你')
+    : (pet.name+'的养护、症状、病历，都可以问');
+  if(isChat){
+    if(typeof renderPetTopBar==='function') renderPetTopBar();
+    const m=document.getElementById('chatMsgs');
+    if(m) setTimeout(()=>{ m.scrollTop=m.scrollHeight; },60);
+  }
+}
+
+// 聊天：接真实大模型，用宠物人设回复（之前是写死的 REPLIES 数组循环）
+let _chatHistory=[];
+async function sendChat(){
   const inp=document.getElementById('chatInput');
-  const txt=(inp.value||'').trim();if(!txt)return;
+  const txt=(inp.value||'').trim(); if(!txt) return;
   const msgs=document.getElementById('chatMsgs');
   const typing=document.getElementById('typingMsg');
-  const urow=document.createElement('div');urow.className='msg me';
-  urow.innerHTML=`<div class="msg-me-ava">我</div><div class="bubble">${txt}</div>`;
-  msgs.insertBefore(urow,typing);inp.value='';msgs.scrollTop=msgs.scrollHeight;
-  setTimeout(()=>{
-    typing.style.display='none';
-    const arow=document.createElement('div');arow.className='msg';
-    arow.innerHTML=`<div class="msg-ava">🐱</div><div class="bubble">${REPLIES[ri++%REPLIES.length]}</div>`;
-    msgs.insertBefore(arow,typing);typing.style.display='';msgs.scrollTop=msgs.scrollHeight;
-    if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(REPLIES[(ri-1)%REPLIES.length]);u.lang='zh-CN';u.rate=.95;window.speechSynthesis.speak(u);}
-  },1400);
+  const pet=PETS[currentHealthPetId]||PETS[currentPetId];
+
+  const urow=document.createElement('div'); urow.className='msg me';
+  urow.innerHTML='<div class="msg-me-ava">我</div><div class="bubble"></div>';
+  urow.querySelector('.bubble').textContent=txt;
+  msgs.insertBefore(urow,typing);
+  inp.value=''; typing.style.display=''; msgs.scrollTop=msgs.scrollHeight;
+
+  _chatHistory.push({role:'user',content:txt});
+  if(_chatHistory.length>12) _chatHistory=_chatHistory.slice(-12);
+
+  let reply='';
+  try{
+    const d=await callFn('ai',{ action:'chat', history:_chatHistory,
+      pet:{ name:pet&&pet.name, species:pet&&pet.species, age:pet&&pet.age,
+            gender:pet&&pet.gender, neutered:pet&&pet.neutered,
+            mood:(pet&&pet.daily&&pet.daily.mood)||'' } });
+    reply=(d&&d.content)||'';
+  }catch(e){
+    console.warn('[sendChat]',e);
+  }
+  if(!reply){
+    reply=REPLIES[ri++%REPLIES.length];   // 模型不可用时的兵底
+  }else{
+    _chatHistory.push({role:'assistant',content:reply});
+  }
+
+  typing.style.display='none';
+  const arow=document.createElement('div'); arow.className='msg';
+  const emoji=(pet&&pet.emoji)||'🐱';
+  arow.innerHTML='<div class="msg-ava"></div><div class="bubble"></div>';
+  arow.querySelector('.msg-ava').textContent=emoji;
+  arow.querySelector('.bubble').textContent=reply;
+  msgs.insertBefore(arow,typing);
+  typing.style.display=''; msgs.scrollTop=msgs.scrollHeight;
 }
 
 // ── MIC：按一下开始录音，再按停止并转文字（真实 ASR，不再依赖浏览器语音识别）──
