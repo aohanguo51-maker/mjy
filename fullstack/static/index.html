@@ -640,7 +640,7 @@ body::before{display:none}
         <div class="tb-logo">PawMemory</div>
         <div class="tb-search" onclick="openSearchModal()"><span>🔍</span><span style="color:var(--muted);font-size:12px">搜索宠物记忆、宠友…</span></div>
         <div class="tb-icon" onclick="openMsgCenter()">💬</div>
-        <div class="ai-cat-dance" onclick="openAiVideoModal()" title="AI 生成宠物视频"><img src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=120&h=120&fit=crop&crop=faces&q=80" alt="AI 生成宠物视频"/></div>
+        <div class="ai-cat-dance" onclick="openAiVideoModal()" title="生成宠物影集"><img src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=120&h=120&fit=crop&crop=faces&q=80" alt="生成宠物影集"/></div>
       </div>
       <div class="tb-tabs">
         <div class="tb-tab" onclick="setHomeTab(this,'tab-following')">关注</div>
@@ -1125,7 +1125,7 @@ body::before{display:none}
       <div style="height:8px"></div>
       <div class="prof-sec">
         <div class="prof-row" onclick="openAccountProfile('me')" style="cursor:pointer"><div class="pr-em">📝</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">我的动态</div><div style="font-size:11px;color:var(--muted);margin-top:1px">查看我发布的所有宠物内容</div></div><div class="pr-arrow">›</div></div>
-        <div class="prof-row" onclick="switchScreen('sc-billing',4)" style="cursor:pointer"><div class="pr-em">💰</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">消费记账</div><div style="font-size:11px;color:var(--muted);margin-top:1px">粗食、玩具、医疗…多宠物分摊一目了然</div></div><div class="pr-arrow">›</div></div>
+        <div class="prof-row" onclick="switchScreen('sc-billing',4)" style="cursor:pointer"><div class="pr-em">💰</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">消费记账</div><div style="font-size:11px;color:var(--muted);margin-top:1px">粮食、玩具、医疗…多宠物分摊一目了然</div></div><div id="profBillSum" style="font-size:12px;font-weight:700;color:var(--ink);margin-right:6px"></div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="importDataToBank()" style="cursor:pointer"><div class="pr-em">📲</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">导入本地照片</div><div style="font-size:11px;color:var(--muted);margin-top:1px">从手机相册选照片 · 直接存入记忆银行</div></div><div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--rf);background:var(--red-l);color:var(--red);margin-right:4px">NEW</div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="openReminderModal()" style="cursor:pointer"><div class="pr-em">🔔</div><div class="pr-lbl">提醒设置</div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="openPrivacyModal()" style="cursor:pointer"><div class="pr-em">🔒</div><div class="pr-lbl">隐私与安全</div><div class="pr-arrow">›</div></div>
@@ -1355,8 +1355,8 @@ body::before{display:none}
   <div class="modal-bg" id="aiVideoModal" onclick="if(event.target===this)closeAiVideoModal()">
     <div class="modal-sheet" style="max-height:94vh;overflow-y:auto">
       <div class="modal-handle"></div>
-      <div class="modal-title">🎬 AI 生成宠物视频</div>
-      <div class="modal-sub">效果演示——后续接入真实图生视频能力</div>
+      <div class="modal-title">🎬 生成宠物影集</div>
+      <div class="modal-sub">选几张照片，合成一段带运镜和转场的小短片</div>
       <!-- 生成表单 -->
       <div id="aiVidForm" style="padding:0 16px 8px">
         <!-- 选择宠物 -->
@@ -1392,10 +1392,11 @@ body::before{display:none}
       </div>
       <!-- 生成结果 -->
       <div id="aiVidResult" class="aiv-video-result" style="display:none">
-        <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px">🎉 视频已生成！</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px">🎉 影集已生成！</div>
         <video id="aiVidVideoEl" controls playsinline style="width:100%;border-radius:var(--r12);background:#000;display:block;max-height:260px"></video>
-        <div style="font-size:10px;color:var(--muted2);margin-top:6px;text-align:center">以上为示例效果，实际效果以真实接入后为准</div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:6px;text-align:center">用你选的真实照片在本机合成，未上传任何第三方</div>
         <button class="modal-cta" style="margin-top:12px" onclick="saveAiVideo()">💾 保存到记忆银行</button>
+        <button onclick="downloadAiVideo()" style="width:100%;height:42px;border-radius:var(--r12);border:1.5px solid var(--line2);background:#fff;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;margin-top:8px">⬇️ 下载到本地</button>
         <button onclick="closeAiVideoModal()" style="width:100%;height:42px;border-radius:var(--r12);border:1.5px solid var(--line2);background:#fff;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;margin-top:8px">关闭</button>
       </div>
     </div>
@@ -1736,7 +1737,7 @@ body::before{display:none}
     <div class="modal-handle"></div>
     <div style="text-align:center;padding:0 16px">
       <div class="modal-title">🕊️ 为 <span id="farewellPetName3">小橘</span> 做一份纪念</div>
-      <div class="modal-sub">挑几张最喜欢的照片，说几句想说的话，AI 会帮你做成一段可以反复回看的纪念视频</div>
+      <div class="modal-sub">挑几张最喜欢的照片，说几句想说的话，帮你做成一段可以反复回看的纪念影集</div>
     </div>
     <div style="padding:0 16px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">📷 选择照片（已从记忆银行为你推荐）</div>
@@ -1754,18 +1755,20 @@ body::before{display:none}
       <textarea id="farewellEulogy" class="ai-ask-ta" style="margin-bottom:14px" placeholder="比如：谢谢你陪了我们三年，那些晒太阳的午后我都记得…"></textarea>
 
       <div id="farewellGenSection">
-        <button class="modal-cta" style="background:#8b5cf6;box-shadow:0 6px 20px rgba(139,92,246,.35);position:static;margin:0 0 8px" onclick="generateFarewellVideo()">✨ AI 生成纪念视频</button>
-        <div style="font-size:10px;color:var(--muted2);text-align:center;margin-bottom:10px">当前为效果演示（示例素材），后续会接入真实的图生视频能力，让每一份纪念都独一无二</div>
+        <button class="modal-cta" style="background:#8b5cf6;box-shadow:0 6px 20px rgba(139,92,246,.35);position:static;margin:0 0 8px" onclick="generateFarewellVideo()">✨ 生成纪念影集</button>
+        <div style="font-size:10px;color:var(--muted2);text-align:center;margin-bottom:10px">用它的真实照片在你手机上合成，不上传、不经过任何第三方</div>
       </div>
       <div id="farewellGenProgress" style="display:none;text-align:center;padding:20px 0">
         <div style="font-size:32px;margin-bottom:10px">🕊️</div>
-        <div style="font-size:13px;color:var(--ink);font-weight:600;margin-bottom:6px" id="farewellGenText">AI 正在根据照片和文字生成纪念视频…</div>
+        <div style="font-size:13px;color:var(--ink);font-weight:600;margin-bottom:6px" id="farewellGenText">正在读取照片…</div>
         <div style="width:100%;height:6px;background:var(--bg3);border-radius:99px;overflow:hidden;margin-top:12px"><div id="farewellGenBar" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);border-radius:99px;transition:width .3s"></div></div>
       </div>
       <div id="farewellVideoResult" style="display:none">
-        <video id="farewellVideoEl" controls style="width:100%;border-radius:var(--r16);display:block;margin-bottom:12px;background:#000"></video>
-        <div style="font-size:12px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:14px">这段视频和它说过的所有话、留下的所有照片，会永久保存在记忆银行里，随时可以回来看看它 🕊️</div>
-        <button class="modal-cta" style="margin-bottom:10px" onclick="saveFarewellVideo()">保存到记忆银行</button>
+        <video id="farewellVideoEl" controls style="width:100%;border-radius:var(--r16);display:block;margin-bottom:8px;background:#000"></video>
+        <div id="farewellVideoInfo" style="font-size:11px;color:var(--muted2);text-align:center;margin-bottom:10px"></div>
+        <div style="font-size:12px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:14px">这段影集和它留下的所有照片，会永久保存在记忆银行里，随时可以回来看看它 🕊️</div>
+        <button class="modal-cta" style="margin-bottom:8px" onclick="saveFarewellVideo()">保存到记忆银行</button>
+        <button class="modal-cta" style="margin-bottom:10px;background:#fff;color:var(--ink);border:1.5px solid var(--line2);box-shadow:none" onclick="downloadFarewellVideo()">⬇️ 下载到本地</button>
       </div>
     </div>
     <div style="height:8px"></div>
@@ -2875,6 +2878,19 @@ function recalcBillTotal(){
   });
   const t=document.getElementById('billMonthTotal');
   if(t) t.textContent='¥ '+total.toFixed(2);
+  syncProfBillSum();
+}
+
+// 个人页「消费记账」右侧直显本月总额
+function syncProfBillSum(){
+  const el=document.getElementById('profBillSum');
+  if(!el) return;
+  let total=0;
+  document.querySelectorAll('#billList .bill-item').forEach(item=>{
+    const a=item.querySelector('.bill-amount');
+    if(a) total+=parseFloat(a.textContent.replace(/[^0-9.]/g,''))||0;
+  });
+  el.textContent = total>0 ? ('本月 ¥'+total.toFixed(0)) : '';
 }
 
 // ── pstat 点击 ──
@@ -3478,39 +3494,57 @@ function selectAiVidStyle(el,style){
   document.querySelectorAll('.aiv-style-btn').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
 }
-function startAiVidGen(){
+// 宠物影集：用用户选的真实照片现场合成（与纪念影集共用引擎）
+// 之前是播 mixkit 素材片冒充 AI 生成，已改掉
+let _aiVidBlob=null;
+
+async function startAiVidGen(){
+  const pet=PETS[_aiVidPetId];
+  const srcs=(_aiVidSelectedPhotos||[]).filter(Boolean).slice(0,8);
+  if(!srcs.length){ showToast('先选几张照片'); return; }
+
   document.getElementById('aiVidForm').style.display='none';
   document.getElementById('aiVidProgress').style.display='block';
   const bar=document.getElementById('aiVidGenBar');
   const text=document.getElementById('aiVidProgressText');
-  const steps=['AI 正在分析照片特征…','正在生成动态帧序列…','正在渲染视频效果…','最后润色中…'];
-  let pct=0,stepIdx=0;
-  const timer=setInterval(()=>{
-    pct+=6;
-    bar.style.width=Math.min(pct,100)+'%';
-    if(pct>25*stepIdx+10&&stepIdx<steps.length-1){stepIdx++;text.textContent=steps[stepIdx];}
-    if(pct>=100){
-      clearInterval(timer);
-      setTimeout(()=>{
-        document.getElementById('aiVidProgress').style.display='none';
-        const pet=PETS[_aiVidPetId];
-        const isDog=pet&&/犬|狗|柯基|金毛|柴犬/.test(pet.species||'');
-        const videoEl=document.getElementById('aiVidVideoEl');
-        videoEl.src=isDog
-          ?'https://assets.mixkit.co/videos/4908/4908-720.mp4'
-          :'https://assets.mixkit.co/videos/1779/1779-720.mp4';
-        videoEl.poster=_aiVidSelectedPhotos[0]||'';
-        document.getElementById('aiVidResult').style.display='block';
-      },400);
-    }
-  },200);
+  bar.style.width='0%'; text.textContent='正在读取照片…';
+
+  const styleNames={cartoon:'可爱卡通',real:'真实动态',retro:'复古胶片',dream:'梦幻'};
+  const res=await _renderPhotoFilm({
+    srcs,
+    title:(pet&&pet.name)||'我家宝贝',
+    subtitle:styleNames[_aiVidStyle]||'',
+    style:_aiVidStyle||'cartoon',
+    onProgress:(p,msg)=>{ bar.style.width=Math.round(p)+'%'; if(msg) text.textContent=msg; },
+  });
+
+  if(!res.ok){
+    document.getElementById('aiVidProgress').style.display='none';
+    document.getElementById('aiVidForm').style.display='block';
+    showToast(res.msg||'合成失败，请重试');
+    return;
+  }
+  _aiVidBlob=res.blob;
+  const videoEl=document.getElementById('aiVidVideoEl');
+  videoEl.src=URL.createObjectURL(res.blob);
+  videoEl.poster=srcs[0]||'';
+  document.getElementById('aiVidProgress').style.display='none';
+  document.getElementById('aiVidResult').style.display='block';
+  showToast('影集已生成 🎬');
+}
+
+function downloadAiVideo(){
+  if(!_aiVidBlob){ showToast('请先生成影集'); return; }
+  const pet=PETS[_aiVidPetId];
+  const ext=(_aiVidBlob.type||'').includes('mp4')?'mp4':'webm';
+  _downloadBlob(_aiVidBlob, ((pet&&pet.name)||'宠物')+'-影集.'+ext);
 }
 function saveAiVideo(){
   const pet=PETS[_aiVidPetId];if(!pet)return;
   const pet_name=pet.name;
   const styleNames={cartoon:'可爱卡通',real:'真实动态',retro:'复古胶片',dream:'梦幻'};
-  pet.timeline.unshift({icon:'🎬',date:'刚刚',title:pet_name+'的AI生成视频',
-    desc:`风格：${styleNames[_aiVidStyle]||''}——AI 根据你的照片生成，会永久保存在记忆银行`});
+  pet.timeline.unshift({icon:'🎬',date:'刚刚',title:pet_name+'的影集',
+    desc:`风格：${styleNames[_aiVidStyle]||''}——用你选的真实照片合成，保存在记忆银行`});
   closeAiVideoModal();
   if(currentBankPetId===_aiVidPetId){renderBankTimeline();}
   saveState();
@@ -3785,6 +3819,12 @@ function submitAddBill(){
   const totalEl=document.getElementById('billMonthTotal');
   const cur=parseFloat(totalEl.textContent.replace(/[^0-9.]/g,''))||0;
   totalEl.textContent='¥ '+(cur+amount).toFixed(2);
+  [...list.querySelectorAll('.bill-item')].forEach((el,i)=>el.setAttribute('onclick','openBillDetail('+i+')'));
+  if(typeof STATIC_BILLS!=='undefined'&&Array.isArray(STATIC_BILLS)){
+    STATIC_BILLS.unshift({icon:billSelectedCat.icon,bg:billSelectedCat.bg,name:name,sub:dateStr+' 刚刚记录',
+      amount:amount.toFixed(2),cat:billSelectedCat.label,pet:pet.name,note:'手动记一笔'});
+  }
+  syncProfBillSum();
   closeAddBill();
   showToast('已为'+pet.name+'记一笔 ¥'+amount.toFixed(2)+' 💰');
 }
@@ -3802,7 +3842,9 @@ function copyHelpWechat(){
 }
 
 // ── 高德地图接入（真实POI，渐进增强：有 key 用真数据，没 key 保留现有示例数据不报错）──
-const AMAP_KEY = 'fc8dbcf035ed9e6809754580988af7e8'; // 高德 Web服务API Key（已配置，正常工作中）
+// 高德 key 已移到云函数 map，前端不再持有（之前硬编码在这里，F12 就能扒走盗刷）
+// 后端未部署时附近页自动降级为示例数据，不报错
+const AMAP_VIA_CLOUD = true;
 let userGeo = null; // {lng, lat}
 const DEFAULT_GEO = { lng: 121.473701, lat: 31.230416 }; // 默认坐标（上海人民广场），未授权定位时地图仍显示真实街景，而不是空白/假图
 let mapZoomLevel = 16;
@@ -3831,17 +3873,21 @@ function renderFriendPins(){
 
 // 渲染高德静态地图真实图片：用高德官方 staticmap 接口直接生成带真实街道/建筑的图片，
 // 商店/医院图钉由高德服务端真实绘制在图上（markers 参数），不再是前端画的假SVG道路网
-function renderAmapStaticMap(){
+async function renderAmapStaticMap(){
   const img=document.getElementById('amapMapImg');
   if(!img)return;
   const g=geo();
-  if(!AMAP_KEY){ img.style.display='none'; return; }
-  let markers = `large,0xEE2233,M:${g.lng},${g.lat}`; // 我的位置（红色M点）
-  shopPOIs.slice(0,4).forEach((p,i)=>{ markers += `|mid,0xF59E0B,${String.fromCharCode(65+i)}:${p.lng},${p.lat}`; });
-  hospitalPOIs.slice(0,4).forEach((p,i)=>{ markers += `|mid,0x10B981,${String.fromCharCode(69+i)}:${p.lng},${p.lat}`; });
-  const url = `https://restapi.amap.com/v3/staticmap?location=${g.lng},${g.lat}&zoom=${mapZoomLevel}&size=750*600&scale=2&markers=${encodeURIComponent(markers)}&key=${AMAP_KEY}`;
-  img.src = url;
-  img.style.display='block';
+  const markers=[{lng:g.lng,lat:g.lat}]
+    .concat(shopPOIs.slice(0,4).map(p=>({lng:p.lng,lat:p.lat})))
+    .concat(hospitalPOIs.slice(0,4).map(p=>({lng:p.lng,lat:p.lat})));
+  try{
+    const d=await callFn('map',{action:'static',lng:g.lng,lat:g.lat,zoom:mapZoomLevel,size:'750*600',markers});
+    if(d&&d.url){ img.src=d.url; img.style.display='block'; }
+    else img.style.display='none';
+  }catch(e){
+    console.log('[附近页] 地图服务不可用，隐藏地图',e);
+    img.style.display='none';
+  }
 }
 function mapZoom(delta){
   mapZoomLevel = Math.max(10, Math.min(19, mapZoomLevel+delta));
@@ -3863,8 +3909,8 @@ function initNearbyReal(){
   const btn=document.getElementById('geoStatusBtn');
   renderAmapStaticMap(); // 先用默认坐标渲染一版真实地图，不等定位结果，避免地图长时间空白
   renderFriendPins();
-  if(!AMAP_KEY){
-    console.log('[附近页] 未配置 AMAP_KEY，当前为示例数据。在 index.html 搜索 AMAP_KEY 变量填入真实key即可接入高德地图真实POI。');
+  if(!AMAP_VIA_CLOUD){
+    console.log('[附近页] 地图代理未启用，当前为示例数据。');
     return;
   }
   if(!navigator.geolocation){
@@ -3906,22 +3952,17 @@ function initNearbyReal(){
 async function fetchNearbyPOI(keyword, listElId, tagElId){
   try{
     const g=geo();
-    const url = `https://restapi.amap.com/v3/place/around?key=${AMAP_KEY}&location=${g.lng},${g.lat}&keywords=${encodeURIComponent(keyword)}&radius=5000&offset=6&page=1&extensions=all`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if(data.status!=='1' || !data.pois || data.pois.length===0){
-      console.log('[附近页] 高德返回无数据或失败，保留示例数据', data);
+    const d = await callFn('map',{action:'around',lng:g.lng,lat:g.lat,keyword,radius:5000});
+    if(!d || d.degraded || !Array.isArray(d.pois) || !d.pois.length){
+      console.log('[附近页] 无真实数据，保留示例数据', d && d.msg);
       return;
     }
     const listEl = document.getElementById(listElId);
     const icon = keyword==='宠物店' ? '🏪' : '🏥';
     const bg = keyword==='宠物店' ? '#fef3c7' : '#d1fae5';
     const actionColor = keyword==='宠物店' ? '#b45309' : '#047857';
-    const actionText = keyword==='宠物店' ? '导航' : '导航';
-    const pois = data.pois.slice(0,6).map(poi=>{
-      const [lng,lat] = (poi.location||'0,0').split(',').map(Number);
-      return { name: poi.name, address: poi.address||'地址未提供', distance: poi.distance, lng, lat };
-    });
+    const actionText = '导航';
+    const pois = d.pois.slice(0,6);
     if(keyword==='宠物店') shopPOIs = pois; else hospitalPOIs = pois;
     listEl.innerHTML = pois.map(poi=>{
       const distKm = poi.distance ? (poi.distance/1000).toFixed(1) : '?';
@@ -6464,39 +6505,234 @@ async function toggleFarewellRecording(){
   }
 }
 // 生成纪念视频：当前为效果演示（示例素材），真实的图生视频能力需要接入第三方API后替换这里的逻辑
-function generateFarewellVideo(){
-  document.getElementById('farewellGenSection').style.display='none';
-  document.getElementById('farewellGenProgress').style.display='block';
+// ══ 真实纪念影集合成（Canvas 逐帧绘制 + MediaRecorder 录制）══
+// 不是播素材片，是用用户自己宠物的真实照片现场合成一段 webm 视频
+let _farewellBlob=null;
+
+function _loadImg(src){
+  return new Promise(resolve=>{
+    const img=new Image();
+    // 跨域图必须带 crossOrigin，否则 canvas 被污染后无法导出视频
+    if(/^https?:\/\//.test(src)) img.crossOrigin='anonymous';
+    img.onload=()=>resolve(img);
+    img.onerror=()=>resolve(null);
+    img.src=src;
+  });
+}
+
+function _drawCover(ctx,img,W,H,scale,offx){
+  const r=Math.max(W/img.width,H/img.height)*scale;
+  const w=img.width*r, h=img.height*r;
+  ctx.drawImage(img,(W-w)/2+offx,(H-h)/2,w,h);
+}
+
+// 圆角居中文字（自动换行）
+function _drawText(ctx,text,W,y,size,color,maxW){
+  if(!text) return y;
+  ctx.font='600 '+size+'px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle=color; ctx.textAlign='center'; ctx.textBaseline='top';
+  const chars=[...text]; let line=''; const lines=[];
+  chars.forEach(c=>{
+    if(c==='\n'){ lines.push(line); line=''; return; }
+    const t=line+c;
+    if(ctx.measureText(t).width>maxW){ lines.push(line); line=c; } else line=t;
+  });
+  if(line) lines.push(line);
+  lines.slice(0,4).forEach((ln,i)=>ctx.fillText(ln,W/2,y+i*(size*1.5)));
+  return y+lines.slice(0,4).length*(size*1.5);
+}
+
+// ══ 共用影集渲染引擎（纪念影集 / 宠物影集都用它）══
+// Canvas 逐帧绘制 + MediaRecorder 录制，全程在用户本机，不上传
+async function _renderPhotoFilm(opts){
+  const { srcs, title, subtitle, eulogy, audioUrl, style, onProgress } = opts||{};
+  const prog=(p,m)=>{ try{ onProgress&&onProgress(p,m); }catch(e){} };
+  if(!srcs||!srcs.length) return {ok:false,msg:'没有可用照片'};
+
+  prog(2,'正在读取照片…');
+  const imgs=[];
+  for(let i=0;i<srcs.length;i++){
+    const im=await _loadImg(srcs[i]);
+    if(im) imgs.push(im);
+    prog(2+ (i+1)/srcs.length*18);
+  }
+  if(!imgs.length) return {ok:false,msg:'照片读取失败，换几张本地照片试试'};
+
+  const W=720,H=720;
+  const cvs=document.createElement('canvas'); cvs.width=W; cvs.height=H;
+  const ctx=cvs.getContext('2d');
+
+  let stream;
+  try{ stream=cvs.captureStream(30); }
+  catch(e){ return {ok:false,msg:'当前浏览器不支持合成，请用最新版 Chrome/Safari'}; }
+
+  let audioEl=null, actx=null;
+  if(audioUrl){
+    try{
+      audioEl=new Audio(audioUrl); audioEl.crossOrigin='anonymous';
+      actx=new (window.AudioContext||window.webkitAudioContext)();
+      const s=actx.createMediaElementSource(audioEl);
+      const dest=actx.createMediaStreamDestination();
+      s.connect(dest);
+      dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+    }catch(e){ console.warn('[film] 音频混入失败，仅合成画面',e); }
+  }
+
+  let mime='';
+  ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4']
+    .forEach(m=>{ if(!mime && window.MediaRecorder && MediaRecorder.isTypeSupported(m)) mime=m; });
+  if(!mime) return {ok:false,msg:'当前浏览器不支持视频录制'};
+
+  const chunks=[];
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2500000});
+  rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+  const done=new Promise(r=>{ rec.onstop=()=>r(new Blob(chunks,{type:mime})); });
+  rec.start();
+  if(audioEl){ try{ await actx.resume(); audioEl.play(); }catch(e){} }
+
+  prog(20,'正在合成画面…');
+  const PER=3.0, FADE=0.6;
+  const openDur=2.0, endDur=eulogy?3.5:2.0;
+  const total=openDur+imgs.length*PER+endDur;
+  const isDream=style==='dream', isRetro=style==='retro';
+  const t0=performance.now();
+
+  await new Promise(resolve=>{
+    function frame(){
+      const t=(performance.now()-t0)/1000;
+      if(t>=total){ resolve(); return; }
+      ctx.filter='none';
+      ctx.fillStyle=isRetro?'#1a1610':'#12100f'; ctx.fillRect(0,0,W,H);
+
+      if(t<openDur){
+        const a=Math.min(1,t/0.8)*Math.min(1,(openDur-t)/0.5);
+        ctx.globalAlpha=Math.max(0,a);
+        ctx.font='700 60px -apple-system,"PingFang SC",sans-serif';
+        ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(eulogy!==undefined?'🕊️':'🎬',W/2,H/2-70);
+        _drawText(ctx,title||'',W,H/2-10,40,'#fff',W-120);
+        if(subtitle) _drawText(ctx,subtitle,W,H/2+60,22,'rgba(255,255,255,.7)',W-120);
+        ctx.globalAlpha=1;
+      } else if(t<openDur+imgs.length*PER){
+        const lt=t-openDur;
+        const idx=Math.min(imgs.length-1,Math.floor(lt/PER));
+        const local=lt-idx*PER, p=local/PER;
+        const zoom=1.06+p*0.10;
+        const pan=(idx%2===0?1:-1)*(p-0.5)*36;
+        ctx.globalAlpha=1;
+        if(isRetro) ctx.filter='sepia(.55) contrast(1.05)';
+        else if(isDream) ctx.filter='saturate(1.25) brightness(1.05) blur(.4px)';
+        _drawCover(ctx,imgs[idx],W,H,zoom,pan);
+        if(local>PER-FADE && idx<imgs.length-1){
+          ctx.globalAlpha=(local-(PER-FADE))/FADE;
+          _drawCover(ctx,imgs[idx+1],W,H,1.06,0);
+          ctx.globalAlpha=1;
+        }
+        ctx.filter='none';
+        if(local<0.35){ ctx.fillStyle='rgba(18,16,15,'+(1-local/0.35)+')'; ctx.fillRect(0,0,W,H); }
+        const g=ctx.createLinearGradient(0,H-190,0,H);
+        g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.62)');
+        ctx.fillStyle=g; ctx.fillRect(0,H-190,W,190);
+        _drawText(ctx,title||'',W,H-120,26,'rgba(255,255,255,.95)',W-100);
+        _drawText(ctx,(idx+1)+' / '+imgs.length,W,H-78,15,'rgba(255,255,255,.55)',W-100);
+      } else {
+        const lt=t-openDur-imgs.length*PER;
+        ctx.globalAlpha=Math.min(1,lt/0.8);
+        let y=eulogy?150:H/2-60;
+        ctx.font='700 34px -apple-system,"PingFang SC",sans-serif';
+        ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='top';
+        ctx.fillText(eulogy!==undefined?'谢谢你来过':(title||''),W/2,y); y+=64;
+        if(eulogy) y=_drawText(ctx,eulogy,W,y,21,'rgba(255,255,255,.86)',W-130)+30;
+        _drawText(ctx, eulogy!==undefined?'—— 永远想你的家人':'毛记忆 PawMemory',
+                  W, Math.min(y,H-120), 18, 'rgba(255,255,255,.6)', W-130);
+        ctx.globalAlpha=1;
+      }
+      prog(20+t/total*72);
+      requestAnimationFrame(frame);
+    }
+    frame();
+  });
+
+  prog(95,'正在封装视频…');
+  rec.stop();
+  if(audioEl){ try{ audioEl.pause(); }catch(e){} }
+  const blob=await done;
+  try{ if(actx) actx.close(); }catch(e){}
+  prog(100);
+  if(!blob||!blob.size) return {ok:false,msg:'合成失败，请重试'};
+  return {ok:true, blob, frames:imgs.length, seconds:total};
+}
+
+async function generateFarewellVideo(){
+  const pet=PETS[farewellPetId];
+  const eulogy=(document.getElementById('farewellEulogy').value||'').trim();
+  const genSec=document.getElementById('farewellGenSection');
+  const prog=document.getElementById('farewellGenProgress');
   const bar=document.getElementById('farewellGenBar');
   const text=document.getElementById('farewellGenText');
-  const steps=['AI 正在根据照片和文字生成纪念视频…','正在为每张照片生成动态效果…','正在配上舒缓的背景音乐…','正在做最后的渲染…'];
-  let pct=0, stepIdx=0;
-  const timer=setInterval(()=>{
-    pct+=8;
-    bar.style.width=Math.min(pct,100)+'%';
-    if(pct>25*stepIdx+10 && stepIdx<steps.length-1){ stepIdx++; text.textContent=steps[stepIdx]; }
-    if(pct>=100){
-      clearInterval(timer);
-      setTimeout(()=>{
-        document.getElementById('farewellGenProgress').style.display='none';
-        const videoEl=document.getElementById('farewellVideoEl');
-        // 示例纪念视频素材（根据宠物种类选取相关对象的素材，真实上线后替换为真实图生视频API的输出）
-        const pet=PETS[farewellPetId];
-        const isCatLike=pet && /猫/.test(pet.species);
-        videoEl.src=isCatLike?'https://assets.mixkit.co/videos/1779/1779-720.mp4':'https://assets.mixkit.co/vhic11s12iou0p0i5oj2cq9wajqc';
-        videoEl.poster=farewellPhotos[0]||'';
-        document.getElementById('farewellVideoResult').style.display='block';
-      },400);
-    }
-  },220);
+
+  const srcs=farewellPhotos.filter(Boolean).slice(0,8);
+  if(!srcs.length){ showToast('至少选一张照片'); return; }
+
+  genSec.style.display='none';
+  prog.style.display='block';
+  bar.style.width='0%';
+
+  const res=await _renderPhotoFilm({
+    srcs,
+    title:(pet&&pet.name)||'它',
+    subtitle:'那些一起的日子',
+    eulogy: eulogy||'',
+    audioUrl: farewellAudioUrl||null,
+    onProgress:(p,m)=>{ bar.style.width=Math.round(p)+'%'; if(m) text.textContent=m; },
+  });
+
+  if(!res.ok){
+    prog.style.display='none'; genSec.style.display='block';
+    showToast(res.msg||'合成失败，请重试'); return;
+  }
+
+  _farewellBlob=res.blob;
+  const v=document.getElementById('farewellVideoEl');
+  v.src=URL.createObjectURL(res.blob); v.poster=srcs[0]||'';
+  prog.style.display='none';
+  document.getElementById('farewellVideoResult').style.display='block';
+  const info=document.getElementById('farewellVideoInfo');
+  if(info) info.textContent='共 '+res.frames+' 张照片 · '+res.seconds.toFixed(0)+' 秒 · '+
+    (res.blob.size/1024/1024).toFixed(1)+'MB'+(farewellAudioUrl?' · 含你的录音':'');
+  showToast('纪念影集已生成 🕊️');
 }
-function saveFarewellVideo(){
+
+function downloadFarewellVideo(){
+  if(!_farewellBlob){ showToast('请先生成影集'); return; }
+  const pet=PETS[farewellPetId];
+  const ext=(_farewellBlob.type||'').includes('mp4')?'mp4':'webm';
+  _downloadBlob(_farewellBlob, ((pet&&pet.name)||'宠物')+'-纪念影集.'+ext);
+  showToast('已开始下载 💾');
+}
+
+async function saveFarewellVideo(){
   const pet=PETS[farewellPetId];if(!pet)return;
-  pet.timeline.unshift({icon:'🕊️',date:'刚刚',title:pet.name+'的纪念视频',desc:'AI 根据它的照片、声音和你写下的话生成，会永久保存在这里'});
+  if(!_farewellBlob){ showToast('请先生成影集'); return; }
+  const btn=event&&event.target; if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
+  let fileID=null;
+  // 后端可用则传云端，不可用就只存本地引用，不阻断用户
+  try{
+    if(typeof uploadToCloud==='function' && getSessionToken && getSessionToken()){
+      const ext=(_farewellBlob.type||'').includes('mp4')?'mp4':'webm';
+      fileID=await uploadToCloud(_farewellBlob,'farewell/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext);
+    }
+  }catch(e){ console.warn('[farewell] 上传云端失败，已保留本地',e); }
+  pet.timeline.unshift({
+    icon:'🕊️', date:'刚刚', title:pet.name+'的纪念影集',
+    desc:'用它的 '+farewellPhotos.filter(Boolean).slice(0,8).length+' 张真实照片合成'+(fileID?'，已存到云端':'，已保存在本机'),
+    videoFileId:fileID||null
+  });
   closeFarewellCreate();
   if(currentBankPetId===farewellPetId){ renderBankTimeline(); }
   saveState();
-  showToast('纪念视频已保存，随时可以回来看看它 🕊️');
+  showToast(fileID?'纪念影集已存入记忆银行 🕊️':'已保存（云端未部署，暂存本机）🕊️');
+  if(btn){ btn.disabled=false; btn.textContent='保存到记忆银行'; }
 }
 
 // ── PARALLAX ──

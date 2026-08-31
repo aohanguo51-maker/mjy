@@ -1,0 +1,9 @@
+{
+  "name": "map",
+  "version": "1.0.0",
+  "description": "PawMemory 高德地图代理（key 收在云端）",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.7.0"
+  }
+}
