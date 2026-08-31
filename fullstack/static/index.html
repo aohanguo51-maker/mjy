@@ -858,20 +858,20 @@ body::before{display:none}
         <button class="upbtn" id="translateBtn" onclick="toggleSoundPicker()">🔊 翻译一下</button>
         <button class="upbtn">📎 文件</button>
       </div>
-      <!-- 真实录音/上传面板（默认收起）—— 这才是真正驱动声音克隆进度的入口 -->
+      <!-- 真实录音/上传面板（默认收起）—— 这才是真正驱动声音留存进度的入口 -->
       <div id="recordPanel" style="display:none;flex-shrink:0;background:linear-gradient(135deg,#fff5f0,#fff8f4);border-bottom:1px solid rgba(255,36,66,.15);padding:14px">
-        <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:5px">🎙️ 存下它真实的声音，这才是声音克隆真正需要的样本</div>
+        <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:5px">🎙️ 存下它真实的声音，以后都能再听到</div>
         <div style="display:flex;gap:8px">
           <button id="recBtnMain" onclick="toggleRealRecording()" style="flex:1;height:44px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span id="recIcon">⏺️</span><span id="recLabel">开始录音</span></button>
           <label for="audioFileInput" style="position:relative;overflow:hidden;flex:1;height:44px;border-radius:var(--rf);background:#fff;border:1.5px solid var(--line2);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">📁 上传音频文件
             <input type="file" id="audioFileInput" accept="audio/*" onchange="handleAudioUpload(event)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer"/>
           </label>
         </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center">每段真实录音/上传都会存入记忆银行并推进声音克隆进度 · 免费</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center">每段录音/上传都会存入记忆银行 · 免费</div>
       </div>
       <!-- 轻量翻译面板（娱乐向，不占用真实录音额度） -->
       <div id="soundPicker" style="display:none;flex-shrink:0;background:#fff8f4;border-bottom:1px solid rgba(255,36,66,.1);padding:12px 14px">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">😺 玩一下：选个叫声看 AI 怎么理解（这个不存入声音克隆，只是娱乐）</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">😺 玩一下：选个叫声看看常见含义（娱乐向，不存入记忆银行）</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
           <div class="mchip on" onclick="setCatSound(this,'喵喵喵')">喵喵喵</div>
           <div class="mchip" onclick="setCatSound(this,'嗷呜~')">嗷呜~</div>
@@ -941,7 +941,7 @@ body::before{display:none}
           <div class="mchip" onclick="setAiSymptom(this,'瘙痒抓挠')">瘙痒抓挠</div>
         </div>
         <textarea id="aiAskDesc" class="ai-ask-ta" placeholder="补充描述一下具体情况（选填）…"></textarea>
-        <button class="ai-ask-btn" onclick="askAiVet()">🩺 获取建议</button>
+        <button class="ai-ask-btn" id="aiAskBtn" onclick="askAiVet()">🩺 获取建议</button>
         <div id="aiAskResult" class="ai-ask-result" style="display:none"></div>
         <div class="ai-ask-disclaimer">仅供参考，不能替代执业兽医诊断，情况严重请及时就医</div>
       </div>
@@ -1119,14 +1119,14 @@ body::before{display:none}
       </div>
       <div class="upgrade-nudge" onclick="openModal()">
         <div class="un-icon">✨</div>
-        <div style="flex:1"><div class="un-title">解锁无限记忆空间</div><div class="un-sub">无限照片 · 声音克隆 · 记忆备份 · 年度会员优先</div></div>
+        <div style="flex:1"><div class="un-title">解锁无限记忆空间</div><div class="un-sub">无限照片 · 声音留存 · 记忆备份 · 年度会员优先</div></div>
         <div class="un-arrow">›</div>
       </div>
       <div style="height:8px"></div>
       <div class="prof-sec">
         <div class="prof-row" onclick="openAccountProfile('me')" style="cursor:pointer"><div class="pr-em">📝</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">我的动态</div><div style="font-size:11px;color:var(--muted);margin-top:1px">查看我发布的所有宠物内容</div></div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="switchScreen('sc-billing',4)" style="cursor:pointer"><div class="pr-em">💰</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">消费记账</div><div style="font-size:11px;color:var(--muted);margin-top:1px">粗食、玩具、医疗…多宠物分摊一目了然</div></div><div class="pr-arrow">›</div></div>
-        <div class="prof-row" onclick="importDataToBank()" style="cursor:pointer"><div class="pr-em">📲</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">一键导入数据</div><div style="font-size:11px;color:var(--muted);margin-top:1px">从微信相册 · 抖音宠物号 · 本地照片 · 自动存入记忆银行</div></div><div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--rf);background:var(--red-l);color:var(--red);margin-right:4px">NEW</div><div class="pr-arrow">›</div></div>
+        <div class="prof-row" onclick="importDataToBank()" style="cursor:pointer"><div class="pr-em">📲</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">导入本地照片</div><div style="font-size:11px;color:var(--muted);margin-top:1px">从手机相册选照片 · 直接存入记忆银行</div></div><div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--rf);background:var(--red-l);color:var(--red);margin-right:4px">NEW</div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="openReminderModal()" style="cursor:pointer"><div class="pr-em">🔔</div><div class="pr-lbl">提醒设置</div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="openPrivacyModal()" style="cursor:pointer"><div class="pr-em">🔒</div><div class="pr-lbl">隐私与安全</div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="openExportModal()" style="cursor:pointer"><div class="pr-em">📦</div><div class="pr-lbl">数据导出</div><div class="pr-arrow">›</div></div>
@@ -1254,7 +1254,7 @@ body::before{display:none}
       </div>
       <div class="clone-card">
         <div class="clone-head">
-          <div class="clone-title">🎙️ 声音克隆进度</div>
+          <div class="clone-title">🎙️ 声音留存进度</div>
           <div class="clone-badge" id="cloneBadge">2 / 8 段</div>
         </div>
         <div class="clone-bar-wrap"><div class="clone-bar-fill" id="cloneBarFill" style="width:25%"></div></div>
@@ -1565,12 +1565,12 @@ body::before{display:none}
     </div>
     <div class="plan-feats" id="planFeatsMonthly">
       <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">无限照片存储（免费版 100张上限）</div></div>
-      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">声音克隆优先处理（免费版排队）</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">声音样本优先处理（免费版排队）</div></div>
       <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">记忆银行云备份（手机丢失不丢数据）</div></div>
       <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">家人协作人数上限 5人 → 无限</div></div>
     </div>
     <div class="plan-feats" id="planFeatsFarewell" style="display:none">
-      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">基于已存声音样本，生成专属声音克隆</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">声音样本无限存储，永久保留</div></div>
       <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">生成告别纪念册（照片+声音+文字合集）</div></div>
       <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">一次性付费，永久保存，不需要续费</div></div>
     </div>
@@ -1869,7 +1869,7 @@ body::before{display:none}
   <div class="modal-sheet" style="max-height:85vh">
     <div class="modal-handle"></div>
     <div class="modal-title">📲 一键导入照片</div>
-    <div class="modal-sub" id="importPhotosSub">正在从微信相册扫描…</div>
+    <div class="modal-sub" id="importPhotosSub">正在读取你选中的照片…</div>
     <div style="padding:0 16px">
       <div id="importScanState" style="text-align:center;padding:30px 0">
         <div style="font-size:36px;margin-bottom:12px">📱</div>
@@ -2847,8 +2847,34 @@ function openBillDetail(idx){
 }
 function closeBillDetail(){document.getElementById('billDetailModal').classList.remove('on');_curBillIdx=null;}
 function deleteBillItem(){
+  const idx=_curBillIdx;
   closeBillDetail();
+  if(idx===null||idx===undefined){ showToast('没有选中记录'); return; }
+  const list=document.getElementById('billList');
+  if(!list){ showToast('删除失败，请刷新重试'); return; }
+  const items=[...list.querySelectorAll('.bill-item')];
+  const node=items[idx];
+  if(!node){ showToast('记录不存在或已删除'); return; }
+  // 真删：移除 DOM + 同步数据源 + 重建索引 + 重算总额
+  node.remove();
+  if(typeof STATIC_BILLS!=='undefined' && Array.isArray(STATIC_BILLS)) STATIC_BILLS.splice(idx,1);
+  [...list.querySelectorAll('.bill-item')].forEach((el,i)=>el.setAttribute('onclick','openBillDetail('+i+')'));
+  recalcBillTotal();
+  try{ saveState&&saveState(); }catch(e){}
   showToast('已删除这笔记录 🗑️');
+}
+
+// 按当前可见的账单重算本月总额（删除/新增/筛选后都调这个）
+function recalcBillTotal(){
+  let total=0;
+  document.querySelectorAll('#billList .bill-item').forEach(item=>{
+    if(item.style.display==='none') return;
+    const el=item.querySelector('.bill-amount');
+    if(!el) return;
+    total+=parseFloat(el.textContent.replace(/[^0-9.]/g,''))||0;
+  });
+  const t=document.getElementById('billMonthTotal');
+  if(t) t.textContent='¥ '+total.toFixed(2);
 }
 
 // ── pstat 点击 ──
@@ -2875,13 +2901,50 @@ function moreActionShare(){
     navigator.clipboard.writeText(link).then(()=>showToast('宠物档案链接已复制 🔗')).catch(()=>showToast('分享链接：'+link));
   } else { showToast('分享链接：'+link); }
 }
+// 举报 / 反馈：真实记录到本地队列，后端可用时自动上报（不再是只弹 toast）
+const FEEDBACK_KEY='pawmemory_feedback_queue';
+function _pushFeedback(rec){
+  let q=[];
+  try{ q=JSON.parse(localStorage.getItem(FEEDBACK_KEY)||'[]'); }catch(e){ q=[]; }
+  q.push(rec);
+  try{ localStorage.setItem(FEEDBACK_KEY, JSON.stringify(q.slice(-200))); }catch(e){}
+  // 后端已部署则尝试上报，失败不影响用户（留在本地队列里）
+  try{
+    if(typeof callFn==='function' && getSessionToken && getSessionToken()){
+      callFn('interact',{action:'feedback',payload:rec}).then(()=>{
+        try{
+          const cur=JSON.parse(localStorage.getItem(FEEDBACK_KEY)||'[]');
+          localStorage.setItem(FEEDBACK_KEY, JSON.stringify(cur.filter(x=>x.id!==rec.id)));
+        }catch(e){}
+      }).catch(()=>{});
+    }
+  }catch(e){}
+  return q.length;
+}
+function _newFeedbackId(){ return Date.now()+'_'+Math.random().toString(36).slice(2,8); }
+
 function moreActionReport(){
   closeMoreActionsModal();
+  const reason=prompt('请简要说明举报原因（违法违规/不实信息/侵权等）：');
+  if(reason===null) return;                 // 用户取消
+  const txt=(reason||'').trim();
+  if(!txt){ showToast('请填写举报原因'); return; }
+  const rec={ id:_newFeedbackId(), type:'report', content:txt.slice(0,500),
+              target:(typeof curDetailPostId!=='undefined'?curDetailPostId:null),
+              at:new Date().toISOString() };
+  _pushFeedback(rec);
   showToast('举报已提交，我们会尽快处理 🛡️');
 }
 function moreActionFeedback(){
   closeMoreActionsModal();
-  showToast('感谢反馈！你的意见会让毛记忆变得更好 💛');
+  const msg=prompt('说说你遇到的问题或建议：');
+  if(msg===null) return;
+  const txt=(msg||'').trim();
+  if(!txt){ showToast('内容不能为空'); return; }
+  const rec={ id:_newFeedbackId(), type:'feedback', content:txt.slice(0,1000),
+              ua:navigator.userAgent.slice(0,120), at:new Date().toISOString() };
+  const n=_pushFeedback(rec);
+  showToast('收到你的反馈了，谢谢 💛（已记录 '+n+' 条）');
 }
 
 function doSearch(){
@@ -3938,7 +4001,7 @@ function translateAndInsert(){
   showToast('这只是娱乐翻译，想真正存它的声音可以点"录TA的声音" 🎙️');
 }
 
-// ── 真实录音 / 上传 ── 真正驱动声音克隆进度的入口
+// ── 真实录音 / 上传 ── 真正驱动声音留存进度的入口
 function toggleRecordPanel(){
   const p=document.getElementById('recordPanel');
   const btn=document.getElementById('recordBtn');
@@ -4016,7 +4079,7 @@ function insertRealAudioMessage(url,durationSec,source){
   toggleRecordPanel();
   updateBankCounts('audio');
   prependBankTimeline('🎙️','新声音样本 · '+source,'时长 '+durationSec+' 秒，已存入声音记忆库');
-  showToast('已存入真实声音样本，声音克隆进度+1 🎙️');
+  showToast('已存入真实声音样本，声音留存进度+1 🎙️');
   // Task 4: If recording (not upload), offer to set as custom voice after a short delay
   if(source==='录音'){
     setTimeout(()=>promptSetCustomVoice(currentPetId||currentBankPetId,url),1200);
@@ -4648,9 +4711,18 @@ function errText(e, fallback) {
   if (typeof e === 'string') return e;
   let raw = e.message || e.error_description || e.error || '';
   if (!raw) { try { raw = JSON.stringify(e); } catch (_) { raw = String(e); } }
+  // 不把 CloudBase 的原始错误码/JSON 甩给用户看，翻译成人话
+  if (/FUNCTION_NOT_FOUND|FunctionName parameter/i.test(raw)) {
+    return '服务还没部署完成，请稍后再试';
+  }
   if (/unauthenticated|credentials not found|PERMISSION_DENIED/i.test(raw)) {
     return '云服务未授权，请确认控制台已开启「匿名登录」';
   }
+  if (/timeout|ETIMEDOUT|超时/i.test(raw)) return '网络超时，请检查网络后重试';
+  if (/Failed to fetch|NetworkError|ERR_/i.test(raw)) return '网络连接失败，请检查网络';
+  if (/OPERATION_FAIL|\{"code"/.test(raw)) return '服务暂时不可用，请稍后重试';
+  // 兵底：看起来像技术黑话（含大段英文/JSON）就不展示原文
+  if (raw.length > 60 && !/[\u4e00-\u9fa5]/.test(raw)) return fallback || '操作失败，请重试';
   return raw || fallback || '未知错误';
 }
 
@@ -5779,7 +5851,7 @@ function renderBankStats(){
   const cvBtn=pet2&&pet2.customVoice?
     `<div onclick="clearCustomVoice('${currentBankPetId}')" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:4px 10px;border-radius:var(--rf);background:#dcfce7;color:#16a34a;font-size:11px;font-weight:600;cursor:pointer">✓ 已设专属叫声（点击取消）</div>`:
     `<div onclick="goRecordPetVoice()" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:4px 10px;border-radius:var(--rf);background:var(--red-m);color:var(--red);font-size:11px;font-weight:600;cursor:pointer">🎙️ 录一段真实叫声</div>`;
-  document.getElementById('cloneHint').innerHTML=(remain>0?`再录 <strong>${remain} 段</strong>不同情绪的叫声，声音克隆即可达到「可用于告别服务」的质量阈值——这一步完全免费，越早开始存越好。`:'🎉 声音样本已集齐，声音克隆质量已达标')+cvBtn;
+  document.getElementById('cloneHint').innerHTML=(remain>0?`再录 <strong>${remain} 段</strong>不同情绪的叫声，就能把它的声音完整地留下来——完全免费，越早开始存越好。`:'🎉 声音样本已集齐，都安全存在记忆银行里了')+cvBtn;
 }
 function renderBankTimeline(){
   const pet=PETS[currentBankPetId];if(!pet)return;
@@ -6052,18 +6124,85 @@ const SYMPTOM_ADVICE={
   '精神萎靡':{reason:'体力消耗过大、轻微不适早期信号、环境变化应激、潜在疾病前兆',advice:'检查体温和进食饮水情况、提供安静休息环境、密切观察24小时、若持续萎靡建议尽快就医'},
   '瘙痒抓挠':{reason:'跳蚤虱子等体外寄生虫、食物或环境过敏、真菌感染、皮肤干燥',advice:'检查皮毛是否有寄生虫、避免频繁洗澡破坏皮肤屏障、更换低敏粮食试试、持续加重需皮肤镜检查'}
 };
-function askAiVet(){
+async function askAiVet(){
   const pet=PETS[currentHealthPetId];
   const desc=(document.getElementById('aiAskDesc').value||'').trim();
-  const data=SYMPTOM_ADVICE[curSymptom];
   const result=document.getElementById('aiAskResult');
+  const btn=document.getElementById('aiAskBtn');
+  if(!curSymptom){ showToast('先选一下它现在的症状'); return; }
   result.style.display='block';
-  result.innerHTML=`<div style="font-weight:700;color:#2563eb;margin-bottom:6px">🩺 基于 ${pet.name}（${pet.species}·${pet.age}·${pet.neutered?'已绝育':'未绝育'}）的分析</div>`+
-    `<div style="margin-bottom:6px"><strong>「${curSymptom}」</strong>${desc?'，'+desc:''}，可能原因：</div>`+
-    `<div style="margin-bottom:8px;color:var(--muted)">${data.reason}</div>`+
-    `<div style="margin-bottom:4px"><strong>建议：</strong></div>`+
-    `<div style="color:var(--muted)">${data.advice}</div>`;
-  showToast('已生成基于'+pet.name+'档案的建议 🩺');
+  result.innerHTML='<div style="color:var(--muted);font-size:13px">正在分析 '+pet.name+' 的情况…</div>';
+  if(btn){ btn.disabled=true; }
+
+  // 先在前端做一道急症兵底：即使后端没部署，急症也必须能抦住
+  const emergency=_frontEmergencyCheck(curSymptom+' '+desc);
+  if(emergency){
+    _renderVetUrgent(result, emergency);
+    if(btn) btn.disabled=false;
+    return;
+  }
+
+  try{
+    const data=await callFn('ai',{
+      action:'vet',
+      symptom:curSymptom,
+      desc:desc,
+      pet:{ name:pet.name, species:pet.species, age:pet.age, gender:pet.gender,
+            weight:pet.weight, neutered:pet.neutered, allergies:pet.allergies }
+    });
+    if(data && data.urgent){ _renderVetUrgent(result, data.emergencyType, data); if(btn) btn.disabled=false; return; }
+    const body=(data && data.content) ? _escapeHtml(data.content).replace(/\n/g,'<br>')
+              : _escapeHtml((data&&data.advice)||'暂时拿不到建议');
+    result.innerHTML=
+      '<div style="font-weight:700;color:#2563eb;margin-bottom:6px">🩺 基于 '+_escapeHtml(pet.name)+
+      '（'+_escapeHtml(pet.species||'')+(pet.age?'·'+_escapeHtml(pet.age):'')+(pet.neutered?'·已绝育':'·未绝育')+'）的分析</div>'+
+      (data&&data.degraded?'<div style="font-size:11px;color:#b45309;background:#fef3c7;padding:6px 8px;border-radius:8px;margin-bottom:8px">⚠️ 智能问答暂时不可用，以下为通用建议</div>':'')+
+      '<div style="line-height:1.7;color:var(--ink)">'+body+'</div>'+
+      '<div style="margin-top:10px;font-size:11px;color:var(--muted2)">'+_escapeHtml((data&&data.disclaimer)||'仅供参考，不能替代执业兽医诊断')+'</div>';
+  }catch(e){
+    console.error('[askAiVet]',e);
+    const d=SYMPTOM_ADVICE[curSymptom];
+    result.innerHTML=
+      '<div style="font-size:11px;color:#b45309;background:#fef3c7;padding:6px 8px;border-radius:8px;margin-bottom:8px">⚠️ 智能问答暂时连不上（'+_escapeHtml(errText(e,'网络异常'))+'），先给你通用建议</div>'+
+      (d?'<div style="margin-bottom:6px;color:var(--muted)">可能原因：'+_escapeHtml(d.reason)+'</div><div style="color:var(--ink)">建议：'+_escapeHtml(d.advice)+'</div>':'')+
+      '<div style="margin-top:10px;font-size:11px;color:var(--muted2)">症状持续或加重，请尽快就医。</div>';
+  }finally{
+    if(btn) btn.disabled=false;
+  }
+}
+
+// 前端急症兵底（与云函数保持一致，双保险）
+const _FRONT_EMERGENCY=[
+  [/吐血|呕血|便血|血便|尿血|血尿|血丝|带血|有血|出血|喷血/,'出血'],
+  [/抽搭|抽风|痉挛|癫痫|口吐白沫/,'神经症状'],
+  [/没(有)?呼吸|不(能|会)呼吸|呼吸困难|窒息|喘不上/,'呼吸窘迫'],
+  [/昏迷|不省人事|叫不醒|失去意识/,'意识障碍'],
+  [/误食|误吞|中毒|吃了(老鼠药|巧克力|洋葱|药)/,'疑似中毒'],
+  [/车祸|摔伤|骨折|被咬伤|大出血/,'外伤'],
+  [/难产|生不出|胎儿卡/,'难产'],
+  [/尿不出|排不出尿|尿闭/,'尿路棗阻'],
+  [/持续呕吐|吐了好几天|吐了三天|一直吐/,'持续呕吐'],
+  [/完全不吃|一口不吃|拒食|不吃不喝|没有食欲.*天/,'完全拒食'],
+  [/体温(过低|很低)|四肢冰凉|休克|牙龈发白/,'休克征象'],
+  [/肚子(胀|鼓)得(很)?大|腹部膨大|胃扭转/,'急腹症'],
+];
+function _frontEmergencyCheck(text){
+  if(!text) return null;
+  for(const [re,why] of _FRONT_EMERGENCY){ if(re.test(text)) return why; }
+  return null;
+}
+function _escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function _renderVetUrgent(el, why, data){
+  el.innerHTML=
+    '<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:12px">'+
+    '<div style="font-weight:800;color:#dc2626;font-size:15px;margin-bottom:6px">⚠️ 这种情况请立即送医</div>'+
+    '<div style="color:#7f1d1d;line-height:1.7">'+
+    _escapeHtml((data&&data.reason)||('你描述的情况涉及「'+why+'」，属于急症信号。'))+'<br>'+
+    _escapeHtml((data&&data.advice)||'请立刻带它去最近的宠物医院，路上保持安静保暖，不要喂食喂水，不要自行给药。时间就是命，别等观察。')+
+    '</div></div>'+
+    '<div style="margin-top:10px"><button class="modal-cta" style="background:#dc2626" onclick="switchScreen(\'sc-home\',0);setTimeout(()=>setHomeTab(document.querySelectorAll(\'.tb-tab\')[2],\'tab-nearby\'),100)">🏥 查看附近宠物医院</button></div>';
 }
 
 
@@ -6074,33 +6213,52 @@ const IMPORT_PHOTO_POOL={
   dog:['https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?w=300&q=70','https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300&q=70','https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&q=70','https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=300&q=70','https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?w=300&q=70','https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&q=70','https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=300&q=70','https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=300&q=70']
 };
 let importedPhotoUrls=[];
+// 一键导入：真实读取用户本地相册（以前是假装扫描微信、实际塞陌生猫狗图，已改掉）
+// 浏览器安全限制下网页无法直接读微信/抖音相册，只能由用户主动选图
 function importDataToBank(){
-  const pet=PETS[currentBankPetId]||PETS[currentPetId];if(!pet)return;
-  document.getElementById('importPhotosSub').textContent='正在从微信相册扫描…';
-  document.getElementById('importScanState').style.display='block';
-  document.getElementById('importResultState').style.display='none';
-  document.getElementById('importConfirmBtn').style.display='none';
-  document.getElementById('importScanBar').style.width='0%';
-  document.getElementById('importPhotosModal').classList.add('on');
-  const isCat=/猫/.test(pet.species);
-  const pool=isCat?IMPORT_PHOTO_POOL.cat:IMPORT_PHOTO_POOL.dog;
-  const count=6+Math.floor(Math.random()*3);
-  importedPhotoUrls=pool.slice(0,count);
-  let pct=0;
-  const timer=setInterval(()=>{
-    pct+=12;
-    document.getElementById('importScanBar').style.width=Math.min(pct,100)+'%';
-    if(pct>=100){
-      clearInterval(timer);
-      setTimeout(()=>{
-        document.getElementById('importScanState').style.display='none';
-        document.getElementById('importResultState').style.display='block';
-        document.getElementById('importResultLabel').textContent='扫描到 '+importedPhotoUrls.length+' 张新照片';
-        document.getElementById('importPhotoGrid').innerHTML=importedPhotoUrls.map(u=>`<img src="${u}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--r8)" alt=""/>`).join('');
-        document.getElementById('importConfirmBtn').style.display='block';
-      },300);
+  const pet=PETS[currentBankPetId]||PETS[currentPetId];
+  if(!pet){ showToast('请先添加一只宠物'); return; }
+  let input=document.getElementById('_realImportInput');
+  if(!input){
+    input=document.createElement('input');
+    input.type='file'; input.accept='image/*'; input.multiple=true;
+    input.id='_realImportInput'; input.style.display='none';
+    document.body.appendChild(input);
+  }
+  input.value='';
+  input.onchange=async ()=>{
+    const files=[...(input.files||[])].slice(0,20);
+    if(!files.length) return;
+    document.getElementById('importPhotosSub').textContent='正在读取你选中的照片…';
+    document.getElementById('importScanState').style.display='block';
+    document.getElementById('importResultState').style.display='none';
+    document.getElementById('importConfirmBtn').style.display='none';
+    document.getElementById('importScanBar').style.width='0%';
+    document.getElementById('importPhotosModal').classList.add('on');
+    importedPhotoUrls=[];
+    for(let i=0;i<files.length;i++){
+      try{
+        const url=await new Promise((res,rej)=>{
+          const fr=new FileReader();
+          fr.onload=()=>res(fr.result); fr.onerror=rej;
+          fr.readAsDataURL(files[i]);
+        });
+        importedPhotoUrls.push(url);
+      }catch(e){ console.warn('[import] 读取失败',files[i]&&files[i].name,e); }
+      document.getElementById('importScanBar').style.width=Math.round((i+1)/files.length*100)+'%';
     }
-  },180);
+    if(!importedPhotoUrls.length){
+      closeImportPhotos();
+      showToast('这些文件读不了，换几张试试');
+      return;
+    }
+    document.getElementById('importScanState').style.display='none';
+    document.getElementById('importResultState').style.display='block';
+    document.getElementById('importResultLabel').textContent='已选中 '+importedPhotoUrls.length+' 张照片';
+    document.getElementById('importPhotoGrid').innerHTML=importedPhotoUrls.map(u=>`<img src="${u}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--r8)" alt=""/>`).join('');
+    document.getElementById('importConfirmBtn').style.display='block';
+  };
+  input.click();
 }
 function closeImportPhotos(){
   document.getElementById('importPhotosModal').classList.remove('on');
@@ -6113,7 +6271,7 @@ function confirmImportPhotos(){
   if(!pet.album)pet.album=[];
   importedPhotoUrls.forEach(u=>{ pet.album.unshift({type:'photo',url:u,date:'刚刚导入'}); });
   syncMemCountEverywhere();
-  prependBankTimeline('📲','一键导入','从微信相册扫描导入了 '+imported+' 张新照片',importedPhotoUrls[0]);
+  prependBankTimeline('📲','导入照片','从本地相册导入了 '+imported+' 张照片',importedPhotoUrls[0]);
   saveState();
   closeImportPhotos();
   showToast('导入成功！新增 '+imported+' 张照片已存入记忆银行 🎉');
@@ -6123,7 +6281,7 @@ const REMINDER_ITEMS=[
   {id:'vaccine',icon:'💉',label:'疫苗/驱虫到期提醒',on:true},
   {id:'checkup',icon:'🏥',label:'年度体检提醒',on:true},
   {id:'memory',icon:'📦',label:'连续未记录提醒（3天未存入新记忆时提醒）',on:true},
-  {id:'cloneprogress',icon:'🎙️',label:'声音克隆进度提醒',on:false},
+  {id:'cloneprogress',icon:'🎙️',label:'声音留存进度提醒',on:false},
   {id:'bill',icon:'💰',label:'每月账单汇总提醒',on:false},
 ];
 function openReminderModal(){
@@ -6145,10 +6303,60 @@ function toggleReminder(id,el){
 // 数据导出
 function openExportModal(){ document.getElementById('exportModal').classList.add('on'); }
 function closeExportModal(){ document.getElementById('exportModal').classList.remove('on'); }
+// 导出：真实生成文件并触发下载（不再是只弹“正在打包”）
+function _downloadBlob(blob, filename){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+function _collectAllData(){
+  const pets=(typeof PETS!=='undefined')?PETS:{};
+  const out={ 导出时间:new Date().toLocaleString('zh-CN'), 应用:'毛记忆 PawMemory', 宠物:[] };
+  Object.values(pets).forEach(p=>{
+    out.宠物.push({
+      名字:p.name, 品种:p.species, 生日:p.birthday, 性别:p.gender,
+      体重:p.weight, 绝育:p.neutered?'已绝育':'未绝育', 过敏史:p.allergies||'无',
+      记忆条数:(p.bank&&p.bank.count)||0,
+      日常:p.daily||{}, 相册:(p.photos||[]).length+' 张'
+    });
+  });
+  return out;
+}
 function doExport(type){
   closeExportModal();
-  const labelMap={photos:'照片',timeline:'时光轴PDF',all:'全部数据打包'};
-  showToast('正在打包'+labelMap[type]+'…完成后会通知你下载 📦');
+  try{
+    if(type==='photos'){
+      const pets=(typeof PETS!=='undefined')?PETS:{};
+      const urls=[];
+      Object.values(pets).forEach(p=>(p.photos||[]).forEach(ph=>urls.push(typeof ph==='string'?ph:(ph&&ph.url))));
+      const list=urls.filter(Boolean);
+      if(!list.length){ showToast('还没有照片可导出 📷'); return; }
+      const txt='毛记忆 · 照片清单\n导出时间：'+new Date().toLocaleString('zh-CN')+'\n共 '+list.length+' 张\n\n'+list.join('\n');
+      _downloadBlob(new Blob([txt],{type:'text/plain;charset=utf-8'}), '毛记忆-照片清单.txt');
+      showToast('已导出 '+list.length+' 张照片的链接清单 📷');
+      return;
+    }
+    if(type==='timeline'){
+      const d=_collectAllData();
+      let md='# 毛记忆 · 时光轴\n\n导出时间：'+d.导出时间+'\n\n';
+      d.宠物.forEach(p=>{
+        md+='## '+p.名字+'\n\n- 品种：'+p.品种+'\n- 生日：'+(p.生日||'未填')+
+            '\n- 体重：'+(p.体重||'未填')+'\n- '+p.绝育+'\n- 记忆：'+p.记忆条数+' 条\n- 相册：'+p.相册+'\n\n';
+      });
+      _downloadBlob(new Blob([md],{type:'text/markdown;charset=utf-8'}), '毛记忆-时光轴.md');
+      showToast('时光轴已导出（Markdown，可直接转PDF）📄');
+      return;
+    }
+    const all=_collectAllData();
+    try{ all.反馈记录=JSON.parse(localStorage.getItem(FEEDBACK_KEY)||'[]'); }catch(e){}
+    _downloadBlob(new Blob([JSON.stringify(all,null,2)],{type:'application/json;charset=utf-8'}), '毛记忆-全部数据.json');
+    showToast('全部数据已导出 📦');
+  }catch(e){
+    console.error('[doExport]',e);
+    showToast('导出失败：'+(e.message||'未知错误'));
+  }
 }
 
 // ══════════════════════════════════════════

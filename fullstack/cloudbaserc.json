@@ -12,6 +12,14 @@
       "envVariables": {}
     },
     {
+      "name": "ai",
+      "timeout": 60,
+      "runtime": "Nodejs18.15",
+      "memSize": 256,
+      "triggers": [],
+      "envVariables": {}
+    },
+    {
       "name": "user",
       "timeout": 15,
       "runtime": "Nodejs18.15",

@@ -1,0 +1,9 @@
+{
+  "name": "ai",
+  "version": "1.0.0",
+  "description": "PawMemory 大模型能力层（DeepSeek）",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.7.0"
+  }
+}
