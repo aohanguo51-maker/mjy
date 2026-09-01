@@ -58,6 +58,14 @@ async function auditText(text) {
   }
 }
 
+
+// doc().get() 在不同 SDK 版本下可能返回对象或长度为1的数组，统一取成对象
+function firstDoc(r) {
+  let d = r && r.data;
+  if (Array.isArray(d)) d = d[0];
+  return d || null;
+}
+
 exports.main = async (event, context) => {
   const uid = getUid(context, event);
   if (!uid) return { code: 401, msg: '未登录' };
@@ -97,7 +105,7 @@ exports.main = async (event, context) => {
       if (realCount !== null) {
         // 叠加展示基数，否则官方帖的 8600 赞会被拍成 1
         const pRes = await postsCol.doc(postId).get();
-        const base = (pRes.data && Number(pRes.data.baseLikeCount)) || 0;
+        const base = (firstDoc(pRes) && Number(firstDoc(pRes).baseLikeCount)) || 0;
         await postsCol.doc(postId).update({ likeCount: base + realCount });
       } else {
         await postsCol.doc(postId).update({ likeCount: _.inc(1) });
@@ -126,7 +134,7 @@ exports.main = async (event, context) => {
       const realCount = (totalRes && typeof totalRes.total === 'number') ? totalRes.total : null;
       if (realCount !== null) {
         const pRes = await postsCol.doc(postId).get();
-        const base = (pRes.data && Number(pRes.data.baseLikeCount)) || 0;
+        const base = (firstDoc(pRes) && Number(firstDoc(pRes).baseLikeCount)) || 0;
         await postsCol.doc(postId).update({ likeCount: base + realCount });
       } else {
         await postsCol.doc(postId).update({ likeCount: _.inc(-1) });
@@ -181,7 +189,7 @@ exports.main = async (event, context) => {
     try {
       // 获取用户信息
       const userRes = await db.collection('users').doc(uid).get();
-      if (!userRes.data) return { code: 404, msg: '用户不存在' };
+      if (!firstDoc(userRes)) return { code: 404, msg: '用户不存在' };
 
       // 审核评论
       const auditResult = await auditText(text.trim());
@@ -193,7 +201,7 @@ exports.main = async (event, context) => {
       const addRes = await commentsCol.add({
         postId,
         userId: uid,
-        userName: userRes.data.name,
+        userName: firstDoc(userRes).name,
         text: text.trim(),
         createdAt: new Date(),
         auditStatus,

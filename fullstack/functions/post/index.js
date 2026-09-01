@@ -56,6 +56,14 @@ async function callAudit(text, fileIds) {
   }
 }
 
+
+// doc().get() 在不同 SDK 版本下可能返回对象或长度为1的数组，统一取成对象
+function firstDoc(r) {
+  let d = r && r.data;
+  if (Array.isArray(d)) d = d[0];
+  return d || null;
+}
+
 exports.main = async (event, context) => {
   const uid = getUid(context, event);
   if (!uid) return { code: 401, msg: '未登录' };
@@ -110,8 +118,8 @@ exports.main = async (event, context) => {
     try {
       // 获取用户信息（冗余昵称/头像）
       const userRes = await db.collection('users').doc(uid).get();
-      if (!userRes.data) return { code: 404, msg: '用户不存在，请重新登录' };
-      const user = userRes.data;
+      if (!firstDoc(userRes)) return { code: 404, msg: '用户不存在，请重新登录' };
+      const user = firstDoc(userRes);
 
       // 审核
       const auditResult = await callAudit(
@@ -158,14 +166,14 @@ exports.main = async (event, context) => {
 
     try {
       const res = await postsCol.doc(postId).get();
-      if (!res.data) return { code: 404, msg: '帖子不存在' };
+      if (!firstDoc(res)) return { code: 404, msg: '帖子不存在' };
 
       // 点赞状态
       const likeRes = await db.collection('likes')
         .where({ userId: uid, postId })
         .limit(1)
         .get();
-      const post = res.data;
+      const post = firstDoc(res);
       post.liked = (likeRes.data || []).length > 0;
 
       // 评论列表（最新 20 条）
@@ -190,8 +198,8 @@ exports.main = async (event, context) => {
 
     try {
       const docRes = await postsCol.doc(postId).get();
-      if (!docRes.data) return { code: 404, msg: '帖子不存在' };
-      if (docRes.data.authorId !== uid) return { code: 403, msg: '无权删除他人帖子' };
+      if (!firstDoc(docRes)) return { code: 404, msg: '帖子不存在' };
+      if (firstDoc(docRes).authorId !== uid) return { code: 403, msg: '无权删除他人帖子' };
 
       await postsCol.doc(postId).remove();
       // 同时删除对应评论、点赞

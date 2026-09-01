@@ -43,6 +43,14 @@ function getUid(context, event) {
 
 const VALID_TYPES = ['photo', 'audio', 'text', 'medical', 'daily', 'import', 'farewell'];
 
+
+// doc().get() 在不同 SDK 版本下可能返回对象或长度为1的数组，统一取成对象
+function firstDoc(r) {
+  let d = r && r.data;
+  if (Array.isArray(d)) d = d[0];
+  return d || null;
+}
+
 exports.main = async (event, context) => {
   const uid = getUid(context, event);
   if (!uid) return { code: 401, msg: '未登录' };
@@ -108,8 +116,8 @@ exports.main = async (event, context) => {
     try {
       // 校验宠物归属
       const petRes = await db.collection('pets').doc(petId).get();
-      if (!petRes.data) return { code: 404, msg: '宠物不存在' };
-      if (petRes.data.ownerId !== uid) return { code: 403, msg: '无权访问该宠物' };
+      if (!firstDoc(petRes)) return { code: 404, msg: '宠物不存在' };
+      if (firstDoc(petRes).ownerId !== uid) return { code: 403, msg: '无权访问该宠物' };
 
       const addRes = await memCol.add({
         ownerId: uid,
@@ -136,8 +144,8 @@ exports.main = async (event, context) => {
 
     try {
       const docRes = await memCol.doc(memoryId).get();
-      if (!docRes.data) return { code: 404, msg: '记忆不存在' };
-      if (docRes.data.ownerId !== uid) return { code: 403, msg: '无权删除他人记忆' };
+      if (!firstDoc(docRes)) return { code: 404, msg: '记忆不存在' };
+      if (firstDoc(docRes).ownerId !== uid) return { code: 403, msg: '无权删除他人记忆' };
 
       await memCol.doc(memoryId).remove();
       return { code: 0, data: { deleted: true } };
@@ -154,8 +162,8 @@ exports.main = async (event, context) => {
 
     try {
       const docRes = await memCol.doc(memoryId).get();
-      if (!docRes.data) return { code: 404, msg: '记忆不存在' };
-      if (docRes.data.ownerId !== uid) return { code: 403, msg: '无权修改他人记忆' };
+      if (!firstDoc(docRes)) return { code: 404, msg: '记忆不存在' };
+      if (firstDoc(docRes).ownerId !== uid) return { code: 403, msg: '无权修改他人记忆' };
 
       const patch = { updatedAt: new Date() };
       if (typeof title === 'string') patch.title = title;

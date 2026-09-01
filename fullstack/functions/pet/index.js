@@ -45,6 +45,14 @@ const UPDATABLE_FIELDS = [
   'weight', 'avaBg', 'dewormCycle', 'allergies', 'daily', 'foodPrefs', 'isMemorial',
 ];
 
+
+// doc().get() 在不同 SDK 版本下可能返回对象或长度为1的数组，统一取成对象
+function firstDoc(r) {
+  let d = r && r.data;
+  if (Array.isArray(d)) d = d[0];
+  return d || null;
+}
+
 exports.main = async (event, context) => {
   const uid = getUid(context, event);
   if (!uid) return { code: 401, msg: '未登录' };
@@ -104,8 +112,8 @@ exports.main = async (event, context) => {
     try {
       // 校验归属
       const docRes = await petsCol.doc(petId).get();
-      if (!docRes.data) return { code: 404, msg: '宠物不存在' };
-      if (docRes.data.ownerId !== uid) return { code: 403, msg: '无权修改他人宠物' };
+      if (!firstDoc(docRes)) return { code: 404, msg: '宠物不存在' };
+      if (firstDoc(docRes).ownerId !== uid) return { code: 403, msg: '无权修改他人宠物' };
 
       const patch = {};
       UPDATABLE_FIELDS.forEach(f => {
@@ -128,8 +136,8 @@ exports.main = async (event, context) => {
 
     try {
       const docRes = await petsCol.doc(petId).get();
-      if (!docRes.data) return { code: 404, msg: '宠物不存在' };
-      if (docRes.data.ownerId !== uid) return { code: 403, msg: '无权删除他人宠物' };
+      if (!firstDoc(docRes)) return { code: 404, msg: '宠物不存在' };
+      if (firstDoc(docRes).ownerId !== uid) return { code: 403, msg: '无权删除他人宠物' };
 
       await petsCol.doc(petId).remove();
       return { code: 0, data: { deleted: true } };

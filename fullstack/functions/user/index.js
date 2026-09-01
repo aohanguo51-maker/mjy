@@ -41,6 +41,14 @@ function getUid(context, event) {
   } catch (e) { return null; }
 }
 
+
+// doc().get() 在不同 SDK 版本下可能返回对象或长度为1的数组，统一取成对象
+function firstDoc(r) {
+  let d = r && r.data;
+  if (Array.isArray(d)) d = d[0];
+  return d || null;
+}
+
 exports.main = async (event, context) => {
   const uid = getUid(context, event);
   if (!uid) return { code: 401, msg: '未登录' };
@@ -52,8 +60,8 @@ exports.main = async (event, context) => {
   if (action === 'get') {
     try {
       const res = await usersCol.doc(uid).get();
-      if (!res.data) return { code: 404, msg: '用户不存在' };
-      return { code: 0, data: res.data };
+      if (!firstDoc(res)) return { code: 404, msg: '用户不存在' };
+      return { code: 0, data: firstDoc(res) };
     } catch (err) {
       console.error('[user/get]', err);
       return { code: 500, msg: err.message };
