@@ -4603,8 +4603,27 @@ async function callFn(name, data) {
   const res = await app.callFunction({ name, data: payload });
   const result = res.result;
   if (!result) throw new Error('云函数无返回');
+  // 登录态失效（密钥轮换 / token 过期）：必须明确让用户重新登录，
+  // 不能静默降级成本地示例数据——那样用户会看到别人家的宠物且 AI 全挂
+  if (result.code === 401) { handleAuthExpired(); throw new Error('登录已失效'); }
   if (result.code !== 0) throw new Error(result.msg || '云函数错误 code=' + result.code);
   return result.data;
+}
+
+// 登录失效统一处理：清 token + 回登录页，全局只提示一次
+let _authExpiredHandled = false;
+function handleAuthExpired() {
+  if (_authExpiredHandled) return;
+  _authExpiredHandled = true;
+  try { setSessionToken(''); } catch (e) {}
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  _currentUid = null;
+  try { showToast('登录已失效，请重新登录 🔑'); } catch (e) {}
+  setTimeout(function () {
+    const lp = document.getElementById('loginPage');
+    if (lp) lp.classList.remove('hidden');
+    _authExpiredHandled = false;
+  }, 600);
 }
 
 // ── 会话 token 管理（登录态，30天有效）──
@@ -5996,6 +6015,21 @@ function firstPetHintGo(){
 
     const isLoggedIn = await checkLoginState();
     if (isLoggedIn) {
+      // 先拿真实接口验一下 token 还能不能用（密钥可能已轮换），
+      // 不验的话会静默降级成本地示例数据，用户看到的是别人家的宠物
+      let tokenOk = true;
+      try {
+        await callFn('user', { action: 'get' });
+      } catch (e) {
+        if (/登录已失效|未登录/.test(e && e.message || '')) tokenOk = false;
+      }
+      if (!tokenOk) {
+        setSessionToken('');
+        document.getElementById('loginPage').classList.remove('hidden');
+        renderDiscoverFeed();
+        renderFollowingFeed();
+        return;
+      }
       document.getElementById('loginPage').classList.add('hidden');
       await initCloudData();
       renderDiscoverFeed();
