@@ -154,13 +154,32 @@ const OFFICIAL_COMMENTS = [
   { postIndex: 6, userId: 'system', userName: '橘猫小丘', text: '上周刚买过，家里猫吃得很香！' },
 ];
 
+// 建集合：新版 CLI 取消了 db:createCollection 命令，改由云函数自己建
+// 已存在会报错，直接忽略，所以可以重复执行
+const COLLECTIONS = ['users','pets','memories','posts','comments','likes','follows','medical','bills','sms_codes'];
+async function ensureCollections() {
+  const created = [];
+  for (const name of COLLECTIONS) {
+    try {
+      await db.createCollection(name);
+      created.push(name);
+    } catch (e) {
+      // 已存在/无权限都忽略，不阻断后续流程
+    }
+  }
+  return created;
+}
+
 exports.main = async () => {
   const result = { posts: 0, comments: 0, errors: [] };
   try {
+    // 先确保 10 个集合都存在
+    result.collectionsCreated = await ensureCollections();
+
     // 幂等保护：已灌过就跳过，避免重复调用产生重复数据
     const exist = await db.collection('posts').where({ isOfficial: true }).limit(1).get();
     if (exist.data && exist.data.length > 0) {
-      return { code: 0, data: { msg: '官方内容已存在，本次跳过', skipped: true } };
+      return { code: 0, data: { msg: '官方内容已存在，本次跳过', skipped: true, collectionsCreated: result.collectionsCreated } };
     }
 
     // 写入帖子，记录 原id → 新_id 的映射，供评论关联
