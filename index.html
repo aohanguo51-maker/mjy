@@ -6,6 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <title>毛记忆 PawMemory</title>
 <!-- @cowork-spa-host -->
+<!-- CloudBase JS SDK v2（v1 的匿名登录已被服务端禁用，必须用 2.x） -->
+<script src="https://static.cloudbase.net/cloudbase-js-sdk/2.32.0/cloudbase.full.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 button,a{outline:none;-webkit-tap-highlight-color:transparent}
@@ -286,6 +288,12 @@ body::before{display:none}
 .pic-info p{font-size:11px;color:var(--muted)}
 .pic-badge{margin-top:4px;display:inline-flex;align-items:center;gap:4px;background:var(--red-l);border-radius:var(--rf);padding:2px 8px;font-size:10px;font-weight:700;color:var(--red)}
 
+/* 问AI 页模式切换（问医生 / 陪它聊天） */
+.ai-mode-bar{display:flex;gap:8px;padding:8px 16px 10px;flex-shrink:0;background:var(--bg)}
+.ai-mode-btn{flex:1;height:38px;border-radius:var(--rf);display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:13px;font-weight:700;color:var(--muted);background:var(--bg2);cursor:pointer;transition:all .18s var(--ease-smooth)}
+.ai-mode-btn.on{background:var(--red);color:#fff;box-shadow:0 4px 14px rgba(255,36,66,.28)}
+.ai-mode-btn:active{transform:scale(.97)}
 /* AI养宠问答卡片（前置至顶部，紧凑布局） */
 .ai-ask-card{background:#fff;border-radius:var(--r16);padding:14px;box-shadow:0 2px 12px rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.1)}
 .ai-ask-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -577,9 +585,57 @@ body::before{display:none}
 .cv-bar:nth-child(6){animation-delay:.5s;height:14px}
 .cv-bar:nth-child(7){animation-delay:.6s;height:22px}
 @keyframes cvWave{0%{transform:scaleY(.4)}100%{transform:scaleY(1)}}
+
+/* ── LOGIN PAGE ── */
+#loginPage{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#fff5f7 0%,#fff 60%,#fff0f5 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px}
+#loginPage.hidden{display:none}
+.login-logo{font-size:52px;margin-bottom:8px}
+.login-title{font-size:22px;font-weight:800;color:var(--ink);margin-bottom:4px;letter-spacing:-.5px}
+.login-subtitle{font-size:13px;color:var(--muted);margin-bottom:36px}
+.login-card{background:#fff;border-radius:20px;padding:24px 20px;box-shadow:0 4px 24px rgba(0,0,0,.08);width:100%;max-width:360px}
+.login-input-wrap{margin-bottom:14px}
+.login-input-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.3px}
+.login-input{width:100%;height:44px;border:1.5px solid var(--line2);border-radius:10px;padding:0 14px;font-size:15px;color:var(--ink);font-family:var(--font);background:#fff;outline:none;transition:border-color .15s}
+.login-input:focus{border-color:var(--red)}
+.login-code-row{display:flex;gap:8px}
+.login-code-row .login-input{flex:1}
+.login-send-btn{flex-shrink:0;height:44px;padding:0 14px;background:var(--red-l);color:var(--red);border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:var(--font)}
+.login-send-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-submit-btn{width:100%;height:48px;background:var(--red);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;font-family:var(--font);transition:opacity .15s}
+.login-submit-btn:disabled{opacity:.6;cursor:not-allowed}
+.login-hint{font-size:11px;color:var(--muted2);text-align:center;margin-top:12px;line-height:1.6}
+.login-hint b{color:var(--red)}
+body::before{display:none}
+
+
 </style>
 </head>
 <body>
+<!-- ── 登录页（未登录时显示）── -->
+<div id="loginPage">
+  <div class="login-logo">🐾</div>
+  <div class="login-title">毛记忆 PawMemory</div>
+  <div class="login-subtitle">记录每一个与TA在一起的瞬间</div>
+  <div class="login-card">
+    <div class="login-input-wrap">
+      <div class="login-input-label">手机号</div>
+      <input class="login-input" id="loginPhone" type="tel" placeholder="请输入手机号" maxlength="11" inputmode="numeric"/>
+    </div>
+    <div class="login-input-wrap">
+      <div class="login-input-label">验证码</div>
+      <div class="login-code-row">
+        <input class="login-input" id="loginCode" type="text" placeholder="请输入验证码" maxlength="6" inputmode="numeric"/>
+        <button class="login-send-btn" id="loginSendBtn" onclick="sendLoginCode()">获取验证码</button>
+      </div>
+    </div>
+    <button class="login-submit-btn" id="loginSubmitBtn" onclick="submitLogin()">登录 / 注册</button>
+    <div class="login-hint">
+      原型测试阶段，验证码固定为 <b>123456</b><br/>
+      首次登录将自动为您创建账号
+    </div>
+  </div>
+</div>
+
 <canvas id="particleCanvas"></canvas>
 <div class="app">
 
@@ -590,7 +646,6 @@ body::before{display:none}
         <div class="tb-logo">PawMemory</div>
         <div class="tb-search" onclick="openSearchModal()"><span>🔍</span><span style="color:var(--muted);font-size:12px">搜索宠物记忆、宠友…</span></div>
         <div class="tb-icon" onclick="openMsgCenter()">💬</div>
-        <div class="ai-cat-dance" onclick="openAiVideoModal()" title="AI 生成宠物视频"><img src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=120&h=120&fit=crop&crop=faces&q=80" alt="AI 生成宠物视频"/></div>
       </div>
       <div class="tb-tabs">
         <div class="tb-tab" onclick="setHomeTab(this,'tab-following')">关注</div>
@@ -783,45 +838,48 @@ body::before{display:none}
   </div><!-- /sc-home -->
 
   <!-- ══ PET (陪伴 + 记录 合并) ══ -->
-  <div class="screen" id="sc-pet">
-    <div class="pet-topbar">
-      <div class="pet-back" onclick="switchScreen('sc-home',0)">‹</div>
-      <div class="pet-ava-wrap">
-        <div class="pet-ava" id="petTopAva">🐱</div>
-        <div class="pet-online"></div>
-      </div>
-      <div class="pet-info">
-        <div class="pet-name" id="petTopName">小橘</div>
-        <div class="pet-sub">在线陪伴中</div>
-      </div>
-      <div style="display:flex;gap:4px">
-        <button style="width:32px;height:32px;border-radius:var(--rf);border:none;background:var(--cream2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--muted)" onclick="openMoreActionsModal()">⋯</button>
-      </div>
+  <!-- sc-pet 已并入问AI页（chat 模式），不再单独成屏 -->
+
+
+  <!-- ══ HEALTH ══ -->
+  <div class="screen" id="sc-health">
+    <div class="health-top">
+      <h2>🤖 问 AI</h2>
+      <p id="healthTopSub">宠物养护、症状、病历，都可以问</p>
     </div>
-    <!-- 对话（文字聊天 + 声音翻译 合并为同一条时间线，不再分tab） -->
-    <div id="pt-chat" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <!-- 宠物切换器：养宠人可能不止一个宠物，健康档案/记忆银行都需要可切换 -->
+    <div class="pet-switch-bar" id="healthPetSwitch"></div>
+
+    <!-- 模式切换：问医生（专业建议） / 陪它聊天（情感陪伴）—— 两类都是跟 AI 对话，收在一个页面里 -->
+    <div class="ai-mode-bar">
+      <div class="ai-mode-btn on" id="aiModeVetBtn" onclick="setAiMode('vet')">🩺 问医生</div>
+      <div class="ai-mode-btn" id="aiModeChatBtn" onclick="setAiMode('chat')">💬 陪它聊天</div>
+    </div>
+
+    <!-- 模式二：陪它聊天（原独立的陪伴页，已并入这里） -->
+    <div id="aiModeChat" style="display:none;flex:1;overflow:hidden;flex-direction:column">
+<div id="pt-chat" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
       <div class="upload-bar">
         <label class="upbtn" for="photoFileInput" style="position:relative;overflow:hidden;cursor:pointer">📷 照片
           <input type="file" id="photoFileInput" accept="image/*" onchange="handlePhotoUpload(event)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer"/>
         </label>
         <button class="upbtn" id="recordBtn" onclick="toggleRecordPanel()" style="background:rgba(255,36,66,.14);color:var(--red);font-weight:700">🎙️ 录TA的声音</button>
         <button class="upbtn" id="translateBtn" onclick="toggleSoundPicker()">🔊 翻译一下</button>
-        <button class="upbtn">📎 文件</button>
       </div>
-      <!-- 真实录音/上传面板（默认收起）—— 这才是真正驱动声音克隆进度的入口 -->
+      <!-- 真实录音/上传面板（默认收起）—— 这才是真正驱动声音留存进度的入口 -->
       <div id="recordPanel" style="display:none;flex-shrink:0;background:linear-gradient(135deg,#fff5f0,#fff8f4);border-bottom:1px solid rgba(255,36,66,.15);padding:14px">
-        <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:5px">🎙️ 存下它真实的声音，这才是声音克隆真正需要的样本</div>
+        <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:5px">🎙️ 选一种方式，存下它真实的声音</div>
         <div style="display:flex;gap:8px">
-          <button id="recBtnMain" onclick="toggleRealRecording()" style="flex:1;height:44px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span id="recIcon">⏺️</span><span id="recLabel">开始录音</span></button>
-          <label for="audioFileInput" style="position:relative;overflow:hidden;flex:1;height:44px;border-radius:var(--rf);background:#fff;border:1.5px solid var(--line2);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">📁 上传音频文件
+          <button id="recBtnMain" onclick="toggleRealRecording()" style="flex:1;height:44px;border-radius:var(--rf);background:var(--red);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span id="recIcon">⏺️</span><span id="recLabel">现在录一段</span></button>
+          <label for="audioFileInput" style="position:relative;overflow:hidden;flex:1;height:44px;border-radius:var(--rf);background:#fff;border:1.5px solid var(--line2);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">📁 传已有音频
             <input type="file" id="audioFileInput" accept="audio/*" onchange="handleAudioUpload(event)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer"/>
           </label>
         </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center">每段真实录音/上传都会存入记忆银行并推进声音克隆进度 · 免费</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center">每段录音/上传都会存入记忆银行 · 免费</div>
       </div>
       <!-- 轻量翻译面板（娱乐向，不占用真实录音额度） -->
       <div id="soundPicker" style="display:none;flex-shrink:0;background:#fff8f4;border-bottom:1px solid rgba(255,36,66,.1);padding:12px 14px">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">😺 玩一下：选个叫声看 AI 怎么理解（这个不存入声音克隆，只是娱乐）</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">😺 玩一下：选个叫声看看常见含义（娱乐向，不存入记忆银行）</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
           <div class="mchip on" onclick="setCatSound(this,'喵喵喵')">喵喵喵</div>
           <div class="mchip" onclick="setCatSound(this,'嗷呜~')">嗷呜~</div>
@@ -858,18 +916,10 @@ body::before{display:none}
         <input class="chat-inp" id="chatInput" placeholder="给小橘发消息…" onkeydown="if(event.key==='Enter')sendChat()"/>
         <button class="inp-send" onclick="sendChat()">➤</button>
       </div>
-    </div>
-  </div><!-- /sc-pet -->
+        </div>
+    </div><!-- /aiModeChat -->
 
-  <!-- ══ HEALTH ══ -->
-  <div class="screen" id="sc-health">
-    <div class="health-top">
-      <h2>🏥 健康档案</h2>
-      <p id="healthTopSub">小橘的身体记录，每一笔都很重要</p>
-    </div>
-    <!-- 宠物切换器：养宠人可能不止一个宠物，健康档案/记忆银行都需要可切换 -->
-    <div class="pet-switch-bar" id="healthPetSwitch"></div>
-    <div class="health-scroll">
+    <div class="health-scroll" id="aiModeVet">
 
       <!-- pet info -->
       <div class="pet-info-card" id="healthPetInfoCard"></div>
@@ -889,9 +939,19 @@ body::before{display:none}
           <div class="mchip" onclick="setAiSymptom(this,'咳嗽')">咳嗽</div>
           <div class="mchip" onclick="setAiSymptom(this,'精神萎靡')">精神萎靡</div>
           <div class="mchip" onclick="setAiSymptom(this,'瘙痒抓挠')">瘙痒抓挠</div>
+          <div class="mchip" onclick="setAiSymptom(this,'其它问题')">其它问题</div>
         </div>
-        <textarea id="aiAskDesc" class="ai-ask-ta" placeholder="补充描述一下具体情况（选填）…"></textarea>
-        <button class="ai-ask-btn" onclick="askAiVet()">🩺 获取建议</button>
+        <textarea id="aiAskDesc" class="ai-ask-ta" placeholder="具体情况，或任何养宠问题都可以问（比如：猫可以吃鸡蛋吗？）…"></textarea>
+
+        <!-- 拍病历/照片问 AI（视觉模型）-->
+        <div id="aiAskPhotoWrap" style="display:none;margin-bottom:8px;position:relative">
+          <img id="aiAskPhotoPrev" style="width:100%;max-height:180px;object-fit:contain;border-radius:var(--r12);background:var(--bg3);display:block" alt=""/>
+          <div onclick="clearAiAskPhoto()" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer">×</div>
+        </div>
+        <label for="aiAskPhotoInput" style="position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:38px;border-radius:var(--rf);border:1.5px dashed var(--line2);background:#fff;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;margin-bottom:10px">📷 传张病历 / 化验单 / 症状照片
+          <input type="file" id="aiAskPhotoInput" accept="image/*" onchange="handleAiAskPhoto(event)" style="position:absolute;inset:0;opacity:0;cursor:pointer"/>
+        </label>
+        <button class="ai-ask-btn" id="aiAskBtn" onclick="askAiVet()">🩺 获取建议</button>
         <div id="aiAskResult" class="ai-ask-result" style="display:none"></div>
         <div class="ai-ask-disclaimer">仅供参考，不能替代执业兽医诊断，情况严重请及时就医</div>
       </div>
@@ -1069,14 +1129,14 @@ body::before{display:none}
       </div>
       <div class="upgrade-nudge" onclick="openModal()">
         <div class="un-icon">✨</div>
-        <div style="flex:1"><div class="un-title">解锁无限记忆空间</div><div class="un-sub">无限照片 · 声音克隆 · 记忆备份 · 年度会员优先</div></div>
+        <div style="flex:1"><div class="un-title">解锁无限记忆空间</div><div class="un-sub">无限照片 · 声音留存 · 记忆备份 · 年度会员优先</div></div>
         <div class="un-arrow">›</div>
       </div>
       <div style="height:8px"></div>
       <div class="prof-sec">
         <div class="prof-row" onclick="openAccountProfile('me')" style="cursor:pointer"><div class="pr-em">📝</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">我的动态</div><div style="font-size:11px;color:var(--muted);margin-top:1px">查看我发布的所有宠物内容</div></div><div class="pr-arrow">›</div></div>
-        <div class="prof-row" onclick="switchScreen('sc-billing',4)" style="cursor:pointer"><div class="pr-em">💰</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">消费记账</div><div style="font-size:11px;color:var(--muted);margin-top:1px">粗食、玩具、医疗…多宠物分摊一目了然</div></div><div class="pr-arrow">›</div></div>
-        <div class="prof-row" onclick="importDataToBank()" style="cursor:pointer"><div class="pr-em">📲</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">一键导入数据</div><div style="font-size:11px;color:var(--muted);margin-top:1px">从微信相册 · 抖音宠物号 · 本地照片 · 自动存入记忆银行</div></div><div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--rf);background:var(--red-l);color:var(--red);margin-right:4px">NEW</div><div class="pr-arrow">›</div></div>
+        <div class="prof-row" onclick="switchScreen('sc-billing',4)" style="cursor:pointer"><div class="pr-em">💰</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">消费记账</div><div style="font-size:11px;color:var(--muted);margin-top:1px">粮食、玩具、医疗…多宠物分摊一目了然</div></div><div id="profBillSum" style="font-size:12px;font-weight:700;color:var(--ink);margin-right:6px"></div><div class="pr-arrow">›</div></div>
+        <div class="prof-row" onclick="importDataToBank()" style="cursor:pointer"><div class="pr-em">📲</div><div class="pr-lbl"><div style="font-size:13px;color:var(--ink)">导入本地照片</div><div style="font-size:11px;color:var(--muted);margin-top:1px">从手机相册选照片 · 直接存入记忆银行</div></div><div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--rf);background:var(--red-l);color:var(--red);margin-right:4px">NEW</div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="openReminderModal()" style="cursor:pointer"><div class="pr-em">🔔</div><div class="pr-lbl">提醒设置</div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="openPrivacyModal()" style="cursor:pointer"><div class="pr-em">🔒</div><div class="pr-lbl">隐私与安全</div><div class="pr-arrow">›</div></div>
         <div class="prof-row" onclick="openExportModal()" style="cursor:pointer"><div class="pr-em">📦</div><div class="pr-lbl">数据导出</div><div class="pr-arrow">›</div></div>
@@ -1204,7 +1264,7 @@ body::before{display:none}
       </div>
       <div class="clone-card">
         <div class="clone-head">
-          <div class="clone-title">🎙️ 声音克隆进度</div>
+          <div class="clone-title" onclick="openAudioVaultModal()" style="cursor:pointer">🎙️ 声音留存进度 <span style="font-size:11px;color:var(--muted2);font-weight:500">› 看全部</span></div>
           <div class="clone-badge" id="cloneBadge">2 / 8 段</div>
         </div>
         <div class="clone-bar-wrap"><div class="clone-bar-fill" id="cloneBarFill" style="width:25%"></div></div>
@@ -1305,8 +1365,8 @@ body::before{display:none}
   <div class="modal-bg" id="aiVideoModal" onclick="if(event.target===this)closeAiVideoModal()">
     <div class="modal-sheet" style="max-height:94vh;overflow-y:auto">
       <div class="modal-handle"></div>
-      <div class="modal-title">🎬 AI 生成宠物视频</div>
-      <div class="modal-sub">效果演示——后续接入真实图生视频能力</div>
+      <div class="modal-title">🎬 生成宠物影集</div>
+      <div class="modal-sub">选几张照片，合成一段带运镜和转场的小短片</div>
       <!-- 生成表单 -->
       <div id="aiVidForm" style="padding:0 16px 8px">
         <!-- 选择宠物 -->
@@ -1342,10 +1402,11 @@ body::before{display:none}
       </div>
       <!-- 生成结果 -->
       <div id="aiVidResult" class="aiv-video-result" style="display:none">
-        <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px">🎉 视频已生成！</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px">🎉 影集已生成！</div>
         <video id="aiVidVideoEl" controls playsinline style="width:100%;border-radius:var(--r12);background:#000;display:block;max-height:260px"></video>
-        <div style="font-size:10px;color:var(--muted2);margin-top:6px;text-align:center">以上为示例效果，实际效果以真实接入后为准</div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:6px;text-align:center">用你选的真实照片在本机合成，未上传任何第三方</div>
         <button class="modal-cta" style="margin-top:12px" onclick="saveAiVideo()">💾 保存到记忆银行</button>
+        <button onclick="downloadAiVideo()" style="width:100%;height:42px;border-radius:var(--r12);border:1.5px solid var(--line2);background:#fff;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;margin-top:8px">⬇️ 下载到本地</button>
         <button onclick="closeAiVideoModal()" style="width:100%;height:42px;border-radius:var(--r12);border:1.5px solid var(--line2);background:#fff;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;margin-top:8px">关闭</button>
       </div>
     </div>
@@ -1382,7 +1443,7 @@ body::before{display:none}
     <button class="bn-item on" onclick="switchScreen('sc-home',0)"><div class="bn-icon">🏠</div><div class="bn-lbl">首页</div></button>
     <button class="bn-item" onclick="switchScreen('sc-bank',1)"><div class="bn-icon">🏦</div><div class="bn-lbl">记忆银行</div></button>
     <button class="bn-item" onclick="openPublishModal()"><div class="bn-post">＋</div><div class="bn-lbl">发布</div></button>
-    <button class="bn-item" onclick="switchScreen('sc-health',3)"><div class="bn-icon">🏥</div><div class="bn-lbl">健康</div></button>
+    <button class="bn-item" onclick="switchScreen('sc-health',3)"><div class="bn-icon">🤖</div><div class="bn-lbl">问AI</div></button>
     <button class="bn-item" onclick="switchScreen('sc-profile',4)"><div class="bn-icon">😺</div><div class="bn-lbl">我的</div></button>
   </nav>
 </div>
@@ -1424,6 +1485,16 @@ body::before{display:none}
     <div class="modal-handle"></div>
     <div class="modal-title">发布宠物动态</div>
     <div style="padding:0 16px 16px">
+      <!-- 影集入口：创作类能力统一收在「发布」里，不再在顶栏另开浮标 -->
+      <div onclick="closePublishModal();setTimeout(openAiVideoModal,180)" style="display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:12px;border-radius:var(--r12);background:linear-gradient(135deg,#fff5f7,#fff0f5);border:1px solid rgba(255,36,66,.16);cursor:pointer">
+        <div style="font-size:20px">🎬</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--ink)">把照片做成影集</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">多张照片合成一段带运镜的小短片</div>
+        </div>
+        <div style="color:var(--muted2)">›</div>
+      </div>
+
       <!-- 选照片/视频（可多选） -->
       <div style="margin-bottom:12px">
         <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">配图 / 视频（可选，最多9个）</div>
@@ -1493,7 +1564,7 @@ body::before{display:none}
       </div>
     </div>
     <div style="padding:12px 16px">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-align:center">缩放</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-align:center">缩放（左缩小 · 右放大）</div>
       <input type="range" id="cropScaleSlider" min="50" max="300" value="100" style="width:100%;accent-color:var(--red)" oninput="onCropScale(this.value)"/>
     </div>
     <div style="display:flex;gap:10px;padding:0 16px 20px">
@@ -1515,12 +1586,12 @@ body::before{display:none}
     </div>
     <div class="plan-feats" id="planFeatsMonthly">
       <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">无限照片存储（免费版 100张上限）</div></div>
-      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">声音克隆优先处理（免费版排队）</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">声音样本优先处理（免费版排队）</div></div>
       <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">记忆银行云备份（手机丢失不丢数据）</div></div>
       <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">家人协作人数上限 5人 → 无限</div></div>
     </div>
     <div class="plan-feats" id="planFeatsFarewell" style="display:none">
-      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">基于已存声音样本，生成专属声音克隆</div></div>
+      <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">声音样本无限存储，永久保留</div></div>
       <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">生成告别纪念册（照片+声音+文字合集）</div></div>
       <div class="pf-row"><div class="pf-check">✓</div><div class="pf-txt">一次性付费，永久保存，不需要续费</div></div>
     </div>
@@ -1686,7 +1757,7 @@ body::before{display:none}
     <div class="modal-handle"></div>
     <div style="text-align:center;padding:0 16px">
       <div class="modal-title">🕊️ 为 <span id="farewellPetName3">小橘</span> 做一份纪念</div>
-      <div class="modal-sub">挑几张最喜欢的照片，说几句想说的话，AI 会帮你做成一段可以反复回看的纪念视频</div>
+      <div class="modal-sub">挑几张最喜欢的照片，说几句想说的话，帮你做成一段可以反复回看的纪念影集</div>
     </div>
     <div style="padding:0 16px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">📷 选择照片（已从记忆银行为你推荐）</div>
@@ -1704,18 +1775,21 @@ body::before{display:none}
       <textarea id="farewellEulogy" class="ai-ask-ta" style="margin-bottom:14px" placeholder="比如：谢谢你陪了我们三年，那些晒太阳的午后我都记得…"></textarea>
 
       <div id="farewellGenSection">
-        <button class="modal-cta" style="background:#8b5cf6;box-shadow:0 6px 20px rgba(139,92,246,.35);position:static;margin:0 0 8px" onclick="generateFarewellVideo()">✨ AI 生成纪念视频</button>
-        <div style="font-size:10px;color:var(--muted2);text-align:center;margin-bottom:10px">当前为效果演示（示例素材），后续会接入真实的图生视频能力，让每一份纪念都独一无二</div>
+        <button class="modal-cta" style="background:#8b5cf6;box-shadow:0 6px 20px rgba(139,92,246,.35);position:static;margin:0 0 8px" onclick="generateFarewellVideo()">✨ 生成纪念影集（快，约15秒）</button>
+        <button class="modal-cta" style="background:#0ea5e9;box-shadow:0 6px 20px rgba(14,165,233,.3);position:static;margin:0 0 8px" onclick="generateFarewellAiVideo()">🎥 让照片动起来（AI，约 2-3 分钟）</button>
+        <div style="font-size:10px;color:var(--muted2);text-align:center;margin-bottom:10px">影集：用它的真实照片在本机合成 · 让照片动起来：AI 把第一张照片生成一段真视频</div>
       </div>
       <div id="farewellGenProgress" style="display:none;text-align:center;padding:20px 0">
         <div style="font-size:32px;margin-bottom:10px">🕊️</div>
-        <div style="font-size:13px;color:var(--ink);font-weight:600;margin-bottom:6px" id="farewellGenText">AI 正在根据照片和文字生成纪念视频…</div>
+        <div style="font-size:13px;color:var(--ink);font-weight:600;margin-bottom:6px" id="farewellGenText">正在读取照片…</div>
         <div style="width:100%;height:6px;background:var(--bg3);border-radius:99px;overflow:hidden;margin-top:12px"><div id="farewellGenBar" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);border-radius:99px;transition:width .3s"></div></div>
       </div>
       <div id="farewellVideoResult" style="display:none">
-        <video id="farewellVideoEl" controls style="width:100%;border-radius:var(--r16);display:block;margin-bottom:12px;background:#000"></video>
-        <div style="font-size:12px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:14px">这段视频和它说过的所有话、留下的所有照片，会永久保存在记忆银行里，随时可以回来看看它 🕊️</div>
-        <button class="modal-cta" style="margin-bottom:10px" onclick="saveFarewellVideo()">保存到记忆银行</button>
+        <video id="farewellVideoEl" controls style="width:100%;border-radius:var(--r16);display:block;margin-bottom:8px;background:#000"></video>
+        <div id="farewellVideoInfo" style="font-size:11px;color:var(--muted2);text-align:center;margin-bottom:10px"></div>
+        <div style="font-size:12px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:14px">这段影集和它留下的所有照片，会永久保存在记忆银行里，随时可以回来看看它 🕊️</div>
+        <button class="modal-cta" style="margin-bottom:8px" onclick="saveFarewellVideo()">保存到记忆银行</button>
+        <button class="modal-cta" style="margin-bottom:10px;background:#fff;color:var(--ink);border:1.5px solid var(--line2);box-shadow:none" onclick="downloadFarewellVideo()">⬇️ 下载到本地</button>
       </div>
     </div>
     <div style="height:8px"></div>
@@ -1819,7 +1893,7 @@ body::before{display:none}
   <div class="modal-sheet" style="max-height:85vh">
     <div class="modal-handle"></div>
     <div class="modal-title">📲 一键导入照片</div>
-    <div class="modal-sub" id="importPhotosSub">正在从微信相册扫描…</div>
+    <div class="modal-sub" id="importPhotosSub">正在读取你选中的照片…</div>
     <div style="padding:0 16px">
       <div id="importScanState" style="text-align:center;padding:30px 0">
         <div style="font-size:36px;margin-bottom:12px">📱</div>
@@ -2159,6 +2233,29 @@ function savePetForm(){
     showToast(name+' 的档案建好啦，去存第一条记忆吧 🎉');
   }
   closePetForm();
+  // 同步到云端（fire-and-forget）
+  if (_petFormEditId && PETS[_petFormEditId]) {
+    const updatedPet = PETS[_petFormEditId];
+    const payload = { action: 'update', petId: updatedPet._cloudId || _petFormEditId,
+      name: updatedPet.name, emoji: updatedPet.emoji, species: updatedPet.species,
+      gender: updatedPet.gender, neutered: updatedPet.neutered, weight: updatedPet.weight,
+      allergies: updatedPet.allergies, birthday: updatedPet.birthday };
+    if (typeof callFn === 'function') callFn('pet', payload).catch(e => console.warn('[savePetForm] cloud update failed', e));
+  } else {
+    // 新建宠物
+    const newPetKeys = Object.keys(PETS);
+    const newId = newPetKeys[newPetKeys.length - 1];
+    const newPet = PETS[newId];
+    if (newPet && typeof callFn === 'function') {
+      const payload = { action: 'create', name: newPet.name, emoji: newPet.emoji,
+        species: newPet.species, gender: newPet.gender, neutered: newPet.neutered,
+        weight: newPet.weight, allergies: newPet.allergies, birthday: newPet.birthday,
+        kind: newPet.kind };
+      callFn('pet', payload).then(function(res) {
+        if (res && res.petId) { newPet._cloudId = res.petId; newPet.id = res.petId; }
+      }).catch(e => console.warn('[savePetForm] cloud create failed', e));
+    }
+  }
   if(typeof saveState==='function')saveState();
   renderProfPetCards();
   syncMemCountEverywhere();
@@ -2634,6 +2731,8 @@ function closeDeletePost(){ document.getElementById('deletePostModal').classList
 function confirmDeletePost(){
   const idx=FEED_POSTS.findIndex(x=>x.id===curFeedPostId);
   if(idx<0){ closeDeletePost(); return; }
+  const post = FEED_POSTS[idx];
+  const cloudId = post && (post._cloudId || post.id);
   FEED_POSTS.splice(idx,1);
   closeDeletePost();
   closePostDetail();
@@ -2641,6 +2740,11 @@ function confirmDeletePost(){
   renderDiscoverFeed();
   renderFollowingFeed();
   showToast('动态已删除');
+  // 异步同步到云端
+  if (cloudId && typeof callFn === 'function') {
+    callFn('post', { action: 'delete', postId: cloudId })
+      .catch(e => console.warn('[confirmDeletePost] cloud delete failed', e));
+  }
 }
 function scrollToDetailComments(){
   const el=document.getElementById('postDetailComments');if(!el)return;
@@ -2767,8 +2871,47 @@ function openBillDetail(idx){
 }
 function closeBillDetail(){document.getElementById('billDetailModal').classList.remove('on');_curBillIdx=null;}
 function deleteBillItem(){
+  const idx=_curBillIdx;
   closeBillDetail();
+  if(idx===null||idx===undefined){ showToast('没有选中记录'); return; }
+  const list=document.getElementById('billList');
+  if(!list){ showToast('删除失败，请刷新重试'); return; }
+  const items=[...list.querySelectorAll('.bill-item')];
+  const node=items[idx];
+  if(!node){ showToast('记录不存在或已删除'); return; }
+  // 真删：移除 DOM + 同步数据源 + 重建索引 + 重算总额
+  node.remove();
+  if(typeof STATIC_BILLS!=='undefined' && Array.isArray(STATIC_BILLS)) STATIC_BILLS.splice(idx,1);
+  [...list.querySelectorAll('.bill-item')].forEach((el,i)=>el.setAttribute('onclick','openBillDetail('+i+')'));
+  recalcBillTotal();
+  try{ saveState&&saveState(); }catch(e){}
   showToast('已删除这笔记录 🗑️');
+}
+
+// 按当前可见的账单重算本月总额（删除/新增/筛选后都调这个）
+function recalcBillTotal(){
+  let total=0;
+  document.querySelectorAll('#billList .bill-item').forEach(item=>{
+    if(item.style.display==='none') return;
+    const el=item.querySelector('.bill-amount');
+    if(!el) return;
+    total+=parseFloat(el.textContent.replace(/[^0-9.]/g,''))||0;
+  });
+  const t=document.getElementById('billMonthTotal');
+  if(t) t.textContent='¥ '+total.toFixed(2);
+  syncProfBillSum();
+}
+
+// 个人页「消费记账」右侧直显本月总额
+function syncProfBillSum(){
+  const el=document.getElementById('profBillSum');
+  if(!el) return;
+  let total=0;
+  document.querySelectorAll('#billList .bill-item').forEach(item=>{
+    const a=item.querySelector('.bill-amount');
+    if(a) total+=parseFloat(a.textContent.replace(/[^0-9.]/g,''))||0;
+  });
+  el.textContent = total>0 ? ('本月 ¥'+total.toFixed(0)) : '';
 }
 
 // ── pstat 点击 ──
@@ -2795,13 +2938,50 @@ function moreActionShare(){
     navigator.clipboard.writeText(link).then(()=>showToast('宠物档案链接已复制 🔗')).catch(()=>showToast('分享链接：'+link));
   } else { showToast('分享链接：'+link); }
 }
+// 举报 / 反馈：真实记录到本地队列，后端可用时自动上报（不再是只弹 toast）
+const FEEDBACK_KEY='pawmemory_feedback_queue';
+function _pushFeedback(rec){
+  let q=[];
+  try{ q=JSON.parse(localStorage.getItem(FEEDBACK_KEY)||'[]'); }catch(e){ q=[]; }
+  q.push(rec);
+  try{ localStorage.setItem(FEEDBACK_KEY, JSON.stringify(q.slice(-200))); }catch(e){}
+  // 后端已部署则尝试上报，失败不影响用户（留在本地队列里）
+  try{
+    if(typeof callFn==='function' && getSessionToken && getSessionToken()){
+      callFn('interact',{action:'feedback',payload:rec}).then(()=>{
+        try{
+          const cur=JSON.parse(localStorage.getItem(FEEDBACK_KEY)||'[]');
+          localStorage.setItem(FEEDBACK_KEY, JSON.stringify(cur.filter(x=>x.id!==rec.id)));
+        }catch(e){}
+      }).catch(()=>{});
+    }
+  }catch(e){}
+  return q.length;
+}
+function _newFeedbackId(){ return Date.now()+'_'+Math.random().toString(36).slice(2,8); }
+
 function moreActionReport(){
   closeMoreActionsModal();
+  const reason=prompt('请简要说明举报原因（违法违规/不实信息/侵权等）：');
+  if(reason===null) return;                 // 用户取消
+  const txt=(reason||'').trim();
+  if(!txt){ showToast('请填写举报原因'); return; }
+  const rec={ id:_newFeedbackId(), type:'report', content:txt.slice(0,500),
+              target:(typeof curDetailPostId!=='undefined'?curDetailPostId:null),
+              at:new Date().toISOString() };
+  _pushFeedback(rec);
   showToast('举报已提交，我们会尽快处理 🛡️');
 }
 function moreActionFeedback(){
   closeMoreActionsModal();
-  showToast('感谢反馈！你的意见会让毛记忆变得更好 💛');
+  const msg=prompt('说说你遇到的问题或建议：');
+  if(msg===null) return;
+  const txt=(msg||'').trim();
+  if(!txt){ showToast('内容不能为空'); return; }
+  const rec={ id:_newFeedbackId(), type:'feedback', content:txt.slice(0,1000),
+              ua:navigator.userAgent.slice(0,120), at:new Date().toISOString() };
+  const n=_pushFeedback(rec);
+  showToast('收到你的反馈了，谢谢 💛（已记录 '+n+' 条）');
 }
 
 function doSearch(){
@@ -3178,6 +3358,17 @@ function saveMemoryEdit(){
   if(desc) item.desc=desc;
   item.mood=window._memEditCurrentMood||item.mood||'';
   saveState();
+  // 同步到云端（有 _memoryId 说明是云端记录）
+  if(item._memoryId && typeof callFn==='function'){
+    const fids=[];
+    if(item.thumb && String(item.thumb).startsWith('cloud://')) fids.push(item.thumb);
+    (item.photos||[]).forEach(function(u){ if(String(u).startsWith('cloud://')) fids.push(u); });
+    callFn('memory', {
+      action:'update', memoryId:item._memoryId,
+      title:item.title, desc:item.desc, mood:item.mood,
+      fileIds: fids
+    }).catch(function(e){ console.warn('[memory/update]', e); });
+  }
   closeMemoryEdit();
   // Re-open detail to reflect changes
   openMemoryDetail(petId, tlIdx);
@@ -3324,39 +3515,57 @@ function selectAiVidStyle(el,style){
   document.querySelectorAll('.aiv-style-btn').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
 }
-function startAiVidGen(){
+// 宠物影集：用用户选的真实照片现场合成（与纪念影集共用引擎）
+// 之前是播 mixkit 素材片冒充 AI 生成，已改掉
+let _aiVidBlob=null;
+
+async function startAiVidGen(){
+  const pet=PETS[_aiVidPetId];
+  const srcs=(_aiVidSelectedPhotos||[]).filter(Boolean).slice(0,8);
+  if(!srcs.length){ showToast('先选几张照片'); return; }
+
   document.getElementById('aiVidForm').style.display='none';
   document.getElementById('aiVidProgress').style.display='block';
   const bar=document.getElementById('aiVidGenBar');
   const text=document.getElementById('aiVidProgressText');
-  const steps=['AI 正在分析照片特征…','正在生成动态帧序列…','正在渲染视频效果…','最后润色中…'];
-  let pct=0,stepIdx=0;
-  const timer=setInterval(()=>{
-    pct+=6;
-    bar.style.width=Math.min(pct,100)+'%';
-    if(pct>25*stepIdx+10&&stepIdx<steps.length-1){stepIdx++;text.textContent=steps[stepIdx];}
-    if(pct>=100){
-      clearInterval(timer);
-      setTimeout(()=>{
-        document.getElementById('aiVidProgress').style.display='none';
-        const pet=PETS[_aiVidPetId];
-        const isDog=pet&&/犬|狗|柯基|金毛|柴犬/.test(pet.species||'');
-        const videoEl=document.getElementById('aiVidVideoEl');
-        videoEl.src=isDog
-          ?'https://assets.mixkit.co/videos/4908/4908-720.mp4'
-          :'https://assets.mixkit.co/videos/1779/1779-720.mp4';
-        videoEl.poster=_aiVidSelectedPhotos[0]||'';
-        document.getElementById('aiVidResult').style.display='block';
-      },400);
-    }
-  },200);
+  bar.style.width='0%'; text.textContent='正在读取照片…';
+
+  const styleNames={cartoon:'可爱卡通',real:'真实动态',retro:'复古胶片',dream:'梦幻'};
+  const res=await _renderPhotoFilm({
+    srcs,
+    title:(pet&&pet.name)||'我家宝贝',
+    subtitle:styleNames[_aiVidStyle]||'',
+    style:_aiVidStyle||'cartoon',
+    onProgress:(p,msg)=>{ bar.style.width=Math.round(p)+'%'; if(msg) text.textContent=msg; },
+  });
+
+  if(!res.ok){
+    document.getElementById('aiVidProgress').style.display='none';
+    document.getElementById('aiVidForm').style.display='block';
+    showToast(res.msg||'合成失败，请重试');
+    return;
+  }
+  _aiVidBlob=res.blob;
+  const videoEl=document.getElementById('aiVidVideoEl');
+  videoEl.src=URL.createObjectURL(res.blob);
+  videoEl.poster=srcs[0]||'';
+  document.getElementById('aiVidProgress').style.display='none';
+  document.getElementById('aiVidResult').style.display='block';
+  showToast('影集已生成 🎬');
+}
+
+function downloadAiVideo(){
+  if(!_aiVidBlob){ showToast('请先生成影集'); return; }
+  const pet=PETS[_aiVidPetId];
+  const ext=(_aiVidBlob.type||'').includes('mp4')?'mp4':'webm';
+  _downloadBlob(_aiVidBlob, ((pet&&pet.name)||'宠物')+'-影集.'+ext);
 }
 function saveAiVideo(){
   const pet=PETS[_aiVidPetId];if(!pet)return;
   const pet_name=pet.name;
   const styleNames={cartoon:'可爱卡通',real:'真实动态',retro:'复古胶片',dream:'梦幻'};
-  pet.timeline.unshift({icon:'🎬',date:'刚刚',title:pet_name+'的AI生成视频',
-    desc:`风格：${styleNames[_aiVidStyle]||''}——AI 根据你的照片生成，会永久保存在记忆银行`});
+  pet.timeline.unshift({icon:'🎬',date:'刚刚',title:pet_name+'的影集',
+    desc:`风格：${styleNames[_aiVidStyle]||''}——用你选的真实照片合成，保存在记忆银行`});
   closeAiVideoModal();
   if(currentBankPetId===_aiVidPetId){renderBankTimeline();}
   saveState();
@@ -3395,7 +3604,9 @@ function confirmCustomVoice(){
 // 从记忆银行直接跳到陪伴页录音（原来只弹提示不带路，属于死按钮）
 function goRecordPetVoice(){
   currentPetId = currentBankPetId || currentPetId;
-  switchScreen('sc-pet', 2);
+  currentHealthPetId = currentPetId;
+  switchScreen('sc-health', 3);
+  setAiMode('chat');
   setTimeout(function(){
     var panel = document.getElementById('recordPanel');
     if (panel && panel.style.display !== 'block' && typeof toggleRecordPanel === 'function') {
@@ -3463,16 +3674,16 @@ function switchScreen(id,navIdx){
   document.querySelectorAll('.bn-item').forEach((b,i)=>b.classList.toggle('on',i===navIdx));
   curNav=navIdx;
   // hide bnav inside pet screen for immersion, show for health/timeline/profile
-  document.getElementById('mainBnav').style.display=(id==='sc-pet')?'none':'flex';
+  document.getElementById('mainBnav').style.display='flex';
   if(id==='sc-health'){renderHealthPage();}
   if(id==='sc-bank'){renderBankPage();}
   if(id==='sc-timeline'){renderTimelinePage();}
-  if(id==='sc-pet'){renderPetTopBar();}
+  if(id==='sc-health'){renderPetTopBar();}
   if(id==='sc-album'){renderAlbumPage();}
   if(id==='sc-profile'){renderProfPetCards();renderUserProfileDisplay();syncMemCountEverywhere();}
 }
 function renderPetTopBar(){
-  const pet=PETS[currentPetId];if(!pet)return;
+  const pet=petOr(currentPetId);if(!pet)return;
   const ava=document.getElementById('petTopAva');
   const name=document.getElementById('petTopName');
   if(ava){ava.textContent=pet.emoji;ava.style.background=pet.avaBg;}
@@ -3631,6 +3842,12 @@ function submitAddBill(){
   const totalEl=document.getElementById('billMonthTotal');
   const cur=parseFloat(totalEl.textContent.replace(/[^0-9.]/g,''))||0;
   totalEl.textContent='¥ '+(cur+amount).toFixed(2);
+  [...list.querySelectorAll('.bill-item')].forEach((el,i)=>el.setAttribute('onclick','openBillDetail('+i+')'));
+  if(typeof STATIC_BILLS!=='undefined'&&Array.isArray(STATIC_BILLS)){
+    STATIC_BILLS.unshift({icon:billSelectedCat.icon,bg:billSelectedCat.bg,name:name,sub:dateStr+' 刚刚记录',
+      amount:amount.toFixed(2),cat:billSelectedCat.label,pet:pet.name,note:'手动记一笔'});
+  }
+  syncProfBillSum();
   closeAddBill();
   showToast('已为'+pet.name+'记一笔 ¥'+amount.toFixed(2)+' 💰');
 }
@@ -3648,7 +3865,9 @@ function copyHelpWechat(){
 }
 
 // ── 高德地图接入（真实POI，渐进增强：有 key 用真数据，没 key 保留现有示例数据不报错）──
-const AMAP_KEY = 'fc8dbcf035ed9e6809754580988af7e8'; // 高德 Web服务API Key（已配置，正常工作中）
+// 高德 key 已移到云函数 map，前端不再持有（之前硬编码在这里，F12 就能扒走盗刷）
+// 后端未部署时附近页自动降级为示例数据，不报错
+const AMAP_VIA_CLOUD = true;
 let userGeo = null; // {lng, lat}
 const DEFAULT_GEO = { lng: 121.473701, lat: 31.230416 }; // 默认坐标（上海人民广场），未授权定位时地图仍显示真实街景，而不是空白/假图
 let mapZoomLevel = 16;
@@ -3677,17 +3896,21 @@ function renderFriendPins(){
 
 // 渲染高德静态地图真实图片：用高德官方 staticmap 接口直接生成带真实街道/建筑的图片，
 // 商店/医院图钉由高德服务端真实绘制在图上（markers 参数），不再是前端画的假SVG道路网
-function renderAmapStaticMap(){
+async function renderAmapStaticMap(){
   const img=document.getElementById('amapMapImg');
   if(!img)return;
   const g=geo();
-  if(!AMAP_KEY){ img.style.display='none'; return; }
-  let markers = `large,0xEE2233,M:${g.lng},${g.lat}`; // 我的位置（红色M点）
-  shopPOIs.slice(0,4).forEach((p,i)=>{ markers += `|mid,0xF59E0B,${String.fromCharCode(65+i)}:${p.lng},${p.lat}`; });
-  hospitalPOIs.slice(0,4).forEach((p,i)=>{ markers += `|mid,0x10B981,${String.fromCharCode(69+i)}:${p.lng},${p.lat}`; });
-  const url = `https://restapi.amap.com/v3/staticmap?location=${g.lng},${g.lat}&zoom=${mapZoomLevel}&size=750*600&scale=2&markers=${encodeURIComponent(markers)}&key=${AMAP_KEY}`;
-  img.src = url;
-  img.style.display='block';
+  const markers=[{lng:g.lng,lat:g.lat}]
+    .concat(shopPOIs.slice(0,4).map(p=>({lng:p.lng,lat:p.lat})))
+    .concat(hospitalPOIs.slice(0,4).map(p=>({lng:p.lng,lat:p.lat})));
+  try{
+    const d=await callFn('map',{action:'static',lng:g.lng,lat:g.lat,zoom:mapZoomLevel,size:'750*600',markers});
+    if(d&&d.url){ img.src=d.url; img.style.display='block'; }
+    else img.style.display='none';
+  }catch(e){
+    console.log('[附近页] 地图服务不可用，隐藏地图',e);
+    img.style.display='none';
+  }
 }
 function mapZoom(delta){
   mapZoomLevel = Math.max(10, Math.min(19, mapZoomLevel+delta));
@@ -3709,8 +3932,8 @@ function initNearbyReal(){
   const btn=document.getElementById('geoStatusBtn');
   renderAmapStaticMap(); // 先用默认坐标渲染一版真实地图，不等定位结果，避免地图长时间空白
   renderFriendPins();
-  if(!AMAP_KEY){
-    console.log('[附近页] 未配置 AMAP_KEY，当前为示例数据。在 index.html 搜索 AMAP_KEY 变量填入真实key即可接入高德地图真实POI。');
+  if(!AMAP_VIA_CLOUD){
+    console.log('[附近页] 地图代理未启用，当前为示例数据。');
     return;
   }
   if(!navigator.geolocation){
@@ -3752,22 +3975,17 @@ function initNearbyReal(){
 async function fetchNearbyPOI(keyword, listElId, tagElId){
   try{
     const g=geo();
-    const url = `https://restapi.amap.com/v3/place/around?key=${AMAP_KEY}&location=${g.lng},${g.lat}&keywords=${encodeURIComponent(keyword)}&radius=5000&offset=6&page=1&extensions=all`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if(data.status!=='1' || !data.pois || data.pois.length===0){
-      console.log('[附近页] 高德返回无数据或失败，保留示例数据', data);
+    const d = await callFn('map',{action:'around',lng:g.lng,lat:g.lat,keyword,radius:5000});
+    if(!d || d.degraded || !Array.isArray(d.pois) || !d.pois.length){
+      console.log('[附近页] 无真实数据，保留示例数据', d && d.msg);
       return;
     }
     const listEl = document.getElementById(listElId);
     const icon = keyword==='宠物店' ? '🏪' : '🏥';
     const bg = keyword==='宠物店' ? '#fef3c7' : '#d1fae5';
     const actionColor = keyword==='宠物店' ? '#b45309' : '#047857';
-    const actionText = keyword==='宠物店' ? '导航' : '导航';
-    const pois = data.pois.slice(0,6).map(poi=>{
-      const [lng,lat] = (poi.location||'0,0').split(',').map(Number);
-      return { name: poi.name, address: poi.address||'地址未提供', distance: poi.distance, lng, lat };
-    });
+    const actionText = '导航';
+    const pois = d.pois.slice(0,6);
     if(keyword==='宠物店') shopPOIs = pois; else hospitalPOIs = pois;
     listEl.innerHTML = pois.map(poi=>{
       const distKm = poi.distance ? (poi.distance/1000).toFixed(1) : '?';
@@ -3794,34 +4012,159 @@ async function fetchNearbyPOI(keyword, listElId, tagElId){
 // ── CHAT ──
 const REPLIES=['喵～我在呢，你今天怎么样？🐾','嗯嗯，我听到你了，你要多吃点饭哦🍚','感觉你今天有点累，要不要先休息一下？😴','我最喜欢你陪我晒太阳了，什么时候再一起？☀️','你知道吗，我每天都在等你回来，听到开门声就跑过去 🏃'];
 let ri=0;
-function sendChat(){
-  const inp=document.getElementById('chatInput');
-  const txt=(inp.value||'').trim();if(!txt)return;
-  const msgs=document.getElementById('chatMsgs');
-  const typing=document.getElementById('typingMsg');
-  const urow=document.createElement('div');urow.className='msg me';
-  urow.innerHTML=`<div class="msg-me-ava">我</div><div class="bubble">${txt}</div>`;
-  msgs.insertBefore(urow,typing);inp.value='';msgs.scrollTop=msgs.scrollHeight;
-  setTimeout(()=>{
-    typing.style.display='none';
-    const arow=document.createElement('div');arow.className='msg';
-    arow.innerHTML=`<div class="msg-ava">🐱</div><div class="bubble">${REPLIES[ri++%REPLIES.length]}</div>`;
-    msgs.insertBefore(arow,typing);typing.style.display='';msgs.scrollTop=msgs.scrollHeight;
-    if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(REPLIES[(ri-1)%REPLIES.length]);u.lang='zh-CN';u.rate=.95;window.speechSynthesis.speak(u);}
-  },1400);
+// ── 问AI 页模式切换：问医生（专业建议）/ 陪它聊天（情感陪伴）──
+let _aiMode='vet';
+function setAiMode(mode){
+  _aiMode = (mode==='chat') ? 'chat' : 'vet';
+  const vetBtn=document.getElementById('aiModeVetBtn');
+  const chatBtn=document.getElementById('aiModeChatBtn');
+  const vetBox=document.getElementById('aiModeVet');
+  const chatBox=document.getElementById('aiModeChat');
+  if(!vetBtn||!chatBtn||!vetBox||!chatBox) return;
+  const isChat=_aiMode==='chat';
+  vetBtn.classList.toggle('on',!isChat);
+  chatBtn.classList.toggle('on',isChat);
+  vetBox.style.display = isChat ? 'none' : '';
+  chatBox.style.display = isChat ? 'flex' : 'none';
+  const sub=document.getElementById('healthTopSub');
+  const pet=PETS[currentHealthPetId];
+  if(sub&&pet) sub.textContent = isChat
+    ? ('跟'+pet.name+'说说话，它会用自己的语气回你')
+    : (pet.name+'的养护、症状、病历，都可以问');
+  if(isChat){
+    if(typeof renderPetTopBar==='function') renderPetTopBar();
+    const m=document.getElementById('chatMsgs');
+    if(m) setTimeout(()=>{ m.scrollTop=m.scrollHeight; },60);
+  }
 }
 
-// ── MIC ──
-let recog=null,micOn=false;
-function toggleMic(){
+// 聊天：接真实大模型，用宠物人设回复（之前是写死的 REPLIES 数组循环）
+let _chatHistory=[];
+async function sendChat(){
+  const inp=document.getElementById('chatInput');
+  const txt=(inp.value||'').trim(); if(!txt) return;
+  const msgs=document.getElementById('chatMsgs');
+  const typing=document.getElementById('typingMsg');
+  const pet=petOr(currentHealthPetId)||petOr(currentPetId);
+  if(!pet){ showToast('请先给毛孩子建个档案 🐾'); return; }
+
+  const urow=document.createElement('div'); urow.className='msg me';
+  urow.innerHTML='<div class="msg-me-ava">我</div><div class="bubble"></div>';
+  urow.querySelector('.bubble').textContent=txt;
+  msgs.insertBefore(urow,typing);
+  inp.value=''; typing.style.display=''; msgs.scrollTop=msgs.scrollHeight;
+
+  _chatHistory.push({role:'user',content:txt});
+  if(_chatHistory.length>12) _chatHistory=_chatHistory.slice(-12);
+
+  let reply='';
+  try{
+    const d=await callFn('ai',{ action:'chat', history:_chatHistory,
+      pet:{ name:pet&&pet.name, species:pet&&pet.species, age:pet&&pet.age,
+            gender:pet&&pet.gender, neutered:pet&&pet.neutered,
+            mood:(pet&&pet.daily&&pet.daily.mood)||'' } });
+    reply=(d&&d.content)||'';
+  }catch(e){
+    console.warn('[sendChat]',e);
+  }
+  if(!reply){
+    reply=REPLIES[ri++%REPLIES.length];   // 模型不可用时的兵底
+  }else{
+    _chatHistory.push({role:'assistant',content:reply});
+  }
+
+  typing.style.display='none';
+  const arow=document.createElement('div'); arow.className='msg';
+  const emoji=(pet&&pet.emoji)||'🐱';
+  arow.innerHTML='<div class="msg-ava"></div><div class="bubble"></div>';
+  arow.querySelector('.msg-ava').textContent=emoji;
+  arow.querySelector('.bubble').textContent=reply;
+  msgs.insertBefore(arow,typing);
+  typing.style.display=''; msgs.scrollTop=msgs.scrollHeight;
+}
+
+// ── MIC：按一下开始录音，再按停止并转文字（真实 ASR，不再依赖浏览器语音识别）──
+let micOn=false, _micRec=null, _micChunks=[], _micStream=null;
+
+function _micReset(btn){
+  micOn=false;
+  if(btn){ btn.textContent='🎤'; btn.style.background=''; btn.disabled=false; }
+  try{ if(_micStream) _micStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+  _micStream=null; _micRec=null; _micChunks=[];
+}
+
+async function toggleMic(){
   const btn=document.getElementById('micBtn');
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){showToast('当前浏览器不支持语音识别');return;}
-  if(micOn){recog&&recog.stop();micOn=false;btn.textContent='🎤';btn.style.background='';return;}
-  recog=new SR();recog.lang='zh-CN';recog.continuous=false;recog.interimResults=false;
-  recog.onresult=e=>{document.getElementById('chatInput').value=e.results[0][0].transcript;micOn=false;btn.textContent='🎤';btn.style.background='';}
-  recog.onerror=()=>{micOn=false;btn.textContent='🎤';btn.style.background='';}
-  recog.start();micOn=true;btn.textContent='🔴';btn.style.background='#fee2e2';
+
+  // 停止录音 → 转文字
+  if(micOn){
+    if(_micRec && _micRec.state!=='inactive'){
+      btn.textContent='⏳'; btn.disabled=true;
+      _micRec.stop();
+    } else { _micReset(btn); }
+    return;
+  }
+
+  // 录音需要安全环境（https 或 localhost），否则浏览器直接禁掉麦克风
+  if(!window.isSecureContext){
+    showToast('当前是 http 访问，浏览器禁止使用麦克风（需 https）🎙️');
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showToast('当前浏览器不支持录音');
+    return;
+  }
+
+  try{
+    _micStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){
+    console.warn('[mic]',e);
+    showToast(e && e.name==='NotAllowedError' ? '麦克风权限被拒绝，请在浏览器设置里允许' : '拿不到麦克风：'+(e.message||''));
+    return;
+  }
+
+  let mime='';
+  ['audio/webm;codecs=opus','audio/webm','audio/mp4'].forEach(m=>{
+    if(!mime && window.MediaRecorder && MediaRecorder.isTypeSupported(m)) mime=m;
+  });
+  try{
+    _micRec = mime ? new MediaRecorder(_micStream,{mimeType:mime}) : new MediaRecorder(_micStream);
+  }catch(e){ showToast('录音初始化失败'); _micReset(btn); return; }
+
+  _micChunks=[];
+  _micRec.ondataavailable=e=>{ if(e.data&&e.data.size) _micChunks.push(e.data); };
+  _micRec.onstop=async ()=>{
+    const blob=new Blob(_micChunks,{type:_micRec.mimeType||'audio/webm'});
+    try{ if(_micStream) _micStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+    _micStream=null;
+    if(!blob.size){ showToast('没录到声音'); _micReset(btn); return; }
+    try{
+      const dataUrl=await new Promise((res,rej)=>{
+        const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(blob);
+      });
+      const d=await callFn('ai',{action:'asr',audioBase64:dataUrl});
+      if(d && d.text){
+        const inp=document.getElementById('chatInput');
+        inp.value=(inp.value?inp.value+' ':'')+d.text;
+        inp.focus();
+        showToast('已转成文字 ✓');
+      }else{
+        showToast((d&&d.msg)||'没识别出内容，再试一次');
+      }
+    }catch(e){
+      console.error('[mic/asr]',e);
+      showToast(errText(e,'语音识别失败'));
+    }
+    _micReset(btn);
+  };
+
+  _micRec.start();
+  micOn=true;
+  btn.textContent='⏹️';
+  btn.style.background='#fee2e2';
+  showToast('开始录音，再点一下结束 🎙️');
+  // 最长 60 秒自动停
+  setTimeout(()=>{ if(micOn && _micRec && _micRec.state!=='inactive'){ btn.textContent='⏳'; btn.disabled=true; _micRec.stop(); } },60000);
 }
 
 // ── TRANSLATION（合并进聊天时间线）──
@@ -3847,7 +4190,7 @@ function translateAndInsert(){
   showToast('这只是娱乐翻译，想真正存它的声音可以点"录TA的声音" 🎙️');
 }
 
-// ── 真实录音 / 上传 ── 真正驱动声音克隆进度的入口
+// ── 真实录音 / 上传 ── 真正驱动声音留存进度的入口
 function toggleRecordPanel(){
   const p=document.getElementById('recordPanel');
   const btn=document.getElementById('recordBtn');
@@ -3925,7 +4268,7 @@ function insertRealAudioMessage(url,durationSec,source){
   toggleRecordPanel();
   updateBankCounts('audio');
   prependBankTimeline('🎙️','新声音样本 · '+source,'时长 '+durationSec+' 秒，已存入声音记忆库');
-  showToast('已存入真实声音样本，声音克隆进度+1 🎙️');
+  showToast('已存入真实声音样本，声音留存进度+1 🎙️');
   // Task 4: If recording (not upload), offer to set as custom voice after a short delay
   if(source==='录音'){
     setTimeout(()=>promptSetCustomVoice(currentPetId||currentBankPetId,url),1200);
@@ -3964,27 +4307,79 @@ function closeInviteModal(){document.getElementById('inviteModal').classList.rem
 function closeHeroBgPickModal(){document.getElementById('heroBgPickModal').classList.remove('on');}
 
 // 声音库弹窗
-function openAudioVaultModal(){
-  const pet=PETS[currentBankPetId];if(!pet)return;
-  const audioItems=(pet.timeline||[]).filter(t=>t.type==='audio'||t.audioUrl||t.icon==='🎙️'||t.icon==='🎤'||t.icon==='🎵');
-  const box=document.getElementById('audioVaultList');
-  document.getElementById('audioVaultTitle').textContent=pet.name+'的声音库';
-  if(audioItems.length===0){
-    box.innerHTML='<div style="text-align:center;padding:24px 0;color:var(--muted2);font-size:12px">还没有声音记录，在记忆时间线存入声音即可出现在这里</div>';
-  } else {
-    window._audioVaultCache = audioItems;
-    box.innerHTML=audioItems.map((t,i)=>`<div style="padding:10px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">
-      <div style="font-size:20px">${t.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--ink)">${t.title}</div>
-        <div style="font-size:11px;color:var(--muted)">${t.date}</div>
-      </div>
-      <button onclick="playAudioVaultItem(this,${i})" style="padding:4px 10px;border-radius:var(--rf);border:1px solid var(--red);background:var(--red-l);color:var(--red);font-size:12px;cursor:pointer">▶️ 播放</button>
-    </div>`).join('');
-  }
+// 声音库二级页：列出每一段已存声音，可逐条播放 / 下载 / 删除
+// filterLabel：从「声音留存进度」的标签点进来时，默认定位到那一类
+function openAudioVaultModal(filterLabel){
+  const pet=PETS[currentBankPetId]||PETS[currentPetId];if(!pet)return;
+  window._audioVaultFilter = (typeof filterLabel==='string' && filterLabel) ? filterLabel : '';
+  renderAudioVault();
   document.getElementById('audioVaultModal').classList.add('on');
 }
-function closeAudioVaultModal(){document.getElementById('audioVaultModal').classList.remove('on');}
+
+function renderAudioVault(){
+  const pet=PETS[currentBankPetId]||PETS[currentPetId];if(!pet)return;
+  const all=(pet.timeline||[]).filter(t=>t.type==='audio'||t.audioUrl||t.icon==='🎙️'||t.icon==='🎤'||t.icon==='🎵');
+  const box=document.getElementById('audioVaultList');
+  const filter=window._audioVaultFilter||'';
+  document.getElementById('audioVaultTitle').textContent=pet.name+'的声音库';
+
+  // 按声音类型分组的筛选条（来自进度标签的 8 类）
+  const cats=(pet.clone&&pet.clone.segs?pet.clone.segs:[]).map(s=>s.replace(/^[✓⬜]\s*/,''));
+  const chips=['<div class="mchip'+(filter?'':' on')+'" onclick="setAudioVaultFilter(\'\')">全部 '+all.length+'</div>']
+    .concat(cats.map(c=>{
+      const n=all.filter(t=>((t.title||'')+(t.desc||'')).indexOf(c)>=0).length;
+      return '<div class="mchip'+(filter===c?' on':'')+'" onclick="setAudioVaultFilter(\''+c.replace(/'/g,"\\'")+'\')">'+c+(n?' '+n:'')+'</div>';
+    })).join('');
+
+  const items = filter ? all.filter(t=>((t.title||'')+(t.desc||'')).indexOf(filter)>=0) : all;
+  window._audioVaultCache = items;
+
+  let listHtml;
+  if(items.length===0){
+    listHtml='<div style="text-align:center;padding:28px 0;color:var(--muted2);font-size:12px">'+
+      (filter?('还没有「'+filter+'」这类声音'):'还没有存入任何声音')+
+      '<div style="margin-top:12px"><button onclick="closeAudioVaultModal();goRecordPetVoice()" style="height:34px;padding:0 16px;border-radius:99px;border:none;background:var(--red);color:#fff;font-size:12px;font-weight:700;cursor:pointer">🎙️ 去录一段</button></div></div>';
+  }else{
+    listHtml=items.map((t,i)=>{
+      const playable=!!t.audioUrl;
+      return '<div style="padding:12px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">'+
+        '<div style="width:36px;height:36px;border-radius:50%;background:var(--red-l);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">'+(t.icon||'🎙️')+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+_escapeHtml(t.title||'未命名录音')+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+_escapeHtml(t.date||'')+(t.duration?(' · '+_escapeHtml(t.duration)):'')+(playable?'':' · 无音频文件')+'</div>'+
+        '</div>'+
+        (playable
+          ? '<button onclick="playAudioVaultItem(this,'+i+')" style="padding:6px 12px;border-radius:var(--rf);border:1px solid var(--red);background:var(--red-l);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0">▶️ 播放</button>'+
+            '<button onclick="downloadAudioVaultItem('+i+')" title="下载" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--line2);background:#fff;cursor:pointer;flex-shrink:0">⬇️</button>'
+          : '<span style="font-size:11px;color:var(--muted2);flex-shrink:0">仅记录</span>')+
+      '</div>';
+    }).join('');
+  }
+
+  box.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 12px;position:sticky;top:0;background:#fff;z-index:2">'+chips+'</div>'+listHtml;
+}
+
+function setAudioVaultFilter(label){
+  window._audioVaultFilter=label||'';
+  renderAudioVault();
+}
+
+function downloadAudioVaultItem(idx){
+  const list=window._audioVaultCache||[];
+  const item=list[idx];
+  if(!item||!item.audioUrl){ showToast('没有可下载的音频'); return; }
+  const a=document.createElement('a');
+  a.href=item.audioUrl;
+  a.download=(item.title||'录音')+'.mp3';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>a.remove(),1200);
+  showToast('已开始下载 💾');
+}
+
+function closeAudioVaultModal(){
+  if(window._vaultAudio){ try{window._vaultAudio.pause();}catch(e){} window._vaultAudio=null; }
+  document.getElementById('audioVaultModal').classList.remove('on');
+}
 function playAudioVaultItem(btn, idx){
   const list = window._audioVaultCache || [];
   const item = (typeof idx === 'number') ? list[idx] : idx;
@@ -4005,7 +4400,8 @@ function playAudioVaultItem(btn, idx){
 
 // 文字库弹窗
 function openTextVaultModal(){
-  const pet=PETS[currentBankPetId];if(!pet)return;
+  const pet=petOr(currentBankPetId);if(!pet)return;
+  if(!PETS[currentBankPetId]) currentBankPetId=pet.id;
   const textItems=(pet.timeline||[]).filter(t=>t.type==='text'||t.icon==='✏️'||t.icon==='📝'||t.icon==='💬');
   const box=document.getElementById('textVaultList');
   document.getElementById('textVaultTitle').textContent=pet.name+'的文字记录';
@@ -4119,32 +4515,218 @@ document.addEventListener('error', function(e){
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('on'),2200);}
 
 // ════════════════════════════════════════════════════════
-// PERSISTENCE: saveState / loadState
-// ════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════
-// ── 数据访问层 DataStore（后续切后端只改这一处）──
-// mode='local'  → localStorage（key: pawmemory_v2_state）
-// mode='api'    → 预留，fetch GET/PUT ${apiBase}/state
-// 业务层只调 saveState() / loadState()，不直接碰 localStorage
+// ── 云端数据访问层（CloudBase）──
 // ════════════════════════════════════════════════════════════════
-const STORAGE_KEY = 'pawmemory_v2_state'; // keep for legacy compat
 
-const DataStore = {
-  mode: 'local',   // 'local' | 'api'
-  apiBase: '',     // 后端接口前缀，如 '/api'；切到 api 模式时填入
+// CloudBase 环境配置
+const TCB_ENV_ID = 'pawmemory-d5gjmq8i444ffb334';
+const STORAGE_KEY = 'pawmemory_v2_state'; // localStorage fallback key
 
-  // ── 读取全量状态 ──
-  async load() {
-    if (this.mode === 'api') {
-      try {
-        const r = await fetch(this.apiBase + '/state', { credentials: 'include' });
-        if (!r.ok) throw new Error('api load ' + r.status);
-        return await r.json();
-      } catch(e) {
-        console.warn('[DataStore] api load failed, fallback to local', e);
+// 全局 CloudBase app 实例（SDK 加载后初始化）
+let _tcbApp = null;
+let _currentUid = null;
+
+function getTcbApp() {
+  if (!_tcbApp && window.cloudbase) {
+    _tcbApp = window.cloudbase.init({ env: TCB_ENV_ID });
+  }
+  return _tcbApp;
+}
+
+// ── 匿名登录：CloudBase 要求先有登录态才能调用任何云资源 ──
+// 未登录直接 callFunction 会报 PERMISSION_DENIED: Unauthenticated access is denied
+// 保证「任何一次云调用之前」都已拿到匿名凭证，并发调用只真正登录一次
+let _anonReady = null;
+async function ensureAnonAuth() {
+  const app = getTcbApp();
+  if (!app) throw new Error('CloudBase SDK 未加载');
+  if (_anonReady) return _anonReady;
+
+  _anonReady = (async () => {
+    const auth = app.auth();
+    try {
+      // 已有登录态（匿名或其它）就不用重复登录
+      if (typeof auth.hasLoginState === 'function') {
+        const st = await auth.hasLoginState();
+        if (st) return true;
       }
+    } catch (e) { /* 拿不到就往下走，直接登一次 */ }
+
+    try {
+      if (typeof auth.signInAnonymously === 'function') {
+        await auth.signInAnonymously();                 // v2 写法
+      } else if (typeof auth.anonymousAuthProvider === 'function') {
+        await auth.anonymousAuthProvider().signIn();    // v1 兼容写法
+      } else {
+        throw new Error('当前 SDK 不支持匿名登录');
+      }
+
+      // 关键：有些环境下 signInAnonymously 不报错但登录态仍为空（控制台未开关）
+      // 必须回查一次，否则会假成功，用户到头来还是用不了
+      let ok = false;
+      try {
+        const st = await auth.getLoginState();
+        ok = !!st;
+      } catch (e) { ok = false; }
+      if (!ok) {
+        throw new Error('ACCESS_TOKEN_DISABLED');
+      }
+      return true;
+    } catch (e) {
+      _anonReady = null; // 失败则允许下次重试，不把失败结果缓存住
+      // SDK 有时抛的是普通对象 {error, error_description}，直接拼字符串会变成 [object Object]
+      let raw = '';
+      if (e && typeof e === 'object') {
+        raw = e.message || e.error_description || e.error || '';
+        if (!raw) { try { raw = JSON.stringify(e); } catch (_) { raw = String(e); } }
+      } else {
+        raw = String(e);
+      }
+      if (/ACCESS_TOKEN_DISABLED|credentials not found|unauthenticated/i.test(raw)) {
+        throw new Error('云环境未开启「匿名登录」，请到 CloudBase 控制台 → 身份认证 → 登录方式 中开启');
+      }
+      throw new Error('云服务连接失败：' + raw);
     }
-    // local
+  })();
+
+  return _anonReady;
+}
+
+// 调用云函数的统一封装
+async function callFn(name, data) {
+  const app = getTcbApp();
+  if (!app) throw new Error('CloudBase SDK 未加载');
+  await ensureAnonAuth();  // 先确保有匿名登录态，否则 PERMISSION_DENIED
+  // 自动携带会话 token（登录时由 auth 云函数签发，存于 localStorage）
+  const payload = Object.assign({}, data || {}, { __token: getSessionToken() });
+  const res = await app.callFunction({ name, data: payload });
+  const result = res.result;
+  if (!result) throw new Error('云函数无返回');
+  // 登录态失效（密钥轮换 / token 过期）：必须明确让用户重新登录，
+  // 不能静默降级成本地示例数据——那样用户会看到别人家的宠物且 AI 全挂
+  if (result.code === 401) { handleAuthExpired(); throw new Error('登录已失效'); }
+  if (result.code !== 0) throw new Error(result.msg || '云函数错误 code=' + result.code);
+  return result.data;
+}
+
+// 登录失效统一处理：清 token + 回登录页，全局只提示一次
+let _authExpiredHandled = false;
+function handleAuthExpired() {
+  if (_authExpiredHandled) return;
+  _authExpiredHandled = true;
+  try { setSessionToken(''); } catch (e) {}
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  _currentUid = null;
+  try { showToast('登录已失效，请重新登录 🔑'); } catch (e) {}
+  setTimeout(function () {
+    const lp = document.getElementById('loginPage');
+    if (lp) lp.classList.remove('hidden');
+    _authExpiredHandled = false;
+  }, 600);
+}
+
+// ── 会话 token 管理（登录态，30天有效）──
+const TOKEN_KEY = 'pawmemory_token';
+function getSessionToken() {
+  try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
+}
+function setSessionToken(t) {
+  try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+}
+function parseTokenUid(t) {
+  if (!t || t.indexOf('.') < 0) return null;
+  try {
+    let s = t.split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    const payload = JSON.parse(decodeURIComponent(escape(atob(s))));
+    if (!payload.uid || !payload.exp || Date.now() > payload.exp) return null;
+    return payload.uid;
+  } catch (e) { return null; }
+}
+
+// ── 图片上传到云存储 ──
+// 将 blob 或 File 上传，返回 fileID
+async function uploadToCloud(file, cloudPath) {
+  const app = getTcbApp();
+  if (!app) throw new Error('CloudBase SDK 未加载');
+  await ensureAnonAuth();
+  const res = await app.uploadFile({ cloudPath, filePath: file });
+  return res.fileID;
+}
+
+// 将 fileID 列表换取临时访问 URL（batch）
+async function getTempUrls(fileIds) {
+  if (!fileIds || fileIds.length === 0) return {};
+  const app = getTcbApp();
+  if (!app) return {};
+  try {
+    await ensureAnonAuth();
+    const res = await app.getTempFileURL({ fileList: fileIds });
+    const map = {};
+    (res.fileList || []).forEach(f => { if (f.status === 0) map[f.fileID] = f.tempFileURL; });
+    return map;
+  } catch (e) {
+    console.warn('[getTempUrls]', e);
+    return {};
+  }
+}
+
+// ── 临时 URL 缓存（避免重复调用 getTempUrls，临时URL约2小时有效）──
+const _tempUrlCache = {};
+
+// 带缓存的 getTempUrls：已缓存的 fileID 不重复请求
+async function getTempUrlsCached(fileIds) {
+  if (!fileIds || fileIds.length === 0) return {};
+  const missing = fileIds.filter(id => id && id.startsWith('cloud://') && !_tempUrlCache[id]);
+  if (missing.length > 0) {
+    const fresh = await getTempUrls(missing);
+    Object.assign(_tempUrlCache, fresh);
+  }
+  const result = {};
+  fileIds.forEach(id => {
+    if (id) result[id] = _tempUrlCache[id] || id;
+  });
+  return result;
+}
+
+// ── XSS 防护：所有用户可控文本插入 innerHTML 前必须转义 ──
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// 把容器内所有 data-cloudsrc="cloud://..." 的 img 异步替换成真实可访问地址
+// 先同步渲染占位（不阻塞界面），拿到临时URL后再回填
+async function hydrateCloudImages(container) {
+  if (!container) return;
+  try {
+    const imgs = Array.from(container.querySelectorAll('img[data-cloudsrc]'));
+    const ids = imgs.map(el => el.getAttribute('data-cloudsrc'))
+                    .filter(v => v && v.startsWith('cloud://'));
+    if (ids.length === 0) return;
+    const map = await getTempUrlsCached(Array.from(new Set(ids)));
+    imgs.forEach(el => {
+      const fid = el.getAttribute('data-cloudsrc');
+      if (fid && map[fid]) el.src = map[fid];
+    });
+  } catch (e) {
+    console.warn('[hydrateCloudImages]', e);
+  }
+}
+
+// ── LocalStorage fallback（离线 / 未登录时） ──
+const DataStore = {
+  mode: 'cloud',   // 'cloud' | 'local'
+
+  async load() {
+    // Cloud mode: load happens through initCloudData()
+    // Local fallback:
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) : null;
@@ -4154,71 +4736,586 @@ const DataStore = {
     }
   },
 
-  // ── 保存全量状态 ──
   async save(state) {
-    if (this.mode === 'api') {
-      try {
-        await fetch(this.apiBase + '/state', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(state),
-          credentials: 'include'
-        });
-        return;
-      } catch(e) {
-        console.warn('[DataStore] api save failed, fallback to local', e);
-      }
-    }
-    // local – trim base64 to stay within 5 MB
+    // 同时写 localStorage 作为本地缓存（离线时不丢数据）
     this._saveLocal(state);
+    // Cloud writes happen directly in each action handler (callFn calls)
   },
 
   _saveLocal(state) {
-    const trimState = (s) => {
-      // Trim album base64 images to at most 30 per pet
-      const MAX_B64 = 30;
-      const out = JSON.parse(JSON.stringify(s));
-      if (out.pets) {
-        Object.values(out.pets).forEach(pet => {
-          if (!pet.album) return;
-          const b64items = pet.album.filter(i => i.url && i.url.startsWith('data:'));
-          if (b64items.length > MAX_B64) {
-            // keep newest MAX_B64, drop oldest from the end
-            let removed = 0, target = b64items.length - MAX_B64;
-            for (let i = pet.album.length - 1; i >= 0 && removed < target; i--) {
-              if (pet.album[i].url && pet.album[i].url.startsWith('data:')) {
-                pet.album.splice(i, 1); removed++;
-              }
-            }
-          }
-        });
-      }
-      return out;
-    };
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(trimState(state)));
-    } catch(e) {
-      if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
-        // aggressive fallback: strip all base64
-        try {
-          const s2 = JSON.parse(JSON.stringify(state));
-          if (s2.USER_PROFILE && s2.USER_PROFILE.ava && s2.USER_PROFILE.ava.startsWith('data:'))
-            s2.USER_PROFILE.ava = '';
-          if (s2.pets) Object.values(s2.pets).forEach(pet => {
-            pet.album = (pet.album||[]).filter(i => !i.url || !i.url.startsWith('data:'));
-            pet.timeline = (pet.timeline||[]).slice(0,20).map(t=>({...t, thumb: t.thumb&&t.thumb.startsWith('data:')?'':t.thumb}));
-            (pet.medical||[]).forEach(m => { m.photos=[]; });
-          });
-          if (s2.myPosts) s2.myPosts = s2.myPosts.map(p=>({...p, img: p.img&&p.img.startsWith('data:')?'':p.img}));
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(s2));
-          showToast('存储空间不足，部分照片未能保存');
-        } catch(e2) { /* silently fail */ }
-      }
-    }
+      // trim large base64 before local storage
+      const out = JSON.parse(JSON.stringify(state));
+      if (out.pets) Object.values(out.pets).forEach(pet => {
+        if (pet.album) pet.album = pet.album.slice(0, 30).map(i => ({
+          ...i, url: (i.url && i.url.startsWith('data:')) ? '' : i.url
+        }));
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(out));
+    } catch(e) { /* quota */ }
   }
 };
 
-// ── saveState / loadState：业务层唯一入口 ──
+// ── 从云端初始化应用数据 ──────────────────────────────────
+async function initCloudData() {
+  try {
+    // 1. 获取用户资料
+    const userData = await callFn('user', { action: 'get' });
+    if (userData) {
+      USER_PROFILE.name = userData.name || '宠物达人';
+      USER_PROFILE.bio = userData.bio || '';
+      USER_PROFILE.years = userData.petYears || 1;
+      USER_PROFILE.avaType = userData.avatarType || 'emoji';
+      USER_PROFILE.ava = userData.avatarType === 'emoji'
+        ? (userData.avatarEmoji || '😺')
+        : (userData.avatarUrl || '😺');
+      USER_PROFILE.joinDays = userData.joinedAt
+        ? Math.floor((Date.now() - new Date(userData.joinedAt).getTime()) / 86400000)
+        : 0;
+    }
+
+    // 2. 获取宠物列表
+    const petData = await callFn('pet', { action: 'list' });
+    if (petData && petData.pets && petData.pets.length > 0) {
+      // 清空内存中的默认宠物数据，用云端数据替换
+      Object.keys(PETS).forEach(k => delete PETS[k]);
+      for (const p of petData.pets) {
+        const petId = p._id;
+        PETS[petId] = {
+          id: petId,
+          _cloudId: petId,
+          name: p.name,
+          emoji: p.emoji || '🐾',
+          species: p.species || '',
+          kind: p.kind || 'other',
+          age: p.birthday ? calcAge(p.birthday) : '未知',
+          ageDetail: p.birthday ? (p.birthday + ' 出生') : '',
+          birthday: p.birthday || '',
+          gender: p.gender || '未知',
+          neutered: !!p.neutered,
+          weight: p.weight || '',
+          avaBg: p.avaBg || 'linear-gradient(135deg,#ff8c5a,#ff2442)',
+          dewormCycle: p.dewormCycle || '',
+          allergies: p.allergies || '',
+          daily: p.daily || { food: '正常', water: '正常', poop: '正常', weight: '', state: '正常', mood: '开心' },
+          foodPrefs: p.foodPrefs || { brand: '', snack: '', allergy: '' },
+          isMemorial: !!p.isMemorial,
+          medical: [], // loaded on demand
+          bank: { count: 0, photos: 0, audio: 0, text: 0, medCount: 0, dailyCount: 0 },
+          album: [],
+          clone: { done: 0, total: 8, segs: ['⬜ 撒娇声','⬜ 呼噜声','⬜ 催促叫','⬜ 低吼声','⬜ 兴奋叫','⬜ 惊吓声','⬜ 睡梦呢喃','⬜ 告别声'] },
+          timeline: [],
+        };
+      }
+      currentPetId = Object.keys(PETS)[0] || currentPetId;
+      // 云端宠物 id 与本地示例数据的 id 不同，这里必须一并重指向，
+      // 否则问AI/记忆银行/相册拿到的都是 undefined，新用户一进去就崩
+      if (!PETS[currentHealthPetId]) currentHealthPetId = currentPetId;
+      if (!PETS[currentBankPetId])   currentBankPetId   = currentPetId;
+      if (typeof currentAlbumPetId !== 'undefined' && !PETS[currentAlbumPetId]) currentAlbumPetId = currentPetId;
+    }
+
+    // 3. 获取 Feed（社区动态）
+    // 先为第一只宠物拉取 medical / memory / album（初始化时）
+    if (Object.keys(PETS).length > 0) {
+      const firstPetId = Object.keys(PETS)[0];
+      const firstPet = PETS[firstPetId];
+      if (firstPet && firstPet._cloudId) {
+        try {
+          const [medRes, memRes, albumRes] = await Promise.all([
+            callFn('medical', { action: 'list', petId: firstPet._cloudId }),
+            callFn('memory', { action: 'list', petId: firstPet._cloudId, page: 1, pageSize: 30 }),
+            callFn('memory', { action: 'album', petId: firstPet._cloudId, page: 1, pageSize: 30 }),
+          ]);
+          if (medRes && medRes.list) {
+            firstPet.medical = (medRes.list || []).map(r => ({
+              id: r._id, date: r.date, title: r.title,
+              badge: r.badge, badgeClass: r.badgeClass || 'mb-checkup',
+              icon: r.icon || '🏥', note: r.note || '',
+              photos: (r.fileIds || []), fileIds: r.fileIds || [],
+            }));
+            firstPet._medLoaded = true;
+          }
+          if (memRes && memRes.list) {
+            firstPet.timeline = (memRes.list || []).map(m => ({
+              icon: m.icon || '📝', date: formatRelTime(m.createdAt),
+              title: m.title || '记忆', desc: m.desc || '',
+              thumb: (m.fileIds && m.fileIds[0]) || null,
+              fileIds: m.fileIds || [], _memoryId: m._id,
+            }));
+            firstPet.bank.count = memRes.list.length;
+            firstPet._memLoaded = true;
+          }
+          if (albumRes && albumRes.list) {
+            firstPet.album = (albumRes.list || []).map(m => ({
+              type: 'photo', url: (m.fileIds && m.fileIds[0]) || '',
+              fileId: (m.fileIds && m.fileIds[0]) || null,
+              fileIds: m.fileIds || [], date: formatRelTime(m.createdAt),
+            }));
+            firstPet.bank.photos = firstPet.album.length;
+          }
+        } catch (e) {
+          console.warn('[initCloudData] pet data preload failed', e);
+        }
+      }
+    }
+
+    const feedData = await callFn('post', { action: 'feed', page: 1, pageSize: 20 });
+    if (feedData && feedData.list) {
+      // 替换 FEED_POSTS 内容
+      const cloudPosts = feedData.list.map(p => cloudPostToLocal(p));
+      FEED_POSTS.splice(0, FEED_POSTS.length, ...cloudPosts);
+    }
+
+  } catch (e) {
+    console.warn('[initCloudData]', e);
+    // 降级：继续使用内存默认数据
+  }
+}
+
+// 将云端 post 转换为前端 FEED_POSTS 格式
+function cloudPostToLocal(p) {
+  return {
+    id: p._id,
+    _cloudId: p._id,
+    accountId: p.authorId || 'official',
+    author: p.authorName || '未知',
+    authorAva: p.authorAvatarType === 'emoji' ? (p.authorAvatarEmoji || '🐾') : (p.authorAvatar || '🐾'),
+    authorAvaType: p.authorAvatarType || 'emoji',
+    authorBg: 'linear-gradient(135deg,#ff8c5a,var(--red))',
+    tag: p.tag || '',
+    img: p.imgUrl || '', // 官方内容用 imgUrl；用户上传的用 fileIds 换临时 URL
+    fileIds: p.fileIds || [],
+    title: p.title || '',
+    content: p.content || '',
+    time: formatRelTime(p.createdAt),
+    liked: !!p.liked,
+    likeCount: p.likeCount || 0,
+    followed: false,
+    comments: (p.comments || []).map(c => ({ user: c.userName, text: c.text })),
+    isOfficial: !!p.isOfficial,
+  };
+}
+
+// 计算宠物年龄字符串
+function calcAge(birthday) {
+  if (!birthday) return '未知';
+  const birth = new Date(birthday.replace(/年|月/g, '-').replace('日', ''));
+  if (isNaN(birth)) return '未知';
+  const now = new Date();
+  const years = now.getFullYear() - birth.getFullYear();
+  const months = now.getMonth() - birth.getMonth();
+  const totalMonths = years * 12 + months;
+  if (totalMonths < 12) return totalMonths + '个月';
+  return Math.floor(totalMonths / 12) + '岁';
+}
+
+// 相对时间格式化
+function formatRelTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const now = Date.now();
+  const diff = now - d.getTime();
+  if (diff < 60000) return '刚刚';
+  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+  if (diff < 172800000) return '昨天';
+  if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
+  return d.getMonth() + 1 + '月' + d.getDate() + '日';
+}
+
+// ── 登录逻辑 ──────────────────────────────────────────────
+let _loginCodeCooldown = 0;
+
+async function sendLoginCode() {
+  const phone = (document.getElementById('loginPhone').value || '').trim();
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    showToast('请输入正确的手机号 📱');
+    return;
+  }
+  if (Date.now() < _loginCodeCooldown) {
+    showToast('请稍候再试 ⏳');
+    return;
+  }
+  const btn = document.getElementById('loginSendBtn');
+  const btnText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '发送中…';
+  try {
+    const r = await callFnNoAuth('auth', { action: 'sendCode', phone });
+    // 云函数返回业务错误时也要报，不能当成发送成功
+    if (!r || r.code !== 0) {
+      throw new Error((r && r.msg) || '发送失败');
+    }
+    showToast('验证码已发送（固定为 123456）✅');
+    _loginCodeCooldown = Date.now() + 60000;
+    let secs = 60;
+    btn.textContent = secs + 's后重试';
+    const timer = setInterval(() => {
+      secs--;
+      btn.textContent = secs + 's后重试';
+      if (secs <= 0) {
+        clearInterval(timer);
+        btn.textContent = '获取验证码';
+        btn.disabled = false;
+        _loginCodeCooldown = 0;
+      }
+    }, 1000);
+  } catch (e) {
+    console.error('[sendLoginCode]', e);
+    showToast('发送失败：' + errText(e, '网络异常，请重试'));
+    // 失败时完整恢复按钮状态和冷却，否则用户卡死在这里
+    btn.disabled = false;
+    btn.textContent = btnText || '获取验证码';
+    _loginCodeCooldown = 0;
+  }
+}
+
+// 把 SDK 抛出的各种形态（Error / 普通对象）统一成可读文案，避免 [object Object]
+function errText(e, fallback) {
+  if (!e) return fallback || '未知错误';
+  if (typeof e === 'string') return e;
+  let raw = e.message || e.error_description || e.error || '';
+  if (!raw) { try { raw = JSON.stringify(e); } catch (_) { raw = String(e); } }
+  // 不把 CloudBase 的原始错误码/JSON 甩给用户看，翻译成人话
+  if (/FUNCTION_NOT_FOUND|FunctionName parameter/i.test(raw)) {
+    return '服务还没部署完成，请稍后再试';
+  }
+  if (/unauthenticated|credentials not found|PERMISSION_DENIED/i.test(raw)) {
+    return '云服务未授权，请确认控制台已开启「匿名登录」';
+  }
+  if (/timeout|ETIMEDOUT|超时/i.test(raw)) return '网络超时，请检查网络后重试';
+  if (/Failed to fetch|NetworkError|ERR_/i.test(raw)) return '网络连接失败，请检查网络';
+  if (/OPERATION_FAIL|\{"code"/.test(raw)) return '服务暂时不可用，请稍后重试';
+  // 兵底：看起来像技术黑话（含大段英文/JSON）就不展示原文
+  if (raw.length > 60 && !/[\u4e00-\u9fa5]/.test(raw)) return fallback || '操作失败，请重试';
+  return raw || fallback || '未知错误';
+}
+
+// 不依赖业务登录态的云函数调用（用于 auth 函数）
+// 注意：仍然需要 CloudBase 匿名登录凭证，否则连发验证码都会被拒
+async function callFnNoAuth(name, data) {
+  let app = getTcbApp();
+  if (!app) {
+    if (window.cloudbase) {
+      _tcbApp = window.cloudbase.init({ env: TCB_ENV_ID });
+      app = _tcbApp;
+    } else {
+      throw new Error('CloudBase SDK 未加载，请刷新页面');
+    }
+  }
+  await ensureAnonAuth();
+  const res = await app.callFunction({ name, data });
+  return res.result;
+}
+
+async function submitLogin() {
+  const phone = (document.getElementById('loginPhone').value || '').trim();
+  const code = (document.getElementById('loginCode').value || '').trim();
+  if (!/^1[3-9]\d{9}$/.test(phone)) { showToast('请输入正确的手机号 📱'); return; }
+  if (!code) { showToast('请输入验证码 🔢'); return; }
+
+  const submitBtn = document.getElementById('loginSubmitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '登录中…';
+
+  try {
+    // 1. 调 auth 云函数校验验证码并拿会话 token
+    const authResult = await callFnNoAuth('auth', { action: 'login', phone, code });
+    if (!authResult || authResult.code !== 0) {
+      throw new Error((authResult && authResult.msg) || '登录失败');
+    }
+    const { token, userId } = authResult.data || authResult;
+
+    // 2. 保存会话 token（后续所有云函数调用自动携带）
+    setSessionToken(token);
+    _currentUid = userId;
+
+    // 3. 隐藏登录页，初始化数据
+    document.getElementById('loginPage').classList.add('hidden');
+    showToast('登录成功，欢迎回来 🐾');
+    await initCloudData();
+    renderDiscoverFeed();
+    renderFollowingFeed();
+    renderUserProfileDisplay();
+    renderProfPetCards();
+    switchScreen('sc-home', 0);
+    showWelcomeIfFirstTime();
+
+  } catch (e) {
+    console.error('[login]', e);
+    showToast('登录失败：' + errText(e, '未知错误'));
+    submitBtn.disabled = false;
+    submitBtn.textContent = '登录 / 注册';
+  }
+}
+
+// 退出登录
+async function logoutCloud() {
+  if (!confirm('确定要退出登录吗？')) return;
+  setSessionToken('');
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  _currentUid = null;
+  document.getElementById('loginPage').classList.remove('hidden');
+  showToast('已退出登录');
+}
+
+// 检查当前是否已登录
+async function checkLoginState() {
+  const t = getSessionToken();
+  const uid = parseTokenUid(t);
+  if (!uid) { setSessionToken(''); return false; }
+  _currentUid = uid;
+  return true;
+}
+
+// ── 覆盖原始的图片上传函数 ──────────────────────────────────
+// 将 base64 dataURL → Blob
+function dataURLtoBlob(dataURL) {
+  const arr = dataURL.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) u8arr[n] = bstr.charCodeAt(n);
+  return new Blob([u8arr], { type: mime });
+}
+
+// 上传 base64 图片到云存储，返回临时 URL（用于页面立即显示）
+// filePath 是云存储路径前缀，例如 'avatars/' 或 'posts/'
+async function uploadBase64ToCloud(base64DataUrl, cloudPathPrefix) {
+  try {
+    const blob = dataURLtoBlob(base64DataUrl);
+    const ext = blob.type.includes('png') ? 'png' : 'jpg';
+    const cloudPath = cloudPathPrefix + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
+    const fileID = await uploadToCloud(blob, cloudPath);
+
+    // 获取临时访问 URL
+    const urlMap = await getTempUrls([fileID]);
+    return { fileID, tempUrl: urlMap[fileID] || base64DataUrl };
+  } catch (e) {
+    console.warn('[uploadBase64ToCloud]', e);
+    // 失败时回退到 base64
+    return { fileID: null, tempUrl: base64DataUrl };
+  }
+}
+
+// ── 改造后的 saveEditProfile（头像改走云存储）─────────────────
+const _origSaveEditProfile = typeof saveEditProfile !== 'undefined' ? saveEditProfile : null;
+
+// 重写 saveEditProfile 以支持云端同步
+async function saveEditProfileCloud() {
+  const name = document.getElementById('editProfileName').value.trim();
+  const years = document.getElementById('editProfileYears').value.trim();
+  const bio = document.getElementById('editProfileBio').value.trim();
+  if (!name) { showToast('给自己起个昵称吧 🐾'); return; }
+
+  USER_PROFILE.name = name;
+  USER_PROFILE.years = years || USER_PROFILE.years;
+  USER_PROFILE.bio = bio;
+  if (editSelectedAva) {
+    USER_PROFILE.ava = editSelectedAva;
+    USER_PROFILE.avaType = editSelectedAvaType;
+  }
+
+  // 如果头像是 base64（拍照裁剪），先上传云存储
+  let avatarUrl = '';
+  let avatarEmoji = USER_PROFILE.avaType === 'emoji' ? USER_PROFILE.ava : '😺';
+  if (USER_PROFILE.avaType === 'photo' && USER_PROFILE.ava && USER_PROFILE.ava.startsWith('data:')) {
+    showToast('头像上传中…');
+    const result = await uploadBase64ToCloud(USER_PROFILE.ava, 'avatars/' + (_currentUid || 'unknown') + '/');
+    if (result.fileID) {
+      USER_PROFILE.ava = result.tempUrl || result.fileID;
+      avatarUrl = result.fileID;
+    }
+  } else if (USER_PROFILE.avaType === 'photo') {
+    avatarUrl = USER_PROFILE.ava;
+  }
+
+  // 同步到云端
+  try {
+    await callFn('user', {
+      action: 'update',
+      name,
+      avatarUrl,
+      avatarEmoji,
+      avatarType: USER_PROFILE.avaType,
+      bio,
+      petYears: parseInt(years) || 1,
+    });
+  } catch(e) {
+    console.warn('[saveEditProfile] cloud sync failed', e);
+  }
+
+  renderUserProfileDisplay();
+  ensureMeAccount();
+  FEED_POSTS.filter(p => p.accountId === 'me').forEach(p => {
+    p.author = USER_PROFILE.name;
+    p.authorAva = USER_PROFILE.ava;
+    p.authorAvaType = USER_PROFILE.avaType || 'emoji';
+  });
+  renderDiscoverFeed();
+  renderFollowingFeed();
+  saveState();
+  closeEditProfile();
+  showToast('资料已保存 ✅');
+}
+
+// 覆盖原始 saveEditProfile
+function saveEditProfile() { saveEditProfileCloud(); }
+
+
+// ── 改造后的 toggleLike
+
+// ── 改造后的 toggleLike（改走云函数）────────────────────────
+const _origToggleLike = typeof toggleLike !== 'undefined' ? toggleLike : null;
+function toggleLike(id) {
+  const p = FEED_POSTS.find(x => x.id === id); if (!p) return;
+  const wasLiked = p.liked;
+  p.liked = !p.liked;
+  p.likeCount += p.liked ? 1 : -1;
+  renderFollowingFeed(); renderDiscoverFeed();
+  if (document.getElementById('postDetailModal').classList.contains('on') && curFeedPostId === id) { renderPostDetail(); }
+  // 异步同步到云端
+  const cloudId = p._cloudId || p.id;
+  callFn('interact', { action: wasLiked ? 'unlike' : 'like', postId: cloudId })
+    .catch(e => console.warn('[toggleLike]', e));
+}
+
+// ── 改造后的 toggleFollow（改走云函数）──────────────────────
+const _origToggleFollow = typeof toggleFollow !== 'undefined' ? toggleFollow : null;
+function toggleFollow(id) {
+  const p = FEED_POSTS.find(x => x.id === id); if (!p) return;
+  p.followed = !p.followed;
+  if (p.accountId && ACCOUNTS[p.accountId]) { ACCOUNTS[p.accountId].followed = p.followed; }
+  saveState();
+  showToast(p.followed ? '已关注 ' + p.author + ' 🎉' : '已取消关注');
+  renderFollowingFeed();
+  if (document.getElementById('postDetailModal').classList.contains('on') && curFeedPostId === id) { renderPostDetail(); }
+  // 异步同步到云端
+  callFn('interact', { action: p.followed ? 'follow' : 'unfollow', targetId: p.accountId })
+    .catch(e => console.warn('[toggleFollow]', e));
+}
+
+// ── 改造后的 toggleAccountFollow（改走云函数）──────────────
+const _origToggleAccountFollow = typeof toggleAccountFollow !== 'undefined' ? toggleAccountFollow : null;
+function toggleAccountFollow() {
+  const acc = ACCOUNTS[curAccountId]; if (!acc) return;
+  acc.followed = !acc.followed;
+  FEED_POSTS.filter(p => p.accountId === curAccountId).forEach(p => { p.followed = acc.followed; });
+  saveState();
+  renderAccountFollowBtn();
+  renderFollowingFeed();
+  showToast(acc.followed ? '已关注' + acc.name + ' 💛' : '已取消关注');
+  // 异步同步到云端
+  callFn('interact', { action: acc.followed ? 'follow' : 'unfollow', targetId: curAccountId })
+    .catch(e => console.warn('[toggleAccountFollow]', e));
+}
+
+// ── 改造后的 submitAddBill（改走云函数）─────────────────────
+const _origSubmitAddBill = typeof submitAddBill !== 'undefined' ? submitAddBill : null;
+async function submitAddBill() {
+  const name = document.getElementById('billItemName').value.trim();
+  const amountRaw = document.getElementById('billItemAmount').value;
+  const amount = parseFloat(amountRaw);
+  if (!name) { showToast('写下购买了什么吧 📝'); return; }
+  if (!amount || amount <= 0) { showToast('输入一个有效的金额吧 💰'); return; }
+  const pet = PETS[billSelectedPet]; if (!pet) return;
+
+  // 立即更新 UI
+  const list = document.getElementById('billList');
+  const today = new Date();
+  const dateStr = (today.getMonth() + 1) + '.' + today.getDate();
+  const item = document.createElement('div');
+  item.className = 'bill-item'; item.dataset.pet = billSelectedPet;
+  item.innerHTML = `<div class="bill-icon" style="background:${billSelectedCat.bg}">${billSelectedCat.icon}</div><div style="flex:1"><div class="bill-title">${name}</div><div class="bill-sub">${dateStr} 刚刚记录</div></div><div style="text-align:right"><div class="bill-amount">-¥${amount.toFixed(2)}</div><div class="btl-pettag" style="margin-top:4px"><div class="btl-pettag-ava" style="background:${pet.avaBg};color:#fff">${pet.emoji}</div>${esc(pet.name)}</div></div>`;
+  list.insertBefore(item, list.firstChild);
+  const totalEl = document.getElementById('billMonthTotal');
+  const cur = parseFloat(totalEl.textContent.replace(/[^0-9.]/g, '')) || 0;
+  totalEl.textContent = '¥ ' + (cur + amount).toFixed(2);
+  closeAddBill();
+  showToast('已为' + pet.name + '记一笔 ¥' + amount.toFixed(2) + ' 💰');
+
+  // 异步写云端（fire-and-forget，UI 不等待）
+  const cloudPetId = pet._cloudId || pet.id;
+  callFn('bill', {
+    action: 'create',
+    petId: cloudPetId,
+    category: billSelectedCat.id,
+    icon: billSelectedCat.icon,
+    itemName: name,
+    amount,
+    date: today.toISOString().slice(0, 10),
+  }).catch(e => {
+    console.warn('[submitAddBill]', e);
+    showToast('账单已本地记录，云端同步失败：'+e.message);
+  });
+}
+
+// ── 改造后的 submitPostComment（改走云函数）─────────────────
+const _origSubmitPostComment = typeof submitPostComment !== 'undefined' ? submitPostComment : null;
+async function submitPostComment() {
+  const input = document.getElementById('postCommentInput');
+  const text = (input ? input.value : '').trim();
+  if (!text) { showToast('写点什么再发送 🐾'); return; }
+
+  const p = FEED_POSTS.find(x => x.id === curFeedPostId);
+  if (!p) return;
+
+  // 立即更新本地
+  p.comments = p.comments || [];
+  p.comments.push({ user: USER_PROFILE.name, text });
+  if (input) input.value = '';
+  renderPostDetail();
+
+  // 异步写云端
+  const cloudId = p._cloudId || p.id;
+  callFn('interact', { action: 'comment', postId: cloudId, text })
+    .catch(e => console.warn('[submitPostComment]', e));
+}
+
+// ── 医疗记录上传（改走云存储）──────────────────────────────
+// 覆盖 handleMedPhotoUpload，改用云存储
+const _origHandleMedPhotoUpload = typeof handleMedPhotoUpload !== 'undefined' ? handleMedPhotoUpload : null;
+async function handleMedPhotoUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const rec = findMedRecord(curMedPetId, curMedId); if (!rec) return;
+  fileToBase64(file, 600).then(async function(url) {
+    // Show immediately as base64
+    rec.photos.push(url);
+    renderMedPhotos();
+    const hint = document.getElementById('medOcrHint');
+    hint.style.display = 'block';
+    hint.textContent = '正在识别图片内容…';
+    setTimeout(async () => {
+      hint.textContent = '✓ 已自动识别：' + (rec.badge === '疫苗' ? '疫苗名称、接种日期、下次接种提醒已提取，可核对后保存' : '就诊医院、诊断结果、用药信息已提取，可核对后保存');
+      updateBankCounts('photo');
+      showToast('图片已识别并存入记忆银行 📷');
+      saveState();
+      // Async upload to cloud
+      const result = await uploadBase64ToCloud(url, 'medical/' + (_currentUid || 'unknown') + '/' + (curMedPetId || 'unknown') + '/');
+      if (result.fileID) {
+        // Replace base64 with fileID in the record
+        const idx = rec.photos.indexOf(url);
+        if (idx >= 0) rec.photos[idx] = result.fileID;
+      }
+    }, 1200);
+  });
+  e.target.value = '';
+}
+
+// ── 头像裁剪后改走云存储 ──────────────────────────────────
+// 覆盖 openCropAva 的保存逻辑（croppedBlob → cloud）
+// 原始 openCropAva 函数不变，只覆盖"确认裁剪"的动作
+const _origConfirmCrop = typeof confirmCropAva !== 'undefined' ? confirmCropAva : null;
+
+// ── 工具函数 ────────────────────────────────────────────────
+
+// ── 云端初始化启动 ────────────────────────────────────────────────────────────
+// （替代原来的 loadState().then(...)）
+
+// ── saveState（云端版本只写 localStorage 缓存） ──
+// ── saveState / loadState：业务层唯一入口 ──// ── saveState / loadState：业务层唯一入口 ──
 function saveState() {
   // Limit base64 images to most recent 30 to avoid quota
   const state = {
@@ -4229,24 +5326,9 @@ function saveState() {
     accountsFollowed: Object.fromEntries(
       Object.entries(ACCOUNTS).map(([k, v]) => [k, v.followed])
     ),
-    // Persist PETS data（含完整档案字段，否则用户新建的宠物刷新后会丢失）
+    // Persist PETS data (timeline, bank counts, album, medical, daily, foodPrefs)
     pets: Object.fromEntries(
       Object.entries(PETS).map(([k, pet]) => [k, {
-        id: pet.id,
-        name: pet.name,
-        emoji: pet.emoji,
-        species: pet.species,
-        kind: pet.kind,
-        age: pet.age,
-        ageDetail: pet.ageDetail,
-        birthday: pet.birthday,
-        gender: pet.gender,
-        neutered: pet.neutered,
-        weight: pet.weight,
-        avaBg: pet.avaBg,
-        dewormCycle: pet.dewormCycle,
-        allergies: pet.allergies,
-        isMemorial: pet.isMemorial,
         bank: pet.bank,
         timeline: pet.timeline.slice(0, 50),
         album: pet.album ? pet.album.slice(0, 50) : [],
@@ -4275,70 +5357,113 @@ function loadState() {
           if (ACCOUNTS[k]) ACCOUNTS[k].followed = v;
         });
       }
-      // Restore PETS data（包括用户自己新建的宠物）
+      // Restore PETS data
       if (state.pets) {
         Object.entries(state.pets).forEach(([k, saved]) => {
-          if (!PETS[k]) {
-            // 用户新建的宠物：预设里没有，需要整只重建
-            if (!saved.name) return;
-            PETS[k] = {
-              id: saved.id || k,
-              name: saved.name,
-              emoji: saved.emoji || '🐾',
-              species: saved.species || '未填写',
-              kind: saved.kind || 'cat',
-              age: saved.age || '未知',
-              ageDetail: saved.ageDetail || '',
-              birthday: saved.birthday || '',
-              gender: saved.gender || '未知',
-              neutered: !!saved.neutered,
-              weight: saved.weight || '未记录',
-              avaBg: saved.avaBg || 'linear-gradient(135deg,#ff8c5a,var(--red))',
-              dewormCycle: saved.dewormCycle || '未设置',
-              allergies: saved.allergies || '无记录',
-              isMemorial: !!saved.isMemorial,
-              bank: saved.bank || { count:0, photos:0, audio:0, text:0, medCount:0, dailyCount:0 },
-              timeline: saved.timeline || [],
-              album: saved.album || [],
-              medical: saved.medical || [],
-              daily: saved.daily || { food:'正常', water:'正常', poop:'正常', weight:'', state:'正常', mood:'开心' },
-              foodPrefs: saved.foodPrefs || { brand:'未记录', snack:'未记录', allergy:'无记录' },
-              clone: saved.clone || { done:0, total:8, segs:['⬜ 撒娇声','⬜ 呼噜声','⬜ 催促叫','⬜ 低吼声','⬜ 兴奋叫','⬜ 惊吓声','⬜ 睡梦呢喃','⬜ 告别声'] }
-            };
-            return;
+          if (PETS[k]) {
+            if (saved.bank) PETS[k].bank = saved.bank;
+            if (saved.timeline) PETS[k].timeline = saved.timeline;
+            if (saved.album) PETS[k].album = saved.album;
+            if (saved.medical) PETS[k].medical = saved.medical;
+            if (saved.daily) PETS[k].daily = saved.daily;
+            if (saved.foodPrefs) PETS[k].foodPrefs = saved.foodPrefs;
+            if (saved.clone) PETS[k].clone = saved.clone;
           }
-          // 预设宠物：恢复用户改动过的字段
-          if (saved.name) PETS[k].name = saved.name;
-          if (saved.emoji) PETS[k].emoji = saved.emoji;
-          if (saved.species) PETS[k].species = saved.species;
-          if (saved.kind) PETS[k].kind = saved.kind;
-          if (saved.age) PETS[k].age = saved.age;
-          if (saved.ageDetail) PETS[k].ageDetail = saved.ageDetail;
-          if (saved.birthday) PETS[k].birthday = saved.birthday;
-          if (saved.gender) PETS[k].gender = saved.gender;
-          if (typeof saved.neutered === 'boolean') PETS[k].neutered = saved.neutered;
-          if (saved.weight) PETS[k].weight = saved.weight;
-          if (saved.allergies) PETS[k].allergies = saved.allergies;
-          if (typeof saved.isMemorial === 'boolean') PETS[k].isMemorial = saved.isMemorial;
-          if (saved.bank) PETS[k].bank = saved.bank;
-          if (saved.timeline) PETS[k].timeline = saved.timeline;
-          if (saved.album) {
-            // v54 迁移：老版本存过一批影棚摆拍/已失效的图，直接沿用会盖掉新图池。
-            // 只保留用户自己上传的照片(data:)，示例图一律回落到当前代码里的新图。
-            const userShots = saved.album.filter(a => a && typeof a.url === 'string' && a.url.startsWith('data:'));
-            if (localStorage.getItem('pawmemory_album_migrated_v54')) {
-              PETS[k].album = saved.album;
-            } else {
-              PETS[k].album = userShots.concat(PETS[k].album || []);
-            }
-          }
-          if (saved.medical) PETS[k].medical = saved.medical;
-          if (saved.daily) PETS[k].daily = saved.daily;
-          if (saved.foodPrefs) PETS[k].foodPrefs = saved.foodPrefs;
-          if (saved.clone) PETS[k].clone = saved.clone;
         });
       }
-      try { localStorage.setItem('pawmemory_album_migrated_v54','1'); } catch(e) {}
+      // Restore user's own posts
+      if (state.myPosts && state.myPosts.length > 0) {
+        // Remove any existing 'me' posts and prepend saved ones
+        const nonMyPosts = FEED_POSTS.filter(p => p.accountId !== 'me');
+        FEED_POSTS.splice(0, FEED_POSTS.length, ...state.myPosts, ...nonMyPosts);
+      }
+      // Make sure 'me' account exists if there are my posts
+      ensureMeAccount();
+    } catch(e) {
+      console.warn('[loadState] apply error', e);
+    }
+  }).catch(function(e) {
+    console.warn('[loadState] error', e);
+  });
+}
+
+function ensureMeAccount() {
+  if (!ACCOUNTS['me']) {
+    ACCOUNTS['me'] = {
+      id: 'me',
+      name: USER_PROFILE.name,
+      ava: USER_PROFILE.avaType === 'photo' ? '我' : USER_PROFILE.ava,
+      bg: 'linear-gradient(135deg,var(--red),#ff6b6b)',
+      type: 'user',
+      bio: USER_PROFILE.bio || '这是我的宠物日记 🐾',
+      followed: false,
+      fans: '1'
+    };
+  } else {
+    // Update me account with latest profile info
+    ACCOUNTS['me'].name = USER_PROFILE.name;
+    ACCOUNTS['me'].bio = USER_PROFILE.bio || '这是我的宠物日记 🐾';
+  }
+}
+
+// ── saveState / loadState：业务层唯一入口（写 localStorage 缓存）──
+// ── saveState（云端版本只写 localStorage 缓存） ──
+// ── saveState / loadState：业务层唯一入口 ──// ── saveState / loadState：业务层唯一入口 ──
+function saveState() {
+  // Limit base64 images to most recent 30 to avoid quota
+  const state = {
+    USER_PROFILE: USER_PROFILE,
+    // Only persist user-created posts (accountId === 'me')
+    myPosts: FEED_POSTS.filter(p => p.accountId === 'me'),
+    // Persist followed status per account
+    accountsFollowed: Object.fromEntries(
+      Object.entries(ACCOUNTS).map(([k, v]) => [k, v.followed])
+    ),
+    // Persist PETS data (timeline, bank counts, album, medical, daily, foodPrefs)
+    pets: Object.fromEntries(
+      Object.entries(PETS).map(([k, pet]) => [k, {
+        bank: pet.bank,
+        timeline: pet.timeline.slice(0, 50),
+        album: pet.album ? pet.album.slice(0, 50) : [],
+        medical: pet.medical,
+        daily: pet.daily,
+        foodPrefs: pet.foodPrefs,
+        clone: pet.clone
+      }])
+    )
+  };
+  DataStore.save(state).catch(e => console.warn('[saveState]', e));
+}
+
+// loadState returns a Promise so boot can use .then()
+function loadState() {
+  return DataStore.load().then(function(state) {
+    if (!state) return;
+    try {
+      // Restore USER_PROFILE
+      if (state.USER_PROFILE) {
+        Object.assign(USER_PROFILE, state.USER_PROFILE);
+      }
+      // Restore followed states
+      if (state.accountsFollowed) {
+        Object.entries(state.accountsFollowed).forEach(([k, v]) => {
+          if (ACCOUNTS[k]) ACCOUNTS[k].followed = v;
+        });
+      }
+      // Restore PETS data
+      if (state.pets) {
+        Object.entries(state.pets).forEach(([k, saved]) => {
+          if (PETS[k]) {
+            if (saved.bank) PETS[k].bank = saved.bank;
+            if (saved.timeline) PETS[k].timeline = saved.timeline;
+            if (saved.album) PETS[k].album = saved.album;
+            if (saved.medical) PETS[k].medical = saved.medical;
+            if (saved.daily) PETS[k].daily = saved.daily;
+            if (saved.foodPrefs) PETS[k].foodPrefs = saved.foodPrefs;
+            if (saved.clone) PETS[k].clone = saved.clone;
+          }
+        });
+      }
       // Restore user's own posts
       if (state.myPosts && state.myPosts.length > 0) {
         // Remove any existing 'me' posts and prepend saved ones
@@ -4403,6 +5528,7 @@ function fileToBase64(file, maxWidth) {
 // AVATAR CROP MODAL
 // ════════════════════════════════════════════════════════
 let cropImg = null, cropScale = 1, cropX = 0, cropY = 0;
+let cropBaseScale = 1;   // 「刚好盖满圆圈」的基准缩放，滑块 100 就对应它
 let cropDragging = false, cropDragStartX = 0, cropDragStartY = 0, cropImgStartX = 0, cropImgStartY = 0;
 let cropRawFile = null;
 
@@ -4420,10 +5546,14 @@ function openCropAva(file) {
       canvas.height = size;
       wrap.style.width = size + 'px';
       wrap.style.height = size + 'px';
-      // initial scale to fill the 200x200 circle
+      // 基准缩放：刚好盖满 200 圆圈
+      // 之前直接把绝对缩放写进滑块，大图算出来常常低于 min=50 被钳在最左端，
+      // 导致只能往右拖（只能放大）。改成相对缩放：滑块100=基准，50%~300%
       const minDim = Math.min(cropImg.width, cropImg.height);
-      cropScale = 200 / minDim * (size / 200) * 1.1;
-      document.getElementById('cropScaleSlider').value = Math.round(cropScale * 100);
+      cropBaseScale = 200 / minDim * (size / 200) * 1.1;
+      cropScale = cropBaseScale;
+      const slider = document.getElementById('cropScaleSlider');
+      slider.min = 50; slider.max = 300; slider.value = 100;
       cropX = (size - cropImg.width * cropScale) / 2;
       cropY = (size - cropImg.height * cropScale) / 2;
       drawCropCanvas();
@@ -4443,8 +5573,8 @@ function drawCropCanvas() {
 }
 
 function onCropScale(val) {
-  const newScale = val / 100;
-  // Scale around center of visible area
+  // val 是相对百分比（100 = 刚好盖满），不再是绝对缩放
+  const newScale = cropBaseScale * (val / 100);
   const cx = document.getElementById('cropCanvas').width / 2;
   const cy = document.getElementById('cropCanvas').height / 2;
   const ratio = newScale / cropScale;
@@ -4663,7 +5793,7 @@ function saveCustomTag() {
   showToast('已添加标签「' + tag + '」');
 }
 
-function submitPublishPost() {
+async function submitPublishPost() {
   const title = (document.getElementById('publishTitle').value || '').trim();
   const content = (document.getElementById('publishContent').value || '').trim();
   if (!title && !content) {
@@ -4689,10 +5819,93 @@ function submitPublishPost() {
     showToast('这内容看起来是随手打的，认真写两句吧 🐾');
     return;
   }
+  // 上传媒体文件到云存储
+  let fileIds = [];
+  let localImgUrl = ''; // 用于本地立即显示
+  let localVideoUrl = '';
+  
+  if (typeof callFn === 'function' && publishMediaList.length > 0) {
+    showToast('媒体上传中…');
+    for (const media of publishMediaList) {
+      try {
+        if (media.type === 'photo' && media.url && media.url.startsWith('data:')) {
+          const result = await uploadBase64ToCloud(media.url, 'posts/' + (typeof _currentUid !== 'undefined' ? _currentUid : 'unknown') + '/');
+          if (result.fileID) fileIds.push(result.fileID);
+          if (!localImgUrl) localImgUrl = result.tempUrl || media.url;
+        } else if (media.type === 'video' && media.url) {
+          // 视频直接用本地 blob URL 显示（TODO: 视频云存储上传需后端支持）
+          localVideoUrl = media.url;
+        } else if (media.url) {
+          localImgUrl = localImgUrl || media.url;
+        }
+      } catch(e) {
+        console.warn('[submitPublishPost] media upload failed', e);
+        // 降级到本地
+        if (media.type === 'photo') localImgUrl = localImgUrl || media.url;
+        else if (media.type === 'video') localVideoUrl = media.url;
+      }
+    }
+    
+    // 调云函数发布帖子
+    try {
+      const relPet = PETS[publishSelectedPet];
+      const postData = await callFn('post', {
+        action: 'create',
+        petId: publishSelectedPet ? (relPet && relPet._cloudId) || '' : '',
+        tag: publishSelectedTags[0]||'📝 日常',
+        tags: publishSelectedTags.slice(),
+        title: title || '我的宠物日记',
+        content: content || '记录毛孩子的美好瞬间 🐾',
+        fileIds,
+      });
+      ensureMeAccount();
+      const newPost = {
+        id: postData.postId || ('post_' + Date.now()),
+        _cloudId: postData.postId,
+        accountId: 'me',
+        author: USER_PROFILE.name,
+        authorAva: USER_PROFILE.ava,
+        authorAvaType: USER_PROFILE.avaType || 'emoji',
+        authorBg: 'linear-gradient(135deg,var(--red),#ff6b6b)',
+        tag: publishSelectedTags[0]||'📝 日常',
+        tags: publishSelectedTags.slice(),
+        img: localImgUrl,
+        media: publishMediaList.slice(),
+        video: localVideoUrl,
+        fileIds,
+        title: title || '我的宠物日记',
+        content: content || '记录毛孩子的美好瞬间 🐾',
+        time: '刚刚',
+        ts: Date.now(),
+        liked: false,
+        likeCount: 0,
+        followed: false,
+        comments: []
+      };
+      FEED_POSTS.unshift(newPost);
+      closePublishModal();
+      saveState();
+      renderDiscoverFeed();
+      renderFollowingFeed();
+      switchScreen('sc-home', 0);
+      const sc = document.getElementById('tab-discover');
+      if (sc) sc.scrollTop = 0;
+      if (postData.auditStatus === 'reject') {
+        showToast('内容已提交审核，通过后将显示在社区');
+      } else {
+        showToast('动态已发布！✨');
+      }
+      return;
+    } catch(e) {
+      console.warn('[submitPublishPost] cloud post failed', e);
+      showToast('云端发布失败，已本地保存：' + e.message);
+    }
+  }
+
+  // 降级：纯本地发布（无云端或云端失败）
   ensureMeAccount();
-  const me = ACCOUNTS['me'];
-  const relPet = PETS[publishSelectedPet];
-  const newPost = {
+  const relPetLocal = PETS[publishSelectedPet];
+  const newPostLocal = {
     id: 'post_' + Date.now(),
     accountId: 'me',
     author: USER_PROFILE.name,
@@ -4713,18 +5926,12 @@ function submitPublishPost() {
     followed: false,
     comments: []
   };
-  FEED_POSTS.unshift(newPost);
+  FEED_POSTS.unshift(newPostLocal);
   closePublishModal();
   saveState();
   renderDiscoverFeed();
   renderFollowingFeed();
-  // 回到首页顶部，让用户立刻看到自己刚发的动态
   switchScreen('sc-home', 0);
-  const discoverTab = document.querySelector('.tb-tab.on');
-  if (!discoverTab || discoverTab.textContent.indexOf('发现') < 0) {
-    const tabs = document.querySelectorAll('.tb-tab');
-    if (tabs[1]) setHomeTab(tabs[1], 'tab-discover');
-  }
   const sc = document.getElementById('tab-discover');
   if (sc) sc.scrollTop = 0;
   showToast('动态已发布！✨');
@@ -4774,19 +5981,76 @@ function firstPetHintGo(){
   setTimeout(function(){ addNewPet(); }, 260);
 }
 
-// ── 启动：先 loadState() 再渲染，确保持久化数据到位后再展示 ──
-loadState().then(function() {
-  renderDiscoverFeed();
-  renderFollowingFeed();
-  switchScreen('sc-home', 0);
-  showWelcomeIfFirstTime();
-}).catch(function(e) {
-  console.warn('[boot]', e);
-  renderDiscoverFeed();
-  renderFollowingFeed();
-  switchScreen('sc-home', 0);
-  showWelcomeIfFirstTime();
-});
+// ── 启动：检查 CloudBase 登录状态，已登录则初始化数据，否则显示登录页 ──
+(async function boot() {
+  try {
+    // 等 SDK 加载（CDN 异步，最多等 3 秒）
+    for (let i = 0; i < 30 && !window.cloudbase; i++) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    if (!window.cloudbase) {
+      console.warn('[boot] CloudBase SDK not loaded, fallback to local mode');
+      // 降级：从 localStorage 加载
+      if (typeof loadState === 'function') {
+        await loadState();
+      }
+      renderDiscoverFeed();
+      renderFollowingFeed();
+      switchScreen('sc-home', 0);
+      showWelcomeIfFirstTime();
+      return;
+    }
+
+    // 初始化 TCB App
+    getTcbApp();
+
+    // 提前做匿名登录：失败则明确告知，不要静默掉到本地模式让用户以为能用
+    try {
+      await ensureAnonAuth();
+    } catch (e) {
+      console.error('[boot] anon auth failed', e);
+      showToast(e && e.message ? e.message : '云服务连接失败');
+    }
+
+    const isLoggedIn = await checkLoginState();
+    if (isLoggedIn) {
+      // 先拿真实接口验一下 token 还能不能用（密钥可能已轮换），
+      // 不验的话会静默降级成本地示例数据，用户看到的是别人家的宠物
+      let tokenOk = true;
+      try {
+        await callFn('user', { action: 'get' });
+      } catch (e) {
+        if (/登录已失效|未登录/.test(e && e.message || '')) tokenOk = false;
+      }
+      if (!tokenOk) {
+        setSessionToken('');
+        document.getElementById('loginPage').classList.remove('hidden');
+        renderDiscoverFeed();
+        renderFollowingFeed();
+        return;
+      }
+      document.getElementById('loginPage').classList.add('hidden');
+      await initCloudData();
+      renderDiscoverFeed();
+      renderFollowingFeed();
+      renderUserProfileDisplay();
+      renderProfPetCards();
+      switchScreen('sc-home', 0);
+      showWelcomeIfFirstTime();
+    } else {
+      // 显示登录页（默认就显示，不需要额外操作）
+      // 先把默认 feed 渲染一下（用本地示例数据）
+      renderDiscoverFeed();
+      renderFollowingFeed();
+    }
+  } catch(e) {
+    console.warn('[boot]', e);
+    renderDiscoverFeed();
+    renderFollowingFeed();
+    switchScreen('sc-home', 0);
+  }
+})();
 
 // renderAccountFollowBtn: see original function (patched directly below)
 
@@ -4857,7 +6121,8 @@ function switchBankPet(petId){
   renderBankPage();
 }
 function renderBankStats(){
-  const pet=PETS[currentBankPetId];if(!pet)return;
+  const pet=petOr(currentBankPetId);if(!pet)return;
+  if(!PETS[currentBankPetId]) currentBankPetId=pet.id;
   document.getElementById('bankHeroLabel').textContent='已为'+pet.name+'存入';
   document.getElementById('bankCount').textContent=pet.bank.count;
   document.getElementById('bankPhotos').textContent=pet.bank.photos;
@@ -4867,16 +6132,22 @@ function renderBankStats(){
   document.getElementById('bankDailyCount').textContent=pet.bank.dailyCount;
   document.getElementById('cloneBadge').textContent=pet.clone.done+' / '+pet.clone.total+' 段';
   document.getElementById('cloneBarFill').style.width=Math.round(pet.clone.done/pet.clone.total*100)+'%';
-  document.getElementById('cloneSegs').innerHTML=pet.clone.segs.map(s=>`<div class="clone-seg ${s.startsWith('✓')?'done':'todo'}">${s}</div>`).join('');
+  document.getElementById('cloneSegs').innerHTML=pet.clone.segs.map((s,i)=>{
+    const done=s.startsWith('✓');
+    const label=s.replace(/^[✓⬜]\s*/,'');
+    return '<div class="clone-seg '+(done?'done':'todo')+'" style="cursor:pointer" '+
+      'onclick="openAudioVaultModal(\''+label.replace(/'/g,"\\'")+'\')">'+s+'</div>';
+  }).join('');
   const remain=pet.clone.total-pet.clone.done;
   const pet2=PETS[currentBankPetId];
   const cvBtn=pet2&&pet2.customVoice?
     `<div onclick="clearCustomVoice('${currentBankPetId}')" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:4px 10px;border-radius:var(--rf);background:#dcfce7;color:#16a34a;font-size:11px;font-weight:600;cursor:pointer">✓ 已设专属叫声（点击取消）</div>`:
     `<div onclick="goRecordPetVoice()" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:4px 10px;border-radius:var(--rf);background:var(--red-m);color:var(--red);font-size:11px;font-weight:600;cursor:pointer">🎙️ 录一段真实叫声</div>`;
-  document.getElementById('cloneHint').innerHTML=(remain>0?`再录 <strong>${remain} 段</strong>不同情绪的叫声，声音克隆即可达到「可用于告别服务」的质量阈值——这一步完全免费，越早开始存越好。`:'🎉 声音样本已集齐，声音克隆质量已达标')+cvBtn;
+  document.getElementById('cloneHint').innerHTML=(remain>0?`再录 <strong>${remain} 段</strong>不同情绪的叫声，就能把它的声音完整地留下来——完全免费，越早开始存越好。`:'🎉 声音样本已集齐，都安全存在记忆银行里了')+cvBtn;
 }
 function renderBankTimeline(){
-  const pet=PETS[currentBankPetId];if(!pet)return;
+  const pet=petOr(currentBankPetId);if(!pet)return;
+  if(!PETS[currentBankPetId]) currentBankPetId=pet.id;
   const list=document.getElementById('bankTlList');
   if(pet.timeline.length===0){
     list.innerHTML='<div style="text-align:center;padding:20px 0;color:var(--muted2);font-size:12px">还没有存入任何记忆，点击下方开始第一条</div>';
@@ -4930,7 +6201,7 @@ function renderMedPhotos(){
   const wrap=document.getElementById('medDetailPhotos');
   wrap.innerHTML=rec.photos.map(url=>`<img src="${url}" style="width:72px;height:72px;border-radius:var(--r8);object-fit:cover;border:1px solid var(--line)"/>`).join('');
 }
-function handleMedPhotoUpload(e){
+async function handleMedPhotoUpload(e){
   const file=e.target.files[0];if(!file)return;
   const rec=findMedRecord(curMedPetId, curMedId);if(!rec)return;
   fileToBase64(file,600).then(function(url){
@@ -5027,15 +6298,21 @@ function switchAlbumPet(petId){
   renderAlbumPage();
 }
 function renderAlbumPage(){
-  const pet=PETS[currentAlbumPetId]||PETS[currentBankPetId]||PETS[currentPetId];
+  const pet=petOr(currentAlbumPetId)||petOr(currentBankPetId)||petOr(currentPetId);
   if(!pet)return;
   currentAlbumPetId=pet.id;
   document.getElementById('albumSub').textContent=pet.name+'的所有照片和视频';
   renderPetSwitchBar('albumPetSwitch', currentAlbumPetId, 'switchAlbumPet');
   const grid=document.getElementById('albumGrid');
   const items=pet.album||[];
+  // “＋”卡片：可同时添加照片和视频
+  const addCard='<label for="albumAddInput" style="position:relative;overflow:hidden;aspect-ratio:1;border-radius:var(--r8);cursor:pointer;border:1.5px dashed var(--line2);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted2)">'+
+    '<div style="font-size:26px;line-height:1">＋</div>'+
+    '<div style="font-size:10px;font-weight:600">照片/视频</div>'+
+    '<input type="file" id="albumAddInput" accept="image/*,video/*" multiple onchange="handleAlbumAdd(event)" style="position:absolute;inset:0;opacity:0;cursor:pointer"/>'+
+    '</label>';
   if(items.length===0){
-    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--muted2);font-size:12px">还没有存入任何照片或视频</div>';
+    grid.innerHTML=addCard+'<div style="grid-column:2/-1;display:flex;align-items:center;color:var(--muted2);font-size:12px">还没有存入照片或视频</div>';
     return;
   }
   grid.innerHTML=items.map((item,i)=>{
@@ -5044,7 +6321,61 @@ function renderAlbumPage(){
       <img src="${thumbUrl}" style="width:100%;height:100%;object-fit:cover" alt=""/>
       ${item.type==='video'?'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.15)"><div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;font-size:12px">▶️</div></div>':''}
     </div>`;
-  }).join('');
+  }).join('')+addCard;
+}
+
+// 相册添加：照片直接存，视频自动抽封面帧作缩略图
+async function handleAlbumAdd(ev){
+  const pet=PETS[currentAlbumPetId]||PETS[currentPetId];
+  if(!pet){ showToast('请先添加一只宠物'); return; }
+  const files=[...(ev.target.files||[])].slice(0,20);
+  ev.target.value='';
+  if(!files.length) return;
+  if(!pet.album) pet.album=[];
+  showToast('正在处理 '+files.length+' 个文件…');
+  let okN=0;
+  for(const f of files){
+    try{
+      const dataUrl=await new Promise((res,rej)=>{
+        const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(f);
+      });
+      if(f.type.startsWith('video/')){
+        const poster=await _grabVideoPoster(dataUrl).catch(()=>'');
+        pet.album.unshift({type:'video',url:dataUrl,poster:poster||'',date:'刚刚添加'});
+      }else{
+        pet.album.unshift({type:'photo',url:dataUrl,date:'刚刚添加'});
+      }
+      okN++;
+    }catch(e){ console.warn('[album] 读取失败',f&&f.name,e); }
+  }
+  if(!okN){ showToast('这些文件读不了，换几个试试'); return; }
+  if(pet.bank){
+    pet.bank.photos=(pet.bank.photos||0)+okN;
+    pet.bank.count=(pet.bank.count||0)+okN;
+  }
+  if(typeof syncMemCountEverywhere==='function') syncMemCountEverywhere();
+  renderAlbumPage();
+  if(typeof saveState==='function') saveState();
+  showToast('已存入 '+okN+' 个文件 🎉');
+}
+
+// 从视频抽一帧做封面
+function _grabVideoPoster(src){
+  return new Promise((resolve,reject)=>{
+    const v=document.createElement('video');
+    v.preload='metadata'; v.muted=true; v.playsInline=true; v.src=src;
+    const bail=setTimeout(()=>reject(new Error('timeout')),8000);
+    v.onloadeddata=()=>{ try{ v.currentTime=Math.min(0.5, (v.duration||1)/3); }catch(e){ clearTimeout(bail); reject(e); } };
+    v.onseeked=()=>{
+      try{
+        const c=document.createElement('canvas');
+        c.width=v.videoWidth||320; c.height=v.videoHeight||320;
+        c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+        clearTimeout(bail); resolve(c.toDataURL('image/jpeg',0.7));
+      }catch(e){ clearTimeout(bail); reject(e); }
+    };
+    v.onerror=()=>{ clearTimeout(bail); reject(new Error('video load error')); };
+  });
 }
 function openAlbumViewer(petId,idx){
   const pet=PETS[petId];if(!pet)return;
@@ -5079,9 +6410,10 @@ function switchHealthPet(petId){
   renderHealthPage();
 }
 function renderHealthPage(){
-  const pet=PETS[currentHealthPetId];if(!pet)return;
+  const pet=petOr(currentHealthPetId);if(!pet)return;
+  if(!PETS[currentHealthPetId]) currentHealthPetId=pet.id;
   renderPetSwitchBar('healthPetSwitch', currentHealthPetId, 'switchHealthPet');
-  document.getElementById('healthTopSub').textContent=pet.name+'的身体记录，每一笔都很重要';
+  document.getElementById('healthTopSub').textContent=pet.name+'的养护、症状、病历，都可以问';
   document.getElementById('healthPetInfoCard').innerHTML=`
     <div class="pic-ava" style="background:${pet.avaBg}">${pet.emoji}</div>
     <div class="pic-info">
@@ -5105,7 +6437,8 @@ function renderHealthPage(){
 }
 // 医疗记录：只保留日期+小标题，紧凑展示，具体情况点击后以半层弹窗呈现
 function renderHealthMedTimeline(){
-  const pet=PETS[currentHealthPetId];if(!pet)return;
+  const pet=petOr(currentHealthPetId);if(!pet)return;
+  if(!PETS[currentHealthPetId]) currentHealthPetId=pet.id;
   const box=document.getElementById('healthMedTimeline');
   if(pet.medical.length===0){
     box.innerHTML='<div style="text-align:center;padding:20px 0;color:var(--muted2);font-size:12px">还没有医疗记录，点击下方按钮添加第一条</div>';
@@ -5146,18 +6479,150 @@ const SYMPTOM_ADVICE={
   '精神萎靡':{reason:'体力消耗过大、轻微不适早期信号、环境变化应激、潜在疾病前兆',advice:'检查体温和进食饮水情况、提供安静休息环境、密切观察24小时、若持续萎靡建议尽快就医'},
   '瘙痒抓挠':{reason:'跳蚤虱子等体外寄生虫、食物或环境过敏、真菌感染、皮肤干燥',advice:'检查皮毛是否有寄生虫、避免频繁洗澡破坏皮肤屏障、更换低敏粮食试试、持续加重需皮肤镜检查'}
 };
-function askAiVet(){
-  const pet=PETS[currentHealthPetId];
+// 拍照问 AI：选图 / 清除
+let _aiAskPhoto=null;
+function handleAiAskPhoto(ev){
+  const f=ev.target.files&&ev.target.files[0];
+  if(!f) return;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    _aiAskPhoto=fr.result;
+    document.getElementById('aiAskPhotoPrev').src=_aiAskPhoto;
+    document.getElementById('aiAskPhotoWrap').style.display='block';
+  };
+  fr.readAsDataURL(f);
+  ev.target.value='';
+}
+function clearAiAskPhoto(){
+  _aiAskPhoto=null;
+  document.getElementById('aiAskPhotoWrap').style.display='none';
+  document.getElementById('aiAskPhotoPrev').src='';
+}
+
+
+// 取宠物统一兜底：id 失效时回落到第一只，避免 undefined 崩页
+function petOr(id){
+  if (typeof PETS==='undefined' || !PETS) return null;
+  if (id && PETS[id]) return PETS[id];
+  const k = Object.keys(PETS)[0];
+  return k ? PETS[k] : null;
+}
+
+async function askAiVet(){
+  const pet=petOr(currentHealthPetId);
+  if(!pet){ showToast('请先给毛孩子建个档案 🐾'); return; }
+  if(!PETS[currentHealthPetId]) currentHealthPetId=pet.id||Object.keys(PETS)[0];
   const desc=(document.getElementById('aiAskDesc').value||'').trim();
-  const data=SYMPTOM_ADVICE[curSymptom];
   const result=document.getElementById('aiAskResult');
+  const btn=document.getElementById('aiAskBtn');
+  if(!curSymptom && !desc && !_aiAskPhoto){ showToast('选个症状，或直接打字问我'); return; }
   result.style.display='block';
-  result.innerHTML=`<div style="font-weight:700;color:#2563eb;margin-bottom:6px">🩺 基于 ${pet.name}（${pet.species}·${pet.age}·${pet.neutered?'已绝育':'未绝育'}）的分析</div>`+
-    `<div style="margin-bottom:6px"><strong>「${curSymptom}」</strong>${desc?'，'+desc:''}，可能原因：</div>`+
-    `<div style="margin-bottom:8px;color:var(--muted)">${data.reason}</div>`+
-    `<div style="margin-bottom:4px"><strong>建议：</strong></div>`+
-    `<div style="color:var(--muted)">${data.advice}</div>`;
-  showToast('已生成基于'+pet.name+'档案的建议 🩺');
+  result.innerHTML='<div style="color:var(--muted);font-size:13px">正在分析 '+_escapeHtml(pet.name)+' 的情况…</div>';
+  if(btn){ btn.disabled=true; }
+
+  // 前端急症兵底：即使后端没部署，急症也必须能抦住
+  const emergency=_frontEmergencyCheck((curSymptom||'')+' '+desc);
+  if(emergency){
+    _renderVetUrgent(result, emergency);
+    if(btn) btn.disabled=false;
+    return;
+  }
+
+  try{
+    // 有图先走视觉模型把图转成文字，再交给文本模型一起分析
+    let imgText='';
+    if(_aiAskPhoto){
+      result.innerHTML='<div style="color:var(--muted);font-size:13px">正在识别你传的照片…</div>';
+      try{
+        const vd=await callFn('ai',{action:'vision',imageBase64:_aiAskPhoto});
+        if(vd && vd.text) imgText=vd.text;
+      }catch(e){ console.warn('[askAiVet] 视觉识别失败',e); }
+      result.innerHTML='<div style="color:var(--muted);font-size:13px">正在分析…</div>';
+    }
+
+    const fullDesc = imgText ? (desc+'\n\n【照片识别内容】\n'+imgText) : desc;
+    const data=await callFn('ai',{
+      action:'vet',
+      symptom:curSymptom||'其它问题',
+      desc:fullDesc,
+      pet:{ name:pet.name, species:pet.species, age:pet.age, gender:pet.gender,
+            weight:pet.weight, neutered:pet.neutered, allergies:pet.allergies }
+    });
+    if(data && data.urgent){ _renderVetUrgent(result, data.emergencyType, data); if(btn) btn.disabled=false; return; }
+    const body=(data && data.content) ? _escapeHtml(data.content).replace(/\n/g,'<br>')
+              : _escapeHtml((data&&data.advice)||'暂时拿不到建议');
+    result.innerHTML=
+      '<div style="font-weight:700;color:#2563eb;margin-bottom:6px">🩺 基于 '+_escapeHtml(pet.name)+
+      '（'+_escapeHtml(pet.species||'')+(pet.age?'·'+_escapeHtml(pet.age):'')+(pet.neutered?'·已绝育':'·未绝育')+'）的分析</div>'+
+      (imgText?'<div style="font-size:11px;color:var(--muted);background:var(--bg2);padding:8px;border-radius:8px;margin-bottom:8px;white-space:pre-wrap">📷 照片识别：\n'+_escapeHtml(imgText)+'</div>':'')+
+      (data&&data.degraded?'<div style="font-size:11px;color:#b45309;background:#fef3c7;padding:6px 8px;border-radius:8px;margin-bottom:8px">⚠️ 智能问答暂时不可用，以下为通用建议</div>':'')+
+      '<div style="line-height:1.7;color:var(--ink)">'+body+'</div>'+
+      '<div style="margin-top:10px"><button onclick="speakAiAnswer(this)" data-text="'+_escapeHtml((data&&data.content)||'')+'" style="height:32px;padding:0 14px;border-radius:99px;border:1.5px solid var(--line2);background:#fff;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer">🔊 读给我听</button></div>'+
+      '<div style="margin-top:10px;font-size:11px;color:var(--muted2)">'+_escapeHtml((data&&data.disclaimer)||'仅供参考，不能替代执业兽医诊断')+'</div>';
+  }catch(e){
+    console.error('[askAiVet]',e);
+    const d=SYMPTOM_ADVICE[curSymptom];
+    result.innerHTML=
+      '<div style="font-size:11px;color:#b45309;background:#fef3c7;padding:6px 8px;border-radius:8px;margin-bottom:8px">⚠️ 智能问答暂时连不上（'+_escapeHtml(errText(e,'网络异常'))+'），先给你通用建议</div>'+
+      (d?'<div style="margin-bottom:6px;color:var(--muted)">可能原因：'+_escapeHtml(d.reason)+'</div><div style="color:var(--ink)">建议：'+_escapeHtml(d.advice)+'</div>':'')+
+      '<div style="margin-top:10px;font-size:11px;color:var(--muted2)">症状持续或加重，请尽快就医。</div>';
+  }finally{
+    if(btn) btn.disabled=false;
+  }
+}
+
+// 把 AI 回答读出来（语音合成）
+async function speakAiAnswer(btn){
+  const text=(btn&&btn.getAttribute('data-text'))||'';
+  if(!text){ showToast('没有可朗读的内容'); return; }
+  const old=btn.textContent;
+  btn.disabled=true; btn.textContent='合成中…';
+  try{
+    const d=await callFn('ai',{action:'tts',text:text.slice(0,480)});
+    if(!d||!d.audioBase64) throw new Error((d&&d.msg)||'语音合成失败');
+    const a=new Audio(d.audioBase64);
+    a.play();
+    btn.textContent='▶️ 播放中';
+    a.onended=()=>{ btn.textContent=old; btn.disabled=false; };
+    a.onerror=()=>{ btn.textContent=old; btn.disabled=false; showToast('播放失败'); };
+  }catch(e){
+    showToast(errText(e,'语音合成失败'));
+    btn.textContent=old; btn.disabled=false;
+  }
+}
+
+// 前端急症兵底（与云函数保持一致，双保险）
+const _FRONT_EMERGENCY=[
+  [/吐血|呕血|便血|血便|尿血|血尿|血丝|带血|有血|出血|喷血/,'出血'],
+  [/抽搭|抽风|痉挛|癫痫|口吐白沫/,'神经症状'],
+  [/没(有)?呼吸|不(能|会)呼吸|呼吸困难|窒息|喘不上/,'呼吸窘迫'],
+  [/昏迷|不省人事|叫不醒|失去意识/,'意识障碍'],
+  [/误食|误吞|中毒|吃了(老鼠药|巧克力|洋葱|药)/,'疑似中毒'],
+  [/车祸|摔伤|骨折|被咬伤|大出血/,'外伤'],
+  [/难产|生不出|胎儿卡/,'难产'],
+  [/尿不出|排不出尿|尿闭/,'尿路棗阻'],
+  [/持续呕吐|吐了好几天|吐了三天|一直吐/,'持续呕吐'],
+  [/完全不吃|一口不吃|拒食|不吃不喝|没有食欲.*天/,'完全拒食'],
+  [/体温(过低|很低)|四肢冰凉|休克|牙龈发白/,'休克征象'],
+  [/肚子(胀|鼓)得(很)?大|腹部膨大|胃扭转/,'急腹症'],
+];
+function _frontEmergencyCheck(text){
+  if(!text) return null;
+  for(const [re,why] of _FRONT_EMERGENCY){ if(re.test(text)) return why; }
+  return null;
+}
+function _escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function _renderVetUrgent(el, why, data){
+  el.innerHTML=
+    '<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:12px">'+
+    '<div style="font-weight:800;color:#dc2626;font-size:15px;margin-bottom:6px">⚠️ 这种情况请立即送医</div>'+
+    '<div style="color:#7f1d1d;line-height:1.7">'+
+    _escapeHtml((data&&data.reason)||('你描述的情况涉及「'+why+'」，属于急症信号。'))+'<br>'+
+    _escapeHtml((data&&data.advice)||'请立刻带它去最近的宠物医院，路上保持安静保暖，不要喂食喂水，不要自行给药。时间就是命，别等观察。')+
+    '</div></div>'+
+    '<div style="margin-top:10px"><button class="modal-cta" style="background:#dc2626" onclick="switchScreen(\'sc-home\',0);setTimeout(()=>setHomeTab(document.querySelectorAll(\'.tb-tab\')[2],\'tab-nearby\'),100)">🏥 查看附近宠物医院</button></div>';
 }
 
 
@@ -5168,33 +6633,52 @@ const IMPORT_PHOTO_POOL={
   dog:['https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?w=300&q=70','https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300&q=70','https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&q=70','https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=300&q=70','https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?w=300&q=70','https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&q=70','https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=300&q=70','https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=300&q=70']
 };
 let importedPhotoUrls=[];
+// 一键导入：真实读取用户本地相册（以前是假装扫描微信、实际塞陌生猫狗图，已改掉）
+// 浏览器安全限制下网页无法直接读微信/抖音相册，只能由用户主动选图
 function importDataToBank(){
-  const pet=PETS[currentBankPetId]||PETS[currentPetId];if(!pet)return;
-  document.getElementById('importPhotosSub').textContent='正在从微信相册扫描…';
-  document.getElementById('importScanState').style.display='block';
-  document.getElementById('importResultState').style.display='none';
-  document.getElementById('importConfirmBtn').style.display='none';
-  document.getElementById('importScanBar').style.width='0%';
-  document.getElementById('importPhotosModal').classList.add('on');
-  const isCat=/猫/.test(pet.species);
-  const pool=isCat?IMPORT_PHOTO_POOL.cat:IMPORT_PHOTO_POOL.dog;
-  const count=6+Math.floor(Math.random()*3);
-  importedPhotoUrls=pool.slice(0,count);
-  let pct=0;
-  const timer=setInterval(()=>{
-    pct+=12;
-    document.getElementById('importScanBar').style.width=Math.min(pct,100)+'%';
-    if(pct>=100){
-      clearInterval(timer);
-      setTimeout(()=>{
-        document.getElementById('importScanState').style.display='none';
-        document.getElementById('importResultState').style.display='block';
-        document.getElementById('importResultLabel').textContent='扫描到 '+importedPhotoUrls.length+' 张新照片';
-        document.getElementById('importPhotoGrid').innerHTML=importedPhotoUrls.map(u=>`<img src="${u}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--r8)" alt=""/>`).join('');
-        document.getElementById('importConfirmBtn').style.display='block';
-      },300);
+  const pet=PETS[currentBankPetId]||PETS[currentPetId];
+  if(!pet){ showToast('请先添加一只宠物'); return; }
+  let input=document.getElementById('_realImportInput');
+  if(!input){
+    input=document.createElement('input');
+    input.type='file'; input.accept='image/*'; input.multiple=true;
+    input.id='_realImportInput'; input.style.display='none';
+    document.body.appendChild(input);
+  }
+  input.value='';
+  input.onchange=async ()=>{
+    const files=[...(input.files||[])].slice(0,20);
+    if(!files.length) return;
+    document.getElementById('importPhotosSub').textContent='正在读取你选中的照片…';
+    document.getElementById('importScanState').style.display='block';
+    document.getElementById('importResultState').style.display='none';
+    document.getElementById('importConfirmBtn').style.display='none';
+    document.getElementById('importScanBar').style.width='0%';
+    document.getElementById('importPhotosModal').classList.add('on');
+    importedPhotoUrls=[];
+    for(let i=0;i<files.length;i++){
+      try{
+        const url=await new Promise((res,rej)=>{
+          const fr=new FileReader();
+          fr.onload=()=>res(fr.result); fr.onerror=rej;
+          fr.readAsDataURL(files[i]);
+        });
+        importedPhotoUrls.push(url);
+      }catch(e){ console.warn('[import] 读取失败',files[i]&&files[i].name,e); }
+      document.getElementById('importScanBar').style.width=Math.round((i+1)/files.length*100)+'%';
     }
-  },180);
+    if(!importedPhotoUrls.length){
+      closeImportPhotos();
+      showToast('这些文件读不了，换几张试试');
+      return;
+    }
+    document.getElementById('importScanState').style.display='none';
+    document.getElementById('importResultState').style.display='block';
+    document.getElementById('importResultLabel').textContent='已选中 '+importedPhotoUrls.length+' 张照片';
+    document.getElementById('importPhotoGrid').innerHTML=importedPhotoUrls.map(u=>`<img src="${u}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--r8)" alt=""/>`).join('');
+    document.getElementById('importConfirmBtn').style.display='block';
+  };
+  input.click();
 }
 function closeImportPhotos(){
   document.getElementById('importPhotosModal').classList.remove('on');
@@ -5207,7 +6691,7 @@ function confirmImportPhotos(){
   if(!pet.album)pet.album=[];
   importedPhotoUrls.forEach(u=>{ pet.album.unshift({type:'photo',url:u,date:'刚刚导入'}); });
   syncMemCountEverywhere();
-  prependBankTimeline('📲','一键导入','从微信相册扫描导入了 '+imported+' 张新照片',importedPhotoUrls[0]);
+  prependBankTimeline('📲','导入照片','从本地相册导入了 '+imported+' 张照片',importedPhotoUrls[0]);
   saveState();
   closeImportPhotos();
   showToast('导入成功！新增 '+imported+' 张照片已存入记忆银行 🎉');
@@ -5217,7 +6701,7 @@ const REMINDER_ITEMS=[
   {id:'vaccine',icon:'💉',label:'疫苗/驱虫到期提醒',on:true},
   {id:'checkup',icon:'🏥',label:'年度体检提醒',on:true},
   {id:'memory',icon:'📦',label:'连续未记录提醒（3天未存入新记忆时提醒）',on:true},
-  {id:'cloneprogress',icon:'🎙️',label:'声音克隆进度提醒',on:false},
+  {id:'cloneprogress',icon:'🎙️',label:'声音留存进度提醒',on:false},
   {id:'bill',icon:'💰',label:'每月账单汇总提醒',on:false},
 ];
 function openReminderModal(){
@@ -5239,10 +6723,60 @@ function toggleReminder(id,el){
 // 数据导出
 function openExportModal(){ document.getElementById('exportModal').classList.add('on'); }
 function closeExportModal(){ document.getElementById('exportModal').classList.remove('on'); }
+// 导出：真实生成文件并触发下载（不再是只弹“正在打包”）
+function _downloadBlob(blob, filename){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+function _collectAllData(){
+  const pets=(typeof PETS!=='undefined')?PETS:{};
+  const out={ 导出时间:new Date().toLocaleString('zh-CN'), 应用:'毛记忆 PawMemory', 宠物:[] };
+  Object.values(pets).forEach(p=>{
+    out.宠物.push({
+      名字:p.name, 品种:p.species, 生日:p.birthday, 性别:p.gender,
+      体重:p.weight, 绝育:p.neutered?'已绝育':'未绝育', 过敏史:p.allergies||'无',
+      记忆条数:(p.bank&&p.bank.count)||0,
+      日常:p.daily||{}, 相册:(p.photos||[]).length+' 张'
+    });
+  });
+  return out;
+}
 function doExport(type){
   closeExportModal();
-  const labelMap={photos:'照片',timeline:'时光轴PDF',all:'全部数据打包'};
-  showToast('正在打包'+labelMap[type]+'…完成后会通知你下载 📦');
+  try{
+    if(type==='photos'){
+      const pets=(typeof PETS!=='undefined')?PETS:{};
+      const urls=[];
+      Object.values(pets).forEach(p=>(p.photos||[]).forEach(ph=>urls.push(typeof ph==='string'?ph:(ph&&ph.url))));
+      const list=urls.filter(Boolean);
+      if(!list.length){ showToast('还没有照片可导出 📷'); return; }
+      const txt='毛记忆 · 照片清单\n导出时间：'+new Date().toLocaleString('zh-CN')+'\n共 '+list.length+' 张\n\n'+list.join('\n');
+      _downloadBlob(new Blob([txt],{type:'text/plain;charset=utf-8'}), '毛记忆-照片清单.txt');
+      showToast('已导出 '+list.length+' 张照片的链接清单 📷');
+      return;
+    }
+    if(type==='timeline'){
+      const d=_collectAllData();
+      let md='# 毛记忆 · 时光轴\n\n导出时间：'+d.导出时间+'\n\n';
+      d.宠物.forEach(p=>{
+        md+='## '+p.名字+'\n\n- 品种：'+p.品种+'\n- 生日：'+(p.生日||'未填')+
+            '\n- 体重：'+(p.体重||'未填')+'\n- '+p.绝育+'\n- 记忆：'+p.记忆条数+' 条\n- 相册：'+p.相册+'\n\n';
+      });
+      _downloadBlob(new Blob([md],{type:'text/markdown;charset=utf-8'}), '毛记忆-时光轴.md');
+      showToast('时光轴已导出（Markdown，可直接转PDF）📄');
+      return;
+    }
+    const all=_collectAllData();
+    try{ all.反馈记录=JSON.parse(localStorage.getItem(FEEDBACK_KEY)||'[]'); }catch(e){}
+    _downloadBlob(new Blob([JSON.stringify(all,null,2)],{type:'application/json;charset=utf-8'}), '毛记忆-全部数据.json');
+    showToast('全部数据已导出 📦');
+  }catch(e){
+    console.error('[doExport]',e);
+    showToast('导出失败：'+(e.message||'未知错误'));
+  }
 }
 
 // ══════════════════════════════════════════
@@ -5350,39 +6884,308 @@ async function toggleFarewellRecording(){
   }
 }
 // 生成纪念视频：当前为效果演示（示例素材），真实的图生视频能力需要接入第三方API后替换这里的逻辑
-function generateFarewellVideo(){
-  document.getElementById('farewellGenSection').style.display='none';
-  document.getElementById('farewellGenProgress').style.display='block';
+// ══ 真实纪念影集合成（Canvas 逐帧绘制 + MediaRecorder 录制）══
+// 不是播素材片，是用用户自己宠物的真实照片现场合成一段 webm 视频
+let _farewellBlob=null;
+
+function _loadImg(src){
+  return new Promise(resolve=>{
+    const img=new Image();
+    // 跨域图必须带 crossOrigin，否则 canvas 被污染后无法导出视频
+    if(/^https?:\/\//.test(src)) img.crossOrigin='anonymous';
+    img.onload=()=>resolve(img);
+    img.onerror=()=>resolve(null);
+    img.src=src;
+  });
+}
+
+function _drawCover(ctx,img,W,H,scale,offx){
+  const r=Math.max(W/img.width,H/img.height)*scale;
+  const w=img.width*r, h=img.height*r;
+  ctx.drawImage(img,(W-w)/2+offx,(H-h)/2,w,h);
+}
+
+// 圆角居中文字（自动换行）
+function _drawText(ctx,text,W,y,size,color,maxW){
+  if(!text) return y;
+  ctx.font='600 '+size+'px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle=color; ctx.textAlign='center'; ctx.textBaseline='top';
+  const chars=[...text]; let line=''; const lines=[];
+  chars.forEach(c=>{
+    if(c==='\n'){ lines.push(line); line=''; return; }
+    const t=line+c;
+    if(ctx.measureText(t).width>maxW){ lines.push(line); line=c; } else line=t;
+  });
+  if(line) lines.push(line);
+  lines.slice(0,4).forEach((ln,i)=>ctx.fillText(ln,W/2,y+i*(size*1.5)));
+  return y+lines.slice(0,4).length*(size*1.5);
+}
+
+// ══ 共用影集渲染引擎（纪念影集 / 宠物影集都用它）══
+// Canvas 逐帧绘制 + MediaRecorder 录制，全程在用户本机，不上传
+async function _renderPhotoFilm(opts){
+  const { srcs, title, subtitle, eulogy, audioUrl, style, onProgress } = opts||{};
+  const prog=(p,m)=>{ try{ onProgress&&onProgress(p,m); }catch(e){} };
+  if(!srcs||!srcs.length) return {ok:false,msg:'没有可用照片'};
+
+  prog(2,'正在读取照片…');
+  const imgs=[];
+  for(let i=0;i<srcs.length;i++){
+    const im=await _loadImg(srcs[i]);
+    if(im) imgs.push(im);
+    prog(2+ (i+1)/srcs.length*18);
+  }
+  if(!imgs.length) return {ok:false,msg:'照片读取失败，换几张本地照片试试'};
+
+  const W=720,H=720;
+  const cvs=document.createElement('canvas'); cvs.width=W; cvs.height=H;
+  const ctx=cvs.getContext('2d');
+
+  let stream;
+  try{ stream=cvs.captureStream(30); }
+  catch(e){ return {ok:false,msg:'当前浏览器不支持合成，请用最新版 Chrome/Safari'}; }
+
+  let audioEl=null, actx=null;
+  if(audioUrl){
+    try{
+      audioEl=new Audio(audioUrl); audioEl.crossOrigin='anonymous';
+      actx=new (window.AudioContext||window.webkitAudioContext)();
+      const s=actx.createMediaElementSource(audioEl);
+      const dest=actx.createMediaStreamDestination();
+      s.connect(dest);
+      dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+    }catch(e){ console.warn('[film] 音频混入失败，仅合成画面',e); }
+  }
+
+  let mime='';
+  ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4']
+    .forEach(m=>{ if(!mime && window.MediaRecorder && MediaRecorder.isTypeSupported(m)) mime=m; });
+  if(!mime) return {ok:false,msg:'当前浏览器不支持视频录制'};
+
+  const chunks=[];
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2500000});
+  rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+  const done=new Promise(r=>{ rec.onstop=()=>r(new Blob(chunks,{type:mime})); });
+  rec.start();
+  if(audioEl){ try{ await actx.resume(); audioEl.play(); }catch(e){} }
+
+  prog(20,'正在合成画面…');
+  const PER=3.0, FADE=0.6;
+  const openDur=2.0, endDur=eulogy?3.5:2.0;
+  const total=openDur+imgs.length*PER+endDur;
+  const isDream=style==='dream', isRetro=style==='retro';
+  const t0=performance.now();
+
+  await new Promise(resolve=>{
+    function frame(){
+      const t=(performance.now()-t0)/1000;
+      if(t>=total){ resolve(); return; }
+      ctx.filter='none';
+      ctx.fillStyle=isRetro?'#1a1610':'#12100f'; ctx.fillRect(0,0,W,H);
+
+      if(t<openDur){
+        const a=Math.min(1,t/0.8)*Math.min(1,(openDur-t)/0.5);
+        ctx.globalAlpha=Math.max(0,a);
+        ctx.font='700 60px -apple-system,"PingFang SC",sans-serif';
+        ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(eulogy!==undefined?'🕊️':'🎬',W/2,H/2-70);
+        _drawText(ctx,title||'',W,H/2-10,40,'#fff',W-120);
+        if(subtitle) _drawText(ctx,subtitle,W,H/2+60,22,'rgba(255,255,255,.7)',W-120);
+        ctx.globalAlpha=1;
+      } else if(t<openDur+imgs.length*PER){
+        const lt=t-openDur;
+        const idx=Math.min(imgs.length-1,Math.floor(lt/PER));
+        const local=lt-idx*PER, p=local/PER;
+        const zoom=1.06+p*0.10;
+        const pan=(idx%2===0?1:-1)*(p-0.5)*36;
+        ctx.globalAlpha=1;
+        if(isRetro) ctx.filter='sepia(.55) contrast(1.05)';
+        else if(isDream) ctx.filter='saturate(1.25) brightness(1.05) blur(.4px)';
+        _drawCover(ctx,imgs[idx],W,H,zoom,pan);
+        if(local>PER-FADE && idx<imgs.length-1){
+          ctx.globalAlpha=(local-(PER-FADE))/FADE;
+          _drawCover(ctx,imgs[idx+1],W,H,1.06,0);
+          ctx.globalAlpha=1;
+        }
+        ctx.filter='none';
+        if(local<0.35){ ctx.fillStyle='rgba(18,16,15,'+(1-local/0.35)+')'; ctx.fillRect(0,0,W,H); }
+        const g=ctx.createLinearGradient(0,H-190,0,H);
+        g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.62)');
+        ctx.fillStyle=g; ctx.fillRect(0,H-190,W,190);
+        _drawText(ctx,title||'',W,H-120,26,'rgba(255,255,255,.95)',W-100);
+        _drawText(ctx,(idx+1)+' / '+imgs.length,W,H-78,15,'rgba(255,255,255,.55)',W-100);
+      } else {
+        const lt=t-openDur-imgs.length*PER;
+        ctx.globalAlpha=Math.min(1,lt/0.8);
+        let y=eulogy?150:H/2-60;
+        ctx.font='700 34px -apple-system,"PingFang SC",sans-serif';
+        ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='top';
+        ctx.fillText(eulogy!==undefined?'谢谢你来过':(title||''),W/2,y); y+=64;
+        if(eulogy) y=_drawText(ctx,eulogy,W,y,21,'rgba(255,255,255,.86)',W-130)+30;
+        _drawText(ctx, eulogy!==undefined?'—— 永远想你的家人':'毛记忆 PawMemory',
+                  W, Math.min(y,H-120), 18, 'rgba(255,255,255,.6)', W-130);
+        ctx.globalAlpha=1;
+      }
+      prog(20+t/total*72);
+      requestAnimationFrame(frame);
+    }
+    frame();
+  });
+
+  prog(95,'正在封装视频…');
+  rec.stop();
+  if(audioEl){ try{ audioEl.pause(); }catch(e){} }
+  const blob=await done;
+  try{ if(actx) actx.close(); }catch(e){}
+  prog(100);
+  if(!blob||!blob.size) return {ok:false,msg:'合成失败，请重试'};
+  return {ok:true, blob, frames:imgs.length, seconds:total};
+}
+
+async function generateFarewellVideo(){
+  const pet=PETS[farewellPetId];
+  const eulogy=(document.getElementById('farewellEulogy').value||'').trim();
+  const genSec=document.getElementById('farewellGenSection');
+  const prog=document.getElementById('farewellGenProgress');
   const bar=document.getElementById('farewellGenBar');
   const text=document.getElementById('farewellGenText');
-  const steps=['AI 正在根据照片和文字生成纪念视频…','正在为每张照片生成动态效果…','正在配上舒缓的背景音乐…','正在做最后的渲染…'];
-  let pct=0, stepIdx=0;
-  const timer=setInterval(()=>{
-    pct+=8;
-    bar.style.width=Math.min(pct,100)+'%';
-    if(pct>25*stepIdx+10 && stepIdx<steps.length-1){ stepIdx++; text.textContent=steps[stepIdx]; }
-    if(pct>=100){
-      clearInterval(timer);
-      setTimeout(()=>{
-        document.getElementById('farewellGenProgress').style.display='none';
-        const videoEl=document.getElementById('farewellVideoEl');
-        // 示例纪念视频素材（根据宠物种类选取相关对象的素材，真实上线后替换为真实图生视频API的输出）
-        const pet=PETS[farewellPetId];
-        const isCatLike=pet && /猫/.test(pet.species);
-        videoEl.src=isCatLike?'https://assets.mixkit.co/videos/1779/1779-720.mp4':'https://assets.mixkit.co/vhic11s12iou0p0i5oj2cq9wajqc';
-        videoEl.poster=farewellPhotos[0]||'';
-        document.getElementById('farewellVideoResult').style.display='block';
-      },400);
-    }
-  },220);
+
+  const srcs=farewellPhotos.filter(Boolean).slice(0,8);
+  if(!srcs.length){ showToast('至少选一张照片'); return; }
+
+  genSec.style.display='none';
+  prog.style.display='block';
+  bar.style.width='0%';
+
+  const res=await _renderPhotoFilm({
+    srcs,
+    title:(pet&&pet.name)||'它',
+    subtitle:'那些一起的日子',
+    eulogy: eulogy||'',
+    audioUrl: farewellAudioUrl||null,
+    onProgress:(p,m)=>{ bar.style.width=Math.round(p)+'%'; if(m) text.textContent=m; },
+  });
+
+  if(!res.ok){
+    prog.style.display='none'; genSec.style.display='block';
+    showToast(res.msg||'合成失败，请重试'); return;
+  }
+
+  _farewellBlob=res.blob;
+  const v=document.getElementById('farewellVideoEl');
+  v.src=URL.createObjectURL(res.blob); v.poster=srcs[0]||'';
+  prog.style.display='none';
+  document.getElementById('farewellVideoResult').style.display='block';
+  const info=document.getElementById('farewellVideoInfo');
+  if(info) info.textContent='共 '+res.frames+' 张照片 · '+res.seconds.toFixed(0)+' 秒 · '+
+    (res.blob.size/1024/1024).toFixed(1)+'MB'+(farewellAudioUrl?' · 含你的录音':'');
+  showToast('纪念影集已生成 🕊️');
 }
-function saveFarewellVideo(){
+
+// AI 图生视频：把第一张照片交给 Wan2.2-I2V 生成一段真视频（耗时较长，异步轮询）
+async function generateFarewellAiVideo(){
+  const pet=PETS[farewellPetId];
+  const genSec=document.getElementById('farewellGenSection');
+  const prog=document.getElementById('farewellGenProgress');
+  const bar=document.getElementById('farewellGenBar');
+  const text=document.getElementById('farewellGenText');
+  const srcs=farewellPhotos.filter(Boolean);
+  if(!srcs.length){ showToast('至少选一张照片'); return; }
+
+  genSec.style.display='none'; prog.style.display='block';
+  bar.style.width='5%'; text.textContent='正在准备照片…';
+
+  try{
+    // 压缩到 768 以内，避免请求体过大
+    const b64=await _toDataUrlLimited(srcs[0], 768);
+    text.textContent='已提交给 AI，正在生成…';
+    bar.style.width='12%';
+    const sub=await callFn('ai',{action:'v2v_submit',imageBase64:b64,
+      prompt:'the pet gently breathes and blinks, subtle head movement, camera slowly pushes in, warm nostalgic light, cinematic'});
+    if(!sub||!sub.requestId) throw new Error((sub&&sub.msg)||'任务提交失败');
+
+    let url=null;
+    for(let i=0;i<40;i++){
+      await new Promise(r=>setTimeout(r,8000));
+      const st=await callFn('ai',{action:'v2v_status',requestId:sub.requestId});
+      const s=st&&st.status;
+      bar.style.width=Math.min(92, 12+i*2.2)+'%';
+      text.textContent='AI 生成中…（已等 '+((i+1)*8)+' 秒，通常需 2-3 分钟）';
+      if(s==='Succeed'){ url=st.url; break; }
+      if(s==='Failed'){ throw new Error(st.reason||'AI 生成失败'); }
+    }
+    if(!url) throw new Error('生成超时，请稍后重试');
+
+    bar.style.width='100%';
+    _farewellBlob=null; // AI 视频是远程 URL，不是本地 blob
+    _farewellAiUrl=url;
+    const v=document.getElementById('farewellVideoEl');
+    v.src=url; v.poster=srcs[0]||'';
+    prog.style.display='none';
+    document.getElementById('farewellVideoResult').style.display='block';
+    const info=document.getElementById('farewellVideoInfo');
+    if(info) info.textContent='AI 图生视频 · Wan2.2 · 链接有效期约1小时，请尽快下载保存';
+    showToast('AI 视频已生成 🎥');
+  }catch(e){
+    console.error('[farewellAiVideo]',e);
+    prog.style.display='none'; genSec.style.display='block';
+    showToast(errText(e,'AI 视频生成失败'));
+  }
+}
+let _farewellAiUrl=null;
+
+// 把图缩到指定边长内并转 dataURL
+async function _toDataUrlLimited(src, maxSide){
+  const img=await _loadImg(src);
+  if(!img) throw new Error('照片读取失败');
+  const r=Math.min(1, maxSide/Math.max(img.width,img.height));
+  const w=Math.round(img.width*r), h=Math.round(img.height*r);
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  c.getContext('2d').drawImage(img,0,0,w,h);
+  return c.toDataURL('image/jpeg',0.88);
+}
+
+function downloadFarewellVideo(){
+  if(_farewellAiUrl && !_farewellBlob){ window.open(_farewellAiUrl,'_blank'); showToast('已在新窗口打开，长按可保存 💾'); return; }
+  if(!_farewellBlob){ showToast('请先生成影集'); return; }
+  const pet=PETS[farewellPetId];
+  const ext=(_farewellBlob.type||'').includes('mp4')?'mp4':'webm';
+  _downloadBlob(_farewellBlob, ((pet&&pet.name)||'宠物')+'-纪念影集.'+ext);
+  showToast('已开始下载 💾');
+}
+
+async function saveFarewellVideo(){
   const pet=PETS[farewellPetId];if(!pet)return;
-  pet.timeline.unshift({icon:'🕊️',date:'刚刚',title:pet.name+'的纪念视频',desc:'AI 根据它的照片、声音和你写下的话生成，会永久保存在这里'});
+  if(!_farewellBlob && !_farewellAiUrl){ showToast('请先生成影集'); return; }
+  const btn=event&&event.target; if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
+  if(!_farewellBlob && _farewellAiUrl){
+    pet.timeline.unshift({icon:'🎥',date:'刚刚',title:pet.name+'的 AI 纪念视频',
+      desc:'由 AI 根据它的照片生成', videoUrl:_farewellAiUrl});
+    closeFarewellCreate();
+    if(currentBankPetId===farewellPetId){ renderBankTimeline(); }
+    saveState();
+    showToast('已存入记忆银行（建议再下载一份到本地）🎥');
+    if(btn){ btn.disabled=false; btn.textContent='保存到记忆银行'; }
+    return;
+  }
+  let fileID=null;
+  // 后端可用则传云端，不可用就只存本地引用，不阻断用户
+  try{
+    if(typeof uploadToCloud==='function' && getSessionToken && getSessionToken()){
+      const ext=(_farewellBlob.type||'').includes('mp4')?'mp4':'webm';
+      fileID=await uploadToCloud(_farewellBlob,'farewell/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext);
+    }
+  }catch(e){ console.warn('[farewell] 上传云端失败，已保留本地',e); }
+  pet.timeline.unshift({
+    icon:'🕊️', date:'刚刚', title:pet.name+'的纪念影集',
+    desc:'用它的 '+farewellPhotos.filter(Boolean).slice(0,8).length+' 张真实照片合成'+(fileID?'，已存到云端':'，已保存在本机'),
+    videoFileId:fileID||null
+  });
   closeFarewellCreate();
   if(currentBankPetId===farewellPetId){ renderBankTimeline(); }
   saveState();
-  showToast('纪念视频已保存，随时可以回来看看它 🕊️');
+  showToast(fileID?'纪念影集已存入记忆银行 🕊️':'已保存（云端未部署，暂存本机）🕊️');
+  if(btn){ btn.disabled=false; btn.textContent='保存到记忆银行'; }
 }
 
 // ── PARALLAX ──
