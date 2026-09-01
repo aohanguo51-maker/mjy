@@ -3683,7 +3683,7 @@ function switchScreen(id,navIdx){
   if(id==='sc-profile'){renderProfPetCards();renderUserProfileDisplay();syncMemCountEverywhere();}
 }
 function renderPetTopBar(){
-  const pet=PETS[currentPetId];if(!pet)return;
+  const pet=petOr(currentPetId);if(!pet)return;
   const ava=document.getElementById('petTopAva');
   const name=document.getElementById('petTopName');
   if(ava){ava.textContent=pet.emoji;ava.style.background=pet.avaBg;}
@@ -4045,7 +4045,8 @@ async function sendChat(){
   const txt=(inp.value||'').trim(); if(!txt) return;
   const msgs=document.getElementById('chatMsgs');
   const typing=document.getElementById('typingMsg');
-  const pet=PETS[currentHealthPetId]||PETS[currentPetId];
+  const pet=petOr(currentHealthPetId)||petOr(currentPetId);
+  if(!pet){ showToast('请先给毛孩子建个档案 🐾'); return; }
 
   const urow=document.createElement('div'); urow.className='msg me';
   urow.innerHTML='<div class="msg-me-ava">我</div><div class="bubble"></div>';
@@ -4399,7 +4400,8 @@ function playAudioVaultItem(btn, idx){
 
 // 文字库弹窗
 function openTextVaultModal(){
-  const pet=PETS[currentBankPetId];if(!pet)return;
+  const pet=petOr(currentBankPetId);if(!pet)return;
+  if(!PETS[currentBankPetId]) currentBankPetId=pet.id;
   const textItems=(pet.timeline||[]).filter(t=>t.type==='text'||t.icon==='✏️'||t.icon==='📝'||t.icon==='💬');
   const box=document.getElementById('textVaultList');
   document.getElementById('textVaultTitle').textContent=pet.name+'的文字记录';
@@ -4787,6 +4789,11 @@ async function initCloudData() {
         };
       }
       currentPetId = Object.keys(PETS)[0] || currentPetId;
+      // 云端宠物 id 与本地示例数据的 id 不同，这里必须一并重指向，
+      // 否则问AI/记忆银行/相册拿到的都是 undefined，新用户一进去就崩
+      if (!PETS[currentHealthPetId]) currentHealthPetId = currentPetId;
+      if (!PETS[currentBankPetId])   currentBankPetId   = currentPetId;
+      if (typeof currentAlbumPetId !== 'undefined' && !PETS[currentAlbumPetId]) currentAlbumPetId = currentPetId;
     }
 
     // 3. 获取 Feed（社区动态）
@@ -6080,7 +6087,8 @@ function switchBankPet(petId){
   renderBankPage();
 }
 function renderBankStats(){
-  const pet=PETS[currentBankPetId];if(!pet)return;
+  const pet=petOr(currentBankPetId);if(!pet)return;
+  if(!PETS[currentBankPetId]) currentBankPetId=pet.id;
   document.getElementById('bankHeroLabel').textContent='已为'+pet.name+'存入';
   document.getElementById('bankCount').textContent=pet.bank.count;
   document.getElementById('bankPhotos').textContent=pet.bank.photos;
@@ -6104,7 +6112,8 @@ function renderBankStats(){
   document.getElementById('cloneHint').innerHTML=(remain>0?`再录 <strong>${remain} 段</strong>不同情绪的叫声，就能把它的声音完整地留下来——完全免费，越早开始存越好。`:'🎉 声音样本已集齐，都安全存在记忆银行里了')+cvBtn;
 }
 function renderBankTimeline(){
-  const pet=PETS[currentBankPetId];if(!pet)return;
+  const pet=petOr(currentBankPetId);if(!pet)return;
+  if(!PETS[currentBankPetId]) currentBankPetId=pet.id;
   const list=document.getElementById('bankTlList');
   if(pet.timeline.length===0){
     list.innerHTML='<div style="text-align:center;padding:20px 0;color:var(--muted2);font-size:12px">还没有存入任何记忆，点击下方开始第一条</div>';
@@ -6255,7 +6264,7 @@ function switchAlbumPet(petId){
   renderAlbumPage();
 }
 function renderAlbumPage(){
-  const pet=PETS[currentAlbumPetId]||PETS[currentBankPetId]||PETS[currentPetId];
+  const pet=petOr(currentAlbumPetId)||petOr(currentBankPetId)||petOr(currentPetId);
   if(!pet)return;
   currentAlbumPetId=pet.id;
   document.getElementById('albumSub').textContent=pet.name+'的所有照片和视频';
@@ -6367,7 +6376,8 @@ function switchHealthPet(petId){
   renderHealthPage();
 }
 function renderHealthPage(){
-  const pet=PETS[currentHealthPetId];if(!pet)return;
+  const pet=petOr(currentHealthPetId);if(!pet)return;
+  if(!PETS[currentHealthPetId]) currentHealthPetId=pet.id;
   renderPetSwitchBar('healthPetSwitch', currentHealthPetId, 'switchHealthPet');
   document.getElementById('healthTopSub').textContent=pet.name+'的养护、症状、病历，都可以问';
   document.getElementById('healthPetInfoCard').innerHTML=`
@@ -6393,7 +6403,8 @@ function renderHealthPage(){
 }
 // 医疗记录：只保留日期+小标题，紧凑展示，具体情况点击后以半层弹窗呈现
 function renderHealthMedTimeline(){
-  const pet=PETS[currentHealthPetId];if(!pet)return;
+  const pet=petOr(currentHealthPetId);if(!pet)return;
+  if(!PETS[currentHealthPetId]) currentHealthPetId=pet.id;
   const box=document.getElementById('healthMedTimeline');
   if(pet.medical.length===0){
     box.innerHTML='<div style="text-align:center;padding:20px 0;color:var(--muted2);font-size:12px">还没有医疗记录，点击下方按钮添加第一条</div>';
@@ -6454,8 +6465,19 @@ function clearAiAskPhoto(){
   document.getElementById('aiAskPhotoPrev').src='';
 }
 
+
+// 取宠物统一兜底：id 失效时回落到第一只，避免 undefined 崩页
+function petOr(id){
+  if (typeof PETS==='undefined' || !PETS) return null;
+  if (id && PETS[id]) return PETS[id];
+  const k = Object.keys(PETS)[0];
+  return k ? PETS[k] : null;
+}
+
 async function askAiVet(){
-  const pet=PETS[currentHealthPetId];
+  const pet=petOr(currentHealthPetId);
+  if(!pet){ showToast('请先给毛孩子建个档案 🐾'); return; }
+  if(!PETS[currentHealthPetId]) currentHealthPetId=pet.id||Object.keys(PETS)[0];
   const desc=(document.getElementById('aiAskDesc').value||'').trim();
   const result=document.getElementById('aiAskResult');
   const btn=document.getElementById('aiAskBtn');
